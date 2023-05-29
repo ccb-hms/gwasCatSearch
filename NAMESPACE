@@ -1,0 +1,7 @@
+import(RSQLite)
+import(DT)
+import(corpustools)
+import(shiny, except=c(dataTableOutput, renderDataTable))
+importFrom(shinyjs, hide)
+
+exportPattern("^[[:alpha:]]+")

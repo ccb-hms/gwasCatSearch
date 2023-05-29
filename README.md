@@ -1,2 +1,3 @@
 # gwasCatSearch
-tooling for semantic search of NHGRI GWAS catalog
+
+An R package to provide free text search, and ontology lookup for GWAS Catalog phenotypes
