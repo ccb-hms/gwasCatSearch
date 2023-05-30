@@ -24,6 +24,8 @@ server = function(input, output, session) {
       }
      })
    last = do.call(rbind, ans)
+   dups = which(duplicated(last$STUDY.ACCESSION))
+   if (length(dups)>0) last = last[-dups,]
    shinyjs::hide("notif")
    last$PUBMEDID = sprintf("<A href='https://pubmed.ncbi.nlm.nih.gov/%s/'>%s</A>", last$PUBMEDID,
       last$PUBMEDID)
