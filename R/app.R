@@ -29,6 +29,7 @@ server = function(input, output, session) {
    shinyjs::hide("notif")
    last$PUBMEDID = sprintf("<A href='https://pubmed.ncbi.nlm.nih.gov/%s/'>%s</A>", last$PUBMEDID,
       last$PUBMEDID)
+   last$MAPPED_TRAIT_URI = sprintf("<A href='%s'>%s</A>", last$MAPPED_TRAIT_URI, last$MAPPED_TRAIT_URI)
    DT::datatable(last, escape=FALSE)
    })
  observe({

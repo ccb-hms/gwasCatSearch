@@ -1,7 +1,7 @@
 Package: gwasCatSearch
 Type: Package
 Title: A package to support ontological search of OpenGWAS
-Version: 0.1.3
+Version: 0.1.5
 Author: Robert Gentleman, Vince Carey, Rafael Goncalves
 Maintainer: Robert Gentleman <rgentlem@gmail.com>
 Description: Provides an interface to a SQLite database that has been created with mappings from GWAS catalog  phenotypes to EOF ontological terms.
