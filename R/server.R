@@ -44,6 +44,7 @@ server = function(input, output, session) {
  output$ontoviz = renderPlot({
    validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
    if (!exists("efo")) efo <<- ontoProc::getOnto("efoOnto")
+   validate(need(!is.null(input$gbuttons), "Waiting for gbutton UI"))
    last = process_annotated()
 #   u = unique(last$MAPPED_TRAIT_CURIE)
 #   kp = input$gbuttons
@@ -53,7 +54,10 @@ server = function(input, output, session) {
 })
  output$showbuttons = renderUI({
    validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
-   if (!exists("efo")) efo <<- ontoProc::getOnto("efoOnto")
+   if (!exists("efo")) {
+      if (file.exists("efo.rda")) load("efo.rda")
+      else efo <<- ontoProc::getOnto("efoOnto")
+      }
    last = process_annotated()
    u = unique(last$MAPPED_TRAIT_CURIE)
    su = u
