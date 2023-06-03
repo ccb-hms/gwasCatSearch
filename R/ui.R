@@ -1,5 +1,5 @@
 
-obsoleteui = fluidPage(
+ui = fluidPage(
  sidebarLayout(
   sidebarPanel(
    helpText(sprintf("gwasCatSearch v. %s",

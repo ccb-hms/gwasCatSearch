@@ -1,11 +1,11 @@
 
-obsoleteserver = function(input, output, session) {
+server = function(input, output, session) {
  data("efo_tc", package="gwasCatSearch")
  data("efo_df", package="gwasCatSearch")
  ntab = reactive({
    sout = corpustools::search_features(tc = efo_tc, query=input$query)
    validate(need(nrow(sout$hits)>0, "no hits, please try a different query"))
-   tab = hits2DT(sout, efo_df, efo_tc)
+   tab = gwasCatSearch::hits2DT(sout, efo_df, efo_tc)
    tab
    })
  output$hits = DT::renderDataTable({
@@ -19,7 +19,7 @@ obsoleteserver = function(input, output, session) {
    ans = vector("list", nu)
    withProgress(message = "collecting resources", value = 0, {
      for (i in seq_len(nu)) {
-      ans[[i]] = resources_annotated_with_term(u[i])
+      ans[[i]] = gwasCatSearch::resources_annotated_with_term(u[i])
       incProgress(1/nu)
       }
      })
@@ -32,7 +32,6 @@ obsoleteserver = function(input, output, session) {
    last$MAPPED_TRAIT_URI = sprintf("<A href='%s'>%s</A>", last$MAPPED_TRAIT_URI, last$MAPPED_TRAIT_URI)
    last$STUDY.ACCESSION = sprintf("<A href='https://www.ebi.ac.uk/gwas/studies/%s' target='_blank'>%s</A>", 
      last$STUDY.ACCESSION, last$STUDY.ACCESSION)
-print(head(last))
    DT::datatable(last, escape=FALSE)
    })
  observe({

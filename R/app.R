@@ -1,5 +1,5 @@
 
-server = function(input, output, session) {
+badserver = function(input, output, session) {
  data("efo_tc", package="gwasCatSearch")
  data("efo_df", package="gwasCatSearch")
  ntab = reactive({
@@ -43,7 +43,7 @@ server = function(input, output, session) {
 
 }
 
-ui = fluidPage(
+badui = fluidPage(
  sidebarLayout(
   sidebarPanel(
    helpText(sprintf("gwasCatSearch v. %s",
