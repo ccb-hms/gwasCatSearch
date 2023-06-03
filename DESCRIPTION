@@ -7,10 +7,12 @@ Maintainer: Robert Gentleman <rgentlem@gmail.com>
 Description: Provides an interface to a SQLite database that has been created with mappings from GWAS catalog phenotypes to EFO and ORDO ontological terms.
 License: CC BY 4.0 | file LICENSE
 VignetteBuilder: knitr
-Depends: corpustools, DT, R (>= 3.5.0)
-Imports: RSQLite, shiny, shinyjs
+Depends: corpustools, R (>= 3.5.0)
+Imports: RSQLite, shinyjs, DBI, utils, DT, shiny
 Suggests: knitr, rmarkdown
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: no
 Packaged: 2023-05-27 16:28:30 UTC; robert
+RoxygenNote: 7.2.3
+Roxygen: list(markdown=TRUE)

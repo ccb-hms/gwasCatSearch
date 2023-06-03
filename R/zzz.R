@@ -1,3 +1,6 @@
+#' @import RSQLite
+#' @import DBI  
+
 .datacache <- new.env(parent=emptyenv())
 
 gwasCatSearch_dbconn <- function() .datacache$dbconn
@@ -9,12 +12,12 @@ gwasCatSearch_dbconn <- function() .datacache$dbconn
   if (!file.exists(dbfile))
     stop("DB file'", dbfile, "' not found")
   assign("dbfile", dbfile, envir=.datacache)
-  dbconn <- dbConnect(SQLite(), dbname = dbfile, cache_size = 64000L,
-                      synchronous = "off", flags = SQLITE_RO)
+  dbconn <- DBI::dbConnect(RSQLite::SQLite(), dbname = dbfile, cache_size = 64000L,
+                      synchronous = "off", flags = RSQLite::SQLITE_RO)
   assign("dbconn", dbconn, envir=.datacache)
 }
 
 .onUnload <- function(libpath)
 {
-  dbDisconnect(gwasCatSearch_dbconn())
+  DBI::dbDisconnect(gwasCatSearch_dbconn())
 }

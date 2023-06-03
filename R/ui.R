@@ -1,5 +1,6 @@
-
-ui = fluidPage(
+#' this is for search_gwascat, and symlinked to inst/app2
+#' @rawNamespace import(shiny, except=c(renderDataTable, dataTableOutput))
+uif = function() shiny::fluidPage(
  sidebarLayout(
   sidebarPanel(
    helpText(sprintf("gwasCatSearch v. %s",
@@ -25,3 +26,5 @@ https://computationalbiomed.hms.harvard.edu/tools-and-technologies/tools-tech-de
   )
  )
 )
+
+ui = uif()

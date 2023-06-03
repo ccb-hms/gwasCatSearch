@@ -28,7 +28,7 @@ In the first example below we search for any *document*, which in our case is ju
 hits = search_features(efo_tc, query = c('Granuloma# granulo*', 'Rheumatic# rheum*'))
 summary(hits)
 hitsasDT = hits2DT(hits, efo_df, efo_tc)
-datatable(hitsasDT, escape=FALSE, rownames=FALSE)
+DT::datatable(hitsasDT, escape=FALSE, rownames=FALSE)
 ```
 
 In the next code chunk we search for any EFO labels that match to both *granulo\** and *rheum\**. There are none.
@@ -47,7 +47,7 @@ ematch = resources_annotated_with_term("EFO:0007987", include_subclasses=FALSE)
 dim(ematch)
 allmatch = resources_annotated_with_term("EFO:0007987", include_subclasses = TRUE)
 dim(allmatch)
-datatable(head(allmatch,n=20))
+DT::datatable(head(allmatch,n=20))
 ```
 
 ## Description of the Database

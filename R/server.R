@@ -1,4 +1,4 @@
-
+#' this is called by search_gwascat, also symlinked to inst/app2 for shinyapps usage
 server = function(input, output, session) {
  data("efo_tc", package="gwasCatSearch")
  data("efo_df", package="gwasCatSearch")
