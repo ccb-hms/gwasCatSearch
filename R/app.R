@@ -6,8 +6,6 @@ server = function(input, output, session) {
    sout = corpustools::search_features(tc = efo_tc, query=input$query)
    validate(need(nrow(sout$hits)>0, "no hits, please try a different query"))
    tab = hits2DT(sout, efo_df, efo_tc)
-   tab$STUDY.ACCESSION = sprintf("<A href='https://www.ebi.ac.uk/gwas/studies/%s>'%s</A>", 
-     tab$STUDY.ACCESSION, tab$STUDY.ACCESSION)
    tab
    })
  output$hits = DT::renderDataTable({
@@ -32,6 +30,8 @@ server = function(input, output, session) {
    last$PUBMEDID = sprintf("<A href='https://pubmed.ncbi.nlm.nih.gov/%s/'>%s</A>", last$PUBMEDID,
       last$PUBMEDID)
    last$MAPPED_TRAIT_URI = sprintf("<A href='%s'>%s</A>", last$MAPPED_TRAIT_URI, last$MAPPED_TRAIT_URI)
+   last$STUDY.ACCESSION = sprintf("<A href='https://www.ebi.ac.uk/gwas/studies/%s' target='_blank'>%s</A>", 
+      last$STUDY.ACCESSION, tab$STUDY.ACCESSION)
    DT::datatable(last, escape=FALSE)
    })
  observe({
