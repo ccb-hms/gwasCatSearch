@@ -18,10 +18,11 @@ uif = function() shiny::fluidPage(
   mainPanel(
    tabsetPanel(
     tabPanel("hits", DT::dataTableOutput("hits")),
-    tabPanel("resources", checkboxGroupInput(inputId="inclsub", 
+    tabPanel("resources", fluidRow( column(8, checkboxGroupInput(inputId="inclsub", 
               label="resourceOpts", 
               choices=c("include subclasses", "direct subclss only"),
-              selected=c("include subclasses"), inline=TRUE), 
+              selected=c("include subclasses"), inline=TRUE)), 
+             column(2,downloadButton("dlres", "Download table"))),
              DT::dataTableOutput("resources")), 
 #    tabPanel("resources", checkboxInput("inclsub", "include subclasses", TRUE),
 #                          checkboxInput("direct_only", "direct subclss only", FALSE), DT::dataTableOutput("resources")), 

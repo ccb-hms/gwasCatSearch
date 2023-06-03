@@ -9,9 +9,13 @@ server = function(input, output, session) {
    tab = gwasCatSearch::hits2DT(sout, efo_df, efo_tc)
    tab
    })
- output$hits = DT::renderDataTable({
-   DT::datatable(ntab(), escape=FALSE)
-   })
+ output$hits = DT::renderDataTable(
+   ntab(), escape=FALSE ,
+#   ntab(), escape=FALSE,
+#                options = list(dom = 'Bfrtip',
+#               buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))
+)
+
  
  process_annotated = reactive({
    tab = ntab()
@@ -68,6 +72,12 @@ server = function(input, output, session) {
 
    checkboxGroupInput("gbuttons", "ontoterms to show", u,selected=su, inline=TRUE)
    })
+ output$dlres = downloadHandler(
+     filename = function(){ "resources.csv" },
+     content = function(fname) {
+       write.csv(process_annotated(), fname)
+     } 
+   )
   
  observe({
             if(input$stopBtn > 0)
