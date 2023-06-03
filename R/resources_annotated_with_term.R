@@ -25,7 +25,7 @@
 #' @references `text2term`
 #' @author Robert Gentleman
 #' @examples
-#' ematch = resources_annotated_with_term("EFO:0009605", include_subclasses=FALSE)
+#' ematch = resources_annotated_with_term("EFO:0005297", include_subclasses=FALSE)
 #' dim(ematch)
 #' ematch[1,]
 #' @export
@@ -45,7 +45,8 @@ resources_annotated_with_term <- function(search_terms, include_subclasses=TRUE,
                     m.`DISEASE.TRAIT`,
                     m.MAPPED_TRAIT,
                     m.PUBMEDID,
-                    m.MAPPED_TRAIT_URI
+                    m.MAPPED_TRAIT_URI,
+                    m.MAPPED_TRAIT_CURIE
                   FROM `gwascatalog_metadata` m
                 LEFT JOIN ",  ontology_table, " ee ON (m.MAPPED_TRAIT_CURIE = ee.Subject)")
 

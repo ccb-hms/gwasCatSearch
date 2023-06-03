@@ -1,4 +1,5 @@
 #' this is for search_gwascat, and symlinked to inst/app2
+#' @note Not exported.
 #' @rawNamespace import(shiny, except=c(renderDataTable, dataTableOutput))
 uif = function() shiny::fluidPage(
  sidebarLayout(
@@ -9,13 +10,17 @@ uif = function() shiny::fluidPage(
    textInput("query", "query", value="vasculitis", placeholder="vasculitis",
      width="200px"), 
    helpText("Be sure to refresh hits tab before viewing resources."),
+   checkboxInput("graphicson", "Enable graphics", FALSE),
+   helpText("graphics startup involves retrieving an ontology, can take 20 sec or so"),
    actionButton("stopBtn", "stop app"),
    width=2
    ),
   mainPanel(
    tabsetPanel(
     tabPanel("hits", DT::dataTableOutput("hits")),
-    tabPanel("resources", tags$div(id="notif", helpText("can be slow; progress bar in lower right")), DT::dataTableOutput("resources")),  # want to remove notif with hide() in server but not working
+    tabPanel("resources", checkboxInput("inclsub", "include subclasses", TRUE),
+                          checkboxInput("direct_only", "direct subclss only", FALSE), DT::dataTableOutput("resources")), 
+    tabPanel("graph", plotOutput("ontoviz"), helpText(" "), uiOutput("showbuttons")),
     tabPanel("about", helpText("This experimental app is based on a tokenization of phenotype descriptions
 from the EBI/NHGRI GWAS catalog, data obtained in March 2023.  The text2term mapper was applied,
 a corpus was derived using corpustools, and the corpus can be interrogated with regular expression

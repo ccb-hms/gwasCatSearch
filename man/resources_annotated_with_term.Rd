@@ -41,7 +41,7 @@ Included in the return values is the confidence score provided by \code{text2ter
 similar the phenotype description was to the ontology term label.
 }
 \examples{
-ematch = resources_annotated_with_term("EFO:0009605", include_subclasses=FALSE)
+ematch = resources_annotated_with_term("EFO:0005297", include_subclasses=FALSE)
 dim(ematch)
 ematch[1,]
 }
