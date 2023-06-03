@@ -31,6 +31,9 @@ server = function(input, output, session) {
    last$PUBMEDID = sprintf("<A href='https://pubmed.ncbi.nlm.nih.gov/%s/'>%s</A>", last$PUBMEDID,
       last$PUBMEDID)
    last$MAPPED_TRAIT_URI = sprintf("<A href='%s'>%s</A>", last$MAPPED_TRAIT_URI, last$MAPPED_TRAIT_URI)
+   last$STUDY.ACCESSION = sprintf("<A href='https://www.ebi.ac.uk/gwas/studies/%s' target='_blank'>%s</A>", 
+     last$STUDY.ACCESSION, last$STUDY.ACCESSION)
+print(head(last))
    DT::datatable(last, escape=FALSE)
    })
  observe({

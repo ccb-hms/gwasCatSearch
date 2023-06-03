@@ -6,6 +6,8 @@ server = function(input, output, session) {
    sout = corpustools::search_features(tc = efo_tc, query=input$query)
    validate(need(nrow(sout$hits)>0, "no hits, please try a different query"))
    tab = hits2DT(sout, efo_df, efo_tc)
+   tab$STUDY.ACCESSION = sprintf("<A href='https://www.ebi.ac.uk/gwas/studies/%s>'%s</A>", 
+     tab$STUDY.ACCESSION, tab$STUDY.ACCESSION)
    tab
    })
  output$hits = DT::renderDataTable({
