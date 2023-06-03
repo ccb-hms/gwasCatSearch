@@ -25,8 +25,9 @@ server = function(input, output, session) {
 #      }
 #     })
 #   last = do.call(rbind, ans)
-   last = gwasCatSearch::resources_annotated_with_term(u, include_subclasses=input$inclsub,
-     direct_subclasses_only = input$direct_only) 
+   #validate(need(!is.null(input$inclsub), "waiting for resource options"))
+   last = gwasCatSearch::resources_annotated_with_term(u, include_subclasses=isTRUE("include subclasses" %in% input$inclsub),
+     direct_subclasses_only = isTRUE("direct subclss only" %in% input$inclsub))
    dups = which(duplicated(last$STUDY.ACCESSION))
    if (length(dups)>0) last = last[-dups,]
    shinyjs::hide("notif")
