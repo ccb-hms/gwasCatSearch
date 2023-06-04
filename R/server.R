@@ -90,6 +90,12 @@ server <- function(input, output, session) {
       })
     }
   })
+  output$packdesc = renderPrint({
+    packageDescription("gwasCatSearch")
+    })
+  output$sessinf = renderPrint({
+    sessionInfo()
+    })
 
 #
 # potential approach for multiple input boxes

@@ -46,7 +46,7 @@ from the EBI/NHGRI GWAS catalog, data obtained in March 2023.  The text2term map
 a corpus was derived using corpustools, and the corpus can be interrogated with regular expression
 and phrase logic.
 
-https://computationalbiomed.hms.harvard.edu/tools-and-technologies/tools-tech-details/text2term-ontology-mapping/"))
+https://computationalbiomed.hms.harvard.edu/tools-and-technologies/tools-tech-details/text2term-ontology-mapping/"), helpText(" "), verbatimTextOutput("packdesc"),  verbatimTextOutput("sessinf"))
         )
       )
     )

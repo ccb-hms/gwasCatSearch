@@ -1,5 +1,5 @@
 #' Simple app for interrogating an ontology-mapped phenotype term corpus derived from EBI/NHGRI GWAS catalog
-#' @importFrom utils data packageVersion write.csv
+#' @importFrom utils data packageVersion write.csv packageDescription sessionInfo
 #' @import DT
 #' @return Used only for side effect of running a shiny app.
 #' @seealso A [shinyapps.io deployment](https://vjcitn.shinyapps.io/gwasCatSearch) is available.
