@@ -8,8 +8,8 @@ Description: Provides an interface to a SQLite database that has been created wi
 License: CC BY 4.0 | file LICENSE
 VignetteBuilder: knitr
 Depends: corpustools, R (>= 3.5.0)
-Imports: RSQLite, shinyjs, DBI, utils, DT, shiny
-Suggests: knitr, rmarkdown
+Imports: RSQLite, shinyjs, DBI, utils, DT, shiny, ontoProc
+Suggests: knitr, rmarkdown, testthat
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: no

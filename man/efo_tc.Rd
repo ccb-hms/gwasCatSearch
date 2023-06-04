@@ -18,7 +18,7 @@ A tCorpus object built using EFO labels.
 }
 \examples{
 efo_tc
-ht2 = search_features(efo_tc, query = "infectious* AND pancrea*")
+ht2 <- search_features(efo_tc, query = "infectious* AND pancrea*")
 summary(ht2)
 }
 \references{

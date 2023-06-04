@@ -6,6 +6,13 @@
 \usage{
 server(input, output, session)
 }
+\arguments{
+\item{input}{formal element for shiny server component}
+
+\item{output}{formal element for shiny server component}
+
+\item{session}{formal element for shiny server component}
+}
 \description{
 this is called by search_gwascat, also symlinked to inst/app2 for shinyapps usage
 }

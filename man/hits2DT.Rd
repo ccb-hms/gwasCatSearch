@@ -35,9 +35,9 @@ to the query.  The using the \code{iri} column in \code{efoDF} a link to the EFO
 Information about how many phenotypes map to the term, both directly and via inheritance are reported.
 }
 \examples{
-hits = search_features(efo_tc, query = c('Infect# infectious*','Pancreas# pancrea*'))
+hits <- search_features(efo_tc, query = c("Infect# infectious*", "Pancreas# pancrea*"))
 summary(hits)
-hitsasDT = hits2DT(hits, efo_df, efo_tc)
+hitsasDT <- hits2DT(hits, efo_df, efo_tc)
 }
 \seealso{
 \code{\link[corpustools:tCorpus]{corpustools::tCorpus()}}, \link{efo_df}, \code{\link[DT:datatable]{DT::datatable()}}

@@ -23,39 +23,41 @@
 #' @author R. Gentleman
 #' @seealso [corpustools::tCorpus()], [efo_df], [DT::datatable()]
 #' @examples
-#' hits = search_features(efo_tc, query = c('Infect# infectious*','Pancreas# pancrea*'))
+#' hits <- search_features(efo_tc, query = c("Infect# infectious*", "Pancreas# pancrea*"))
 #' summary(hits)
-#' hitsasDT = hits2DT(hits, efo_df, efo_tc)
+#' hitsasDT <- hits2DT(hits, efo_df, efo_tc)
 #' @export
-hits2DT = function(hits, efoDF, tc) {
-  if(nrow(hits$hits)==0) return(NULL)
-  ##fix up the tc so it only has the HITS...
-  .i = tc$get_token_id(doc_id = hits$hits$doc_id, token_id = hits$hits$token_id)
-  .value = as.character(hits$hits$code)
-  tc$set("HITS", value = .value, subset = .i, subset_value = FALSE)
-  keep=rep(FALSE, nrow(tc$tokens))
-  keep[.i] = TRUE
-  sub_tc = tc$subset(subset = keep, subset_meta = unique(hits$hits$doc_id %in% tc$meta$doc_id),
-                     copy=TRUE)
-
-  hit_index = match(unique(hits$hits$doc_id), efoDF$Subject)
-  matchedEFO = efoDF[hit_index,]
-  EFO = paste0("<a href= \"", matchedEFO$IRI, "\">", matchedEFO$Subject, "</a>")
-  EFOtext = matchedEFO$Object
-  Direct = matchedEFO$"Direct"
-  Inherited = matchedEFO$"Inherited"
-  outDF = data.frame(EFO=EFO, Text=EFOtext, Direct=Direct, Inherited=Inherited, row.names=matchedEFO$Subject)
-  ##now look at how many things were queried and make a vector for each one
-  ##that gives the token for the doc
-  Queries = split(sub_tc$tokens, sub_tc$tokens$HITS)
-  for( i in 1:length(Queries)) {
-    tmp = rep(NA, nrow(matchedEFO))
-    names(tmp) = matchedEFO$Subject
-    docID = as.character(Queries[[i]]$doc_id)
-    tmp[docID] = as.character(Queries[[i]]$token)
-    outDF[[names(Queries[i])]] = tmp
+hits2DT <- function(hits, efoDF, tc) {
+  if (nrow(hits$hits) == 0) {
+    return(NULL)
   }
-    return(outDF)
+  ## fix up the tc so it only has the HITS...
+  .i <- tc$get_token_id(doc_id = hits$hits$doc_id, token_id = hits$hits$token_id)
+  .value <- as.character(hits$hits$code)
+  tc$set("HITS", value = .value, subset = .i, subset_value = FALSE)
+  keep <- rep(FALSE, nrow(tc$tokens))
+  keep[.i] <- TRUE
+  sub_tc <- tc$subset(
+    subset = keep, subset_meta = unique(hits$hits$doc_id %in% tc$meta$doc_id),
+    copy = TRUE
+  )
+
+  hit_index <- match(unique(hits$hits$doc_id), efoDF$Subject)
+  matchedEFO <- efoDF[hit_index, ]
+  EFO <- paste0("<a href= \"", matchedEFO$IRI, "\">", matchedEFO$Subject, "</a>")
+  EFOtext <- matchedEFO$Object
+  Direct <- matchedEFO$"Direct"
+  Inherited <- matchedEFO$"Inherited"
+  outDF <- data.frame(EFO = EFO, Text = EFOtext, Direct = Direct, Inherited = Inherited, row.names = matchedEFO$Subject)
+  ## now look at how many things were queried and make a vector for each one
+  ## that gives the token for the doc
+  Queries <- split(sub_tc$tokens, sub_tc$tokens$HITS)
+  for (i in 1:length(Queries)) {
+    tmp <- rep(NA, nrow(matchedEFO))
+    names(tmp) <- matchedEFO$Subject
+    docID <- as.character(Queries[[i]]$doc_id)
+    tmp[docID] <- as.character(Queries[[i]]$token)
+    outDF[[names(Queries[i])]] <- tmp
+  }
+  return(outDF)
 }
-
-

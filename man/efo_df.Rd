@@ -29,6 +29,6 @@ Separately we have mapped all openGWAS traits to EFO ontology terms using the \c
 \examples{
 data(efo_df)
 dim(efo_df)
-efo_df[11:15,]
+efo_df[11:15, ]
 }
 \keyword{datasets}

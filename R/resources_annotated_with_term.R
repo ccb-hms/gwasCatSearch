@@ -1,4 +1,3 @@
-
 #' A function that finds which phenotypes from a collection of phenotypes (openGWAS for this package)
 #' map to specific terms in an ontology (EFO for this package).
 #' @description
@@ -25,22 +24,24 @@
 #' @references `text2term`
 #' @author Robert Gentleman
 #' @examples
-#' ematch = resources_annotated_with_term("EFO:0005297", include_subclasses=FALSE)
+#' ematch <- resources_annotated_with_term("EFO:0005297", include_subclasses = FALSE)
 #' dim(ematch)
-#' ematch[1,]
+#' ematch[1, ]
 #' @export
-resources_annotated_with_term <- function(search_terms, include_subclasses=TRUE, direct_subclasses_only=FALSE) {
-  ontology_name = "efo"
-  con = gwasCatSearch_dbconn()
-  if ( include_subclasses )
-    if ( direct_subclasses_only )
-      ontology_table = paste0(ontology_name, "_edges")
-    else
-      ontology_table = paste0(ontology_name, "_entailed_edges")
-  else
-      ontology_table = paste0(ontology_name, "_edges")
+resources_annotated_with_term <- function(search_terms, include_subclasses = TRUE, direct_subclasses_only = FALSE) {
+  ontology_name <- "efo"
+  con <- gwasCatSearch_dbconn()
+  if (include_subclasses) {
+    if (direct_subclasses_only) {
+      ontology_table <- paste0(ontology_name, "_edges")
+    } else {
+      ontology_table <- paste0(ontology_name, "_entailed_edges")
+    }
+  } else {
+    ontology_table <- paste0(ontology_name, "_edges")
+  }
 
-  query = paste0("SELECT DISTINCT 
+  query <- paste0("SELECT DISTINCT
                     m.`STUDY.ACCESSION`,
                     m.`DISEASE.TRAIT`,
                     m.MAPPED_TRAIT,
@@ -48,21 +49,23 @@ resources_annotated_with_term <- function(search_terms, include_subclasses=TRUE,
                     m.MAPPED_TRAIT_URI,
                     m.MAPPED_TRAIT_CURIE
                   FROM `gwascatalog_metadata` m
-                LEFT JOIN ",  ontology_table, " ee ON (m.MAPPED_TRAIT_CURIE = ee.Subject)")
+                LEFT JOIN ", ontology_table, " ee ON (m.MAPPED_TRAIT_CURIE = ee.Subject)")
 
-  index = 0
-  where_clause = "\nWHERE ("
+  index <- 0
+  where_clause <- "\nWHERE ("
   for (term in search_terms) {
-        if( index == 0)
-          where_clause = paste0(where_clause, "m.MAPPED_TRAIT_CURIE = \'", term, "\'")
-        else
-          where_clause = paste0(where_clause, " OR m.MAPPED_TRAIT_CURIE = \'", term, "\'")
-        if(include_subclasses) 
-          where_clause = paste0(where_clause, " OR ee.Object = \'", term, "\'")
-        index=index+1
-   }
-   query = paste0(query, where_clause, ")")  
-  results = dbGetQuery(con, query)
-  ##results$MappingConfidence = round(results$MappingConfidence, digits=3)
+    if (index == 0) {
+      where_clause <- paste0(where_clause, "m.MAPPED_TRAIT_CURIE = \'", term, "\'")
+    } else {
+      where_clause <- paste0(where_clause, " OR m.MAPPED_TRAIT_CURIE = \'", term, "\'")
+    }
+    if (include_subclasses) {
+      where_clause <- paste0(where_clause, " OR ee.Object = \'", term, "\'")
+    }
+    index <- index + 1
+  }
+  query <- paste0(query, where_clause, ")")
+  results <- dbGetQuery(con, query)
+  ## results$MappingConfidence = round(results$MappingConfidence, digits=3)
   return(results)
 }
