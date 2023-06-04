@@ -26,7 +26,10 @@ server <- function(input, output, session) {
 
   process_annotated <- reactive({
     tab <- ntab()
-    u <- unique(rownames(tab))
+    rn = rownames(tab)
+    sels = input$hits_rows_selected
+    if (!is.null(sels)) rn = rn[sels]
+    u <- unique(rn)
     last <- gwasCatSearch::resources_annotated_with_term(u,
       include_subclasses = isTRUE("include subclasses" %in% input$inclsub),
       direct_subclasses_only = isTRUE("direct subclss only" %in% input$inclsub)
@@ -54,6 +57,7 @@ server <- function(input, output, session) {
     if (!exists("efo")) efo <<- ontoProc::getOnto("efoOnto")
     validate(need(!is.null(input$gbuttons), "Waiting for gbutton UI"))
     last <- process_annotated()
+    validate(need(length(input$gbuttons)>1, "only one term present, nothing to plot"))
     ontoProc::onto_plot2(efo, input$gbuttons)
   })
   output$showbuttons <- renderUI({

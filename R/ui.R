@@ -26,7 +26,9 @@ uif <- function() {
       ),
       mainPanel(
         tabsetPanel(
-          tabPanel("hits", DT::dataTableOutput("hits")),
+          tabPanel("hits", 
+             helpText("Select terms to limit resource retrieval by clicking in the middle of the associated row"),
+             DT::dataTableOutput("hits")),
           tabPanel(
             "resources", fluidRow(
               column(8, checkboxGroupInput(
