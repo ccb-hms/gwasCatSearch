@@ -9,16 +9,19 @@ uif <- function() {
           "gwasCatSearch v. %s",
           packageVersion("gwasCatSearch")
         )),
-        helpText("Enter free text, * permitted"),
-        textInput("query", "query",
+        helpText("Enter free text, * permitted; use AND or OR for multiple terms"),
+        textInput("query", "query term",
           value = "vasculitis", placeholder = "vasculitis",
           width = "200px"
         ),
+        actionButton("submit", "Submit"),
+#        actionButton("addInput","Add another query"),
+#        uiOutput("newInps"),
         helpText("Be sure to refresh hits tab before viewing resources."),
         checkboxInput("graphicson", "Enable graphics", FALSE),
-        helpText("graphics startup involves retrieving an ontology, can take 20 sec or so"),
+        helpText("graphics startup may involve retrieving an ontology, can take 20 sec or so"),
         actionButton("stopBtn", "stop app"),
-        width = 2
+        width = 3
       ),
       mainPanel(
         tabsetPanel(

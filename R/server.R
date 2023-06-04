@@ -7,14 +7,17 @@ server <- function(input, output, session) {
   data("efo_tc", package = "gwasCatSearch")
   data("efo_df", package = "gwasCatSearch")
   ntab <- reactive({
+   input$submit
+   isolate({
     sout <- corpustools::search_features(tc = efo_tc, query = input$query)
     validate(need(nrow(sout$hits) > 0, "no hits, please try a different query"))
     tab <- gwasCatSearch::hits2DT(sout, efo_df, efo_tc)
     tab
+    })
   })
   output$hits <- DT::renderDataTable(
     ntab(),
-    escape = FALSE,
+    escape = FALSE, rownames=FALSE
     #   ntab(), escape=FALSE,
     #                options = list(dom = 'Bfrtip',
     #               buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))
@@ -24,16 +27,6 @@ server <- function(input, output, session) {
   process_annotated <- reactive({
     tab <- ntab()
     u <- unique(rownames(tab))
-    #   nu = length(u)
-    #   ans = vector("list", nu)
-    #   withProgress(message = "collecting resources", value = 0, {
-    #     for (i in seq_len(nu)) {
-    #      ans[[i]] = gwasCatSearch::resources_annotated_with_term(u) #[i])
-    #      incProgress(1/nu)
-    #      }
-    #     })
-    #   last = do.call(rbind, ans)
-    # validate(need(!is.null(input$inclsub), "waiting for resource options"))
     last <- gwasCatSearch::resources_annotated_with_term(u,
       include_subclasses = isTRUE("include subclasses" %in% input$inclsub),
       direct_subclasses_only = isTRUE("direct subclss only" %in% input$inclsub)
@@ -61,10 +54,6 @@ server <- function(input, output, session) {
     if (!exists("efo")) efo <<- ontoProc::getOnto("efoOnto")
     validate(need(!is.null(input$gbuttons), "Waiting for gbutton UI"))
     last <- process_annotated()
-    #   u = unique(last$MAPPED_TRAIT_CURIE)
-    #   kp = input$gbuttons
-    #   su = u
-    #   if (length(u)>= 15) su = u[seq_len(15)]
     ontoProc::onto_plot2(efo, input$gbuttons)
   })
   output$showbuttons <- renderUI({
@@ -101,4 +90,25 @@ server <- function(input, output, session) {
       })
     }
   })
+
+#
+# potential approach for multiple input boxes
+#  ids <<- NULL
+#
+#  observeEvent(input$addInput,{
+#    print(ids)
+#    if (is.null(ids)){
+#      ids <<- 1
+#    }else{
+#      ids <<- c(ids, max(ids)+1)
+#    }
+#    output$newInps <- renderUI({
+#      tagList(
+#        lapply(1:length(ids),function(i){
+#          textInput(paste0("txtInput",ids[i]), sprintf("query #%d",ids[i]+1))
+#        })
+#      )
+#    })
+#  })
+
 }
