@@ -10,9 +10,10 @@ uif <- function() {
           packageVersion("gwasCatSearch")
         )),
         helpText("Enter free text, * permitted; use AND or OR for multiple terms"),
-        textInput("query", "query term",
-          value = "vasculitis", placeholder = "vasculitis",
-          width = "200px"
+        textAreaInput("query", "query phrase",
+          value = "(glomerul* AND filtration) OR urate OR (chronic AND kidney AND disease)", 
+          placeholder = "(glomerul* AND filtration) OR urate OR (chronic AND kidney AND disease)",
+          height = "350px"
         ),
         actionButton("submit", "Submit"),
 #        actionButton("addInput","Add another query"),
