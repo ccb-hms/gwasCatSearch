@@ -60,6 +60,16 @@ server <- function(input, output, session) {
     validate(need(length(input$gbuttons)>1, "only one term present, nothing to plot"))
     ontoProc::onto_plot2(efo, input$gbuttons)
   })
+  output$snps <- DT::renderDataTable({
+     picks = input$resources_rows_selected
+     validate(need(length(picks)>0, "no studies selected"))
+     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
+     dat = as.data.frame(gwascat_2023_06_24)
+     acc = unique(dat$STUDY.ACCESSION[picks])
+     dat = dat[which(dat$STUDY.ACCESSION %in% acc),]
+     validate(need(nrow(dat)>0, "no values found in SNPS"))
+     dat
+   })
   output$showbuttons <- renderUI({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
     if (!exists("efo")) {
