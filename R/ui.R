@@ -45,6 +45,7 @@ uif <- function() {
           #                          checkboxInput("direct_only", "direct subclss only", FALSE), DT::dataTableOutput("resources")),
           tabPanel("graph", plotOutput("ontoviz"), helpText(" "), uiOutput("showbuttons")),
           tabPanel("snps", DT::dataTableOutput("snps")),
+          tabPanel("manh", plotly::plotlyOutput("snpviz")),
           tabPanel("about", helpText("This experimental app is based on a tokenization of phenotype descriptions
 from the EBI/NHGRI GWAS catalog, data obtained in March 2023.  The text2term mapper was applied,
 a corpus was derived using corpustools, and the corpus can be interrogated with regular expression

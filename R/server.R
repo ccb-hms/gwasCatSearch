@@ -61,20 +61,34 @@ server <- function(input, output, session) {
     validate(need(length(input$gbuttons)>1, "only one term present, nothing to plot"))
     ontoProc::onto_plot2(efo, input$gbuttons)
   })
-  output$snps <- DT::renderDataTable({
-     fields2use = c("SNPS", "REGION", "CHR_ID", "CHR_POS", "MAPPED_GENE", "CONTEXT",
-            "OR.or.BETA", "INITIAL.SAMPLE.SIZE", "REPLICATION.SAMPLE.SIZE")
+  grab_resources = reactive({
      if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
      dat = as.data.frame(gwascat_2023_06_24)
      last <- process_annotated()
      acc = unique(last$accstr[input$resources_rows_selected])
      validate(need(length(input$resources_rows_selected)>0, "no studies selected"))
-print(input$resources_rows_selected)
-print(acc)
      dat = dat[which(dat$STUDY.ACCESSION %in% acc),]
      validate(need(nrow(dat)>0, "no values found in SNPS"))
+     dat
+     })
+     
+  output$snps <- DT::renderDataTable({
+     fields2use = c("SNPS", "REGION", "CHR_ID", "CHR_POS", "MAPPED_GENE", "CONTEXT",
+            "OR.or.BETA", "INITIAL.SAMPLE.SIZE", "REPLICATION.SAMPLE.SIZE")
+     lk = input$resources_rows_selected  # watch
+     dat = grab_resources()
      dat[,fields2use]
    })
+  output$snpviz <- plotly::renderPlotly({
+     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
+     snpind = input$snps_rows_selected
+print(snpind)
+     validate(need(length(snpind)==1, "please select only one SNP for viz"))
+     dat = grab_resources()
+     kp = dat[snpind,]
+print(kp)
+     gwasCatSearch::view_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, gwcat=gwascat_2023_06_24)
+     })
   output$showbuttons <- renderUI({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
     if (!exists("efo")) {
