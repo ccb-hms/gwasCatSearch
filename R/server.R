@@ -42,6 +42,7 @@ server <- function(input, output, session) {
       last$PUBMEDID
     )
     last$MAPPED_TRAIT_URI <- sprintf("<A href='%s'>%s</A>", last$MAPPED_TRAIT_URI, last$MAPPED_TRAIT_URI)
+    last$accstr = last$STUDY.ACCESSION
     last$STUDY.ACCESSION <- sprintf(
       "<A href='https://www.ebi.ac.uk/gwas/studies/%s' target='_blank'>%s</A>",
       last$STUDY.ACCESSION, last$STUDY.ACCESSION
@@ -61,14 +62,18 @@ server <- function(input, output, session) {
     ontoProc::onto_plot2(efo, input$gbuttons)
   })
   output$snps <- DT::renderDataTable({
-     picks = input$resources_rows_selected
-     validate(need(length(picks)>0, "no studies selected"))
+     fields2use = c("SNPS", "REGION", "CHR_ID", "CHR_POS", "MAPPED_GENE", "CONTEXT",
+            "OR.or.BETA", "INITIAL.SAMPLE.SIZE", "REPLICATION.SAMPLE.SIZE")
      if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
      dat = as.data.frame(gwascat_2023_06_24)
-     acc = unique(dat$STUDY.ACCESSION[picks])
+     last <- process_annotated()
+     acc = unique(last$accstr[input$resources_rows_selected])
+     validate(need(length(input$resources_rows_selected)>0, "no studies selected"))
+print(input$resources_rows_selected)
+print(acc)
      dat = dat[which(dat$STUDY.ACCESSION %in% acc),]
      validate(need(nrow(dat)>0, "no values found in SNPS"))
-     dat
+     dat[,fields2use]
    })
   output$showbuttons <- renderUI({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
