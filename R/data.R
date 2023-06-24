@@ -28,3 +28,9 @@
 #' ht2 <- search_features(efo_tc, query = "infectious* AND pancrea*")
 #' summary(ht2)
 "efo_tc"
+
+#' A snapshot of EBI GWAS catalog
+#' @docType data
+#' @format an instance of gwaswloc from gwascat package
+#' @source see gwascat package function makeCurrentGwascat 
+"gwascat_2023_06_24"

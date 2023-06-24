@@ -1,17 +1,28 @@
 Package: gwasCatSearch
 Type: Package
 Title: A package to support ontological search of OpenGWAS
-Version: 0.1.10
-Author: Robert Gentleman, Vince Carey, Rafael Goncalves
-Maintainer: Robert Gentleman <rgentlem@gmail.com>
+Version: 0.1.13
+Authors@R:
+    c(person(given = "Robert",
+           family = "Gentleman",
+           role = c("aut", "cre"),
+           email = "rgentlem@gmail.com"),
+      person(given = "Vincent",
+           family = "Carey",
+           role = c("aut")),
+      person(given = "Rafael",
+           family = "Goncalves",
+           role = c("aut")))
 Description: Provides an interface to a SQLite database that has been created with mappings from GWAS catalog phenotypes to EFO and ORDO ontological terms.
 License: CC BY 4.0 | file LICENSE
 VignetteBuilder: knitr
 Depends: corpustools, R (>= 3.5.0)
-Imports: RSQLite, shinyjs, DBI, utils, DT, shiny, ontoProc
+Imports: RSQLite, shinyjs, DBI, utils, DT, shiny, ontoProc,
+	ggplot2, plotly, gwascat, GenomicRanges, S4Vectors, IRanges
 Suggests: knitr, rmarkdown, testthat
 Encoding: UTF-8
 LazyData: true
+LazyDataCompression: xz
 NeedsCompilation: no
 Packaged: 2023-05-27 16:28:30 UTC; robert
 RoxygenNote: 7.2.3
