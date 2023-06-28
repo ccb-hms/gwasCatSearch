@@ -25,16 +25,16 @@ While helpful, we then have the challenge of how to help a researcher find an EF
 In the first example below we search for any *document*, which in our case is just the text label for an EFO ontology term that contains a match to either *granulo\** or *rheum\**. We named these two arguments **Granuloma** and **Rheumatic**. The `summary` function tells how many terms matched and in how many *documents*. And then we created a table using `hitsasDT` and then rendered that using `datatable`. The output is searchable. Under the column labeled **Granuloma** are the actual words that were matched to *granulo\** and under the column labled **Rheumatic** are the words that matched to *rheum\**.
 
 ```{r}
-hits <- search_features(efo_tc, query = c("Granuloma# granulo*", "Rheumatic# rheum*"))
+hits = search_features(efo_tc, query = c('Granuloma# granulo*', 'Rheumatic# rheum*'))
 summary(hits)
-hitsasDT <- hits2DT(hits, efo_df, efo_tc)
-DT::datatable(hitsasDT, escape = FALSE, rownames = FALSE)
+hitsasDT = hits2DT(hits, efo_df, efo_tc)
+datatable(hitsasDT, escape=FALSE, rownames=FALSE)
 ```
 
 In the next code chunk we search for any EFO labels that match to both *granulo\** and *rheum\**. There are none.
 
 ```{r}
-ht2 <- search_features(efo_tc, query = "granulo* AND rheum*")
+ht2 = search_features(efo_tc, query = "granulo* AND rheum*")
 summary(ht2)
 ```
 
@@ -43,11 +43,55 @@ summary(ht2)
 Here we describe how to search for GWAS catalog hits that match a certain EFO identifier. For our example we use the EFO term [EFO:0007987](#0) which is labeled as *granulocyte count*. To do this we call the `resources_annotated_with_term` function. We provide the term identifier and then either ask only for the resources annotated specifically with the provided term (`ematch`) or for all those that either match directly, or that match to a child of the term provided (`allmatch`). There are 4 that match directly and another 106 that match for some children. We use a `datatable` so the reader can explore the first 20.
 
 ```{r}
-ematch <- resources_annotated_with_term("EFO:0007987", include_subclasses = FALSE)
+ematch = resources_annotated_with_term("EFO:0007987", include_subclasses=FALSE)
 dim(ematch)
-allmatch <- resources_annotated_with_term("EFO:0007987", include_subclasses = TRUE)
+allmatch = resources_annotated_with_term("EFO:0007987", include_subclasses = TRUE)
 dim(allmatch)
-DT::datatable(head(allmatch, n = 20))
+datatable(head(allmatch,n=20))
+```
+
+## Next Steps
+
+Given the Study Accession identifiers we can then access the actual SNPs, the risk alleles get nearby genes and perform a variety of downstream analysis.
+
+```{r getSNPs}
+library("gwasrapidd")
+my_associations <- get_associations(study_id = allmatch[1,1])
+slotNames(my_associations)
+my_associations@entrez_ids
+```
+
+Let's look at the autoimmune diseases.
+
+```{r autoimmune}
+
+ht3 = search_features(efo_tc, query = "\"autoimmune disease\"")
+dtxx = hits2DT(ht3, efo_df, efo_tc)
+DT::datatable(dtxx)
+
+am = resources_annotated_with_term("EFO:0005140", include_subclasses = TRUE)
+dim(am)
+## let's see which ones
+gg = grepl("*EFO_0005140", am[,4])
+am[gg,]
+```
+
+We can compare with what the `gwasrapidd` vignette. Somehow even though the `study_ids` are unique, the PubMed Ids and titles are not.
+
+```{r}
+gwrdd = gwasrapidd::get_studies(efo_trait = 'autoimmune disease')
+gwrdd@studies$study_id
+
+gwrdd@publications$title
+
+gwrdd@publications$pubmed_id
+
+```
+
+And a datatable of all of them - just in case it is helpful
+
+```{r }
+DT::datatable(am)
 ```
 
 ## Description of the Database
