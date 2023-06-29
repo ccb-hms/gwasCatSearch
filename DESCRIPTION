@@ -1,7 +1,7 @@
 Package: gwasCatSearch
 Type: Package
 Title: A package to support ontological search of OpenGWAS
-Version: 0.1.15
+Version: 0.1.16
 Authors@R:
     c(person(given = "Robert",
            family = "Gentleman",
@@ -17,9 +17,9 @@ Description: Provides an interface to a SQLite database that has been created wi
 License: CC BY 4.0 | file LICENSE
 VignetteBuilder: knitr
 Depends: corpustools, R (>= 3.5.0)
-Imports: RSQLite, shinyjs, DBI, utils, DT, shiny, ontoProc,
+Imports: methods, RSQLite, shinyjs, DBI, utils, DT, shiny, ontoProc,
 	ggplot2, plotly, gwascat, GenomicRanges, S4Vectors, IRanges
-Suggests: knitr, rmarkdown, testthat
+Suggests: knitr, rmarkdown, testthat, gwasrapidd
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: xz

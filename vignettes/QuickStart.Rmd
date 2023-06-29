@@ -14,6 +14,7 @@ editor: visual
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 library("gwasCatSearch")
+library(DT)
 ```
 
 The gwasCatSearch package provides functionality to search for different phenotypes within the GWAS catalog (<https://gwas.mrcieu.ac.uk>) database. We used the mappings provided by the GWAS catalog for phenotypes to the EFO ontology (<https://www.ebi.ac.uk/efo/>). We then created a SQLite database that contains (among other things) a table that has the linearized form of the ontology. Annotations can be mapped directly to a term, or they can be inferred from any child term. Then given any EFO ontology label users can query the database to determine which, if any, GWAS catalog phenotypes have been mapped to that EFO term.

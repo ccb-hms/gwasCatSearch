@@ -5,7 +5,13 @@
 \title{utility for extracting information about GWAS hits near a position,
 uses a snapshot of EBI GWAS catalog}
 \usage{
-get_variant_context(chr = 15, pos = 6.9e+07, radius = 5e+05, gwcat)
+get_variant_context(
+  chr = 15,
+  pos = 6.9e+07,
+  radius = 5e+05,
+  focal_rec = NULL,
+  gwcat
+)
 }
 \arguments{
 \item{chr}{chromosome identifier}
@@ -13,6 +19,10 @@ get_variant_context(chr = 15, pos = 6.9e+07, radius = 5e+05, gwcat)
 \item{pos}{numeric(1) position of variant of interest}
 
 \item{radius}{numeric(1) radius of interval to present}
+
+\item{focal_rec}{NULL or data.frame with one row with elements CHR_ID, CHR_POS, PVALUE_MLOG, STUDY.ACCESSION,
+MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
+SNP for the visualization with a blue dot}
 
 \item{gwcat}{instance of gwaswloc from gwascat package}
 }

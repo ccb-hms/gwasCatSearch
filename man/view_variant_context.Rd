@@ -8,6 +8,7 @@ view_variant_context(
   chr = 15,
   pos = 6.9e+07,
   radius = 5e+05,
+  focal_rec = NULL,
   gwcat,
   main = "Manhattan plot for GWAS catalog hits, mouseover for details"
 )
@@ -18,6 +19,10 @@ view_variant_context(
 \item{pos}{numeric(1) position of variant of interest}
 
 \item{radius}{numeric(1) radius of interval to present}
+
+\item{focal_rec}{NULL or data.frame with one row with elements CHR_ID, CHR_POS, PVALUE_MLOG, STUDY.ACCESSION,
+MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
+SNP for the visualization with a blue dot}
 
 \item{gwcat}{instance of gwaswloc from gwascat package}
 
@@ -31,5 +36,8 @@ interactive visualization of GWAS hits near a position
 }
 \examples{
 data(gwascat_2023_06_24)
-view_variant_context(gwcat=gwascat_2023_06_24)
+foc = S4Vectors::mcols(IRanges::subsetByOverlaps(as(gwascat_2023_06_24, "GRanges"), 
+     GenomicRanges::GRanges("15:69287238")))
+foc = as.data.frame(foc)
+view_variant_context(gwcat=gwascat_2023_06_24, focal_rec=foc)
 }

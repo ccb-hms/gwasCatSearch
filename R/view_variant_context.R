@@ -4,9 +4,13 @@
 #' uses a snapshot of EBI GWAS catalog
 #' @importFrom GenomicRanges start
 #' @importFrom IRanges subsetByOverlaps
+#' @importFrom methods as
 #' @param chr chromosome identifier
 #' @param pos numeric(1) position of variant of interest
 #' @param radius numeric(1) radius of interval to present
+#' @param focal_rec NULL or data.frame with one row with elements CHR_ID, CHR_POS, PVALUE_MLOG, STUDY.ACCESSION,
+#' MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
+#' SNP for the visualization with a blue dot
 #' @param gwcat instance of gwaswloc from gwascat package
 #' @return a data.frame with fields PVALUE_MLOG, STUDY.ACCESSION, MAPPED_TRAIT,
 #' SNP_ID_CURRENT, PUBMEDID, pos, mlogp, and tag, the latter an HTML string
@@ -16,12 +20,21 @@
 #' mydf = get_variant_context(gwcat = gwascat_2023_06_24)
 #' head(mydf[, 1:6])
 #' @export
-get_variant_context = function(chr=15, pos=69e6, radius=5e5, gwcat) {
- tt = IRanges::subsetByOverlaps(as(gwcat, "GRanges"), GenomicRanges::GRanges(chr, IRanges::IRanges(pos,width=1)+radius))
+get_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwcat) {
+ tt = IRanges::subsetByOverlaps(as(gwcat, "GRanges"), 
+       GenomicRanges::GRanges(chr, IRanges::IRanges(pos,width=1)+radius))
  mydf = as.data.frame(S4Vectors::mcols(tt))[,c("PVALUE_MLOG", "STUDY.ACCESSION", "MAPPED_TRAIT",
         "SNP_ID_CURRENT", "PUBMEDID")]
  mydf$pos = GenomicRanges::start(tt)
  mydf$mlogp = pmin(70, mydf$PVALUE_MLOG)
+ mydf$focal = FALSE
+ if (!is.null(focal_rec)) {
+   focal_rec$pos = focal_rec$CHR_POS
+   focal_rec$mlogp = pmin(70, focal_rec$PVALUE_MLOG)
+   focal_rec$focal = TRUE
+   mydf = rbind(mydf, focal_rec[c("PVALUE_MLOG", "STUDY.ACCESSION", "MAPPED_TRAIT",
+           "SNP_ID_CURRENT", "PUBMEDID", "pos", "mlogp", "focal")])
+   }
  mydf$tag = paste0("snp: ", mydf$SNP_ID_CURRENT, 
                  "<br>", "trait :", mydf$MAPPED_TRAIT, 
                  "<br>", "acc: ", mydf$STUDY.ACCESSION,
@@ -35,18 +48,30 @@ get_variant_context = function(chr=15, pos=69e6, radius=5e5, gwcat) {
 #' @param chr chromosome identifier
 #' @param pos numeric(1) position of variant of interest
 #' @param radius numeric(1) radius of interval to present
+#' @param focal_rec NULL or data.frame with one row with elements CHR_ID, CHR_POS, PVALUE_MLOG, STUDY.ACCESSION,
+#' MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
+#' SNP for the visualization with a blue dot
 #' @param gwcat instance of gwaswloc from gwascat package
 #' @param main character(1) title for plot
 #' @return ggplotly is called
 #' @examples
 #' data(gwascat_2023_06_24)
-#' view_variant_context(gwcat=gwascat_2023_06_24)
+#' foc = S4Vectors::mcols(IRanges::subsetByOverlaps(as(gwascat_2023_06_24, "GRanges"), 
+#'      GenomicRanges::GRanges("15:69287238")))
+#' foc = as.data.frame(foc)
+#' view_variant_context(gwcat=gwascat_2023_06_24, focal_rec=foc)
 #' @export
-view_variant_context = function(chr=15, pos=69e6, radius=5e5, gwcat,
+view_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwcat,
   main="Manhattan plot for GWAS catalog hits, mouseover for details") {
- mydf = get_variant_context(chr=chr, pos=pos, radius=radius, gwcat=gwcat)
- pl = ggplot(mydf, aes(x=pos, y=mlogp, text=tag)) + geom_point() + 
+ mydf = get_variant_context(chr=chr, pos=pos, radius=radius, focal_rec=focal_rec, gwcat=gwcat)
+ pl = ggplot(mydf, aes(x=pos, y=mlogp, text=tag)) + geom_point() + xlab(sprintf("Pos on chr %s", chr)) +
          ylab("min(70, -log10 p)") + ggtitle(main)
+ focind = which(mydf$focal)
+ if (length(focind)>0) {
+     ndf = mydf[focind[1],]
+     pl = pl + geom_point(data=ndf, aes(x=pos,
+                    y=mlogp), colour="lightblue", size=1.2)
+     }
  plotly::ggplotly(pl)
 }
 
