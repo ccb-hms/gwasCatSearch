@@ -27,6 +27,11 @@ hitsasDT = hits2DT(hts, efo_df, efo_tc)
 DT::datatable(hitsasDT, escape=FALSE, rownames=FALSE)
 ```
 
+At this point all we have done is asked which terms in the ontology match our search. The next part of the process is to identify which, if any, of those terms have studies in the GWAS catalog that actually map to that term. 
+The mapping can come in two ways:
+- direct: the study was mapped to that term specifically
+- indirect: the study maps to a term because it mapped directly to a more specific term and hence it is inferred to map to the current ontology term.
+
 ## Mapping to the Ontologies and finding the roll-ups
 
 
@@ -52,3 +57,13 @@ And then we can visualize the variant context using `view_variant_context`.
 view_variant_context(chr=lu1$CHR_ID[1], pos=lu1$CHR_POS[1], radius=5e+05,
                      gwcat=gwascat_2023_06_24, main="Manhattan Plot")
 ```
+
+## Perhaps there are other terms that are interesting
+
+```{r otherterms}
+q2 = "Infectious AND disease"
+hts2 = search_features(efo_tc, query = q2)
+hitsasDT2 = hits2DT(hts2, efo_df, efo_tc)
+DT::datatable(hitsasDT2, escape=FALSE, rownames=FALSE)
+```
+
