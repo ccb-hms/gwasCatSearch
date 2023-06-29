@@ -87,6 +87,15 @@ server <- function(input, output, session) {
      kp = dat[snpind,]
      gwasCatSearch::view_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, focal_rec=kp, gwcat=gwascat_2023_06_24)
      })
+  output$snptab <- DT::renderDataTable({
+     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
+     snpind = input$snps_rows_selected
+     validate(need(length(snpind)==1, "please select only one SNP for viz"))
+     dat = grab_resources()
+     kp = dat[snpind,]
+     gwasCatSearch::get_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, focal_rec=kp, gwcat=gwascat_2023_06_24)
+     })
+    
   output$showbuttons <- renderUI({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
     if (!exists("efo")) {

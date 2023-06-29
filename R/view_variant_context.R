@@ -70,7 +70,7 @@ view_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gw
  if (length(focind)>0) {
      ndf = mydf[focind[1],]
      pl = pl + geom_point(data=ndf, aes(x=pos,
-                    y=mlogp), colour="lightblue", size=1.2)
+                    y=mlogp), colour="lightblue", size=1.3)
      }
  plotly::ggplotly(pl)
 }
