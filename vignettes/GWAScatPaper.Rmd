@@ -2,6 +2,10 @@
 title: "Paper"
 author: "RG"
 date: "2023-06-23"
+vignette: >
+  %\VignetteIndexEntry{Paper}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 output: html_document
 ---
 
