@@ -8,7 +8,7 @@
 #'    \item{\samp{Direct}}{The count of openGWAS phenotypes that were mapped directly to the EFO term.}
 #'    \item{\samp{Inherited}}{The number of openGWAS phenotypes that were inferred to have the EFO term.}
 #' }
-#' @note Separately we have mapped all openGWAS traits to EFO ontology terms using the `text2term` (https://text2term.hms.harvard.edu/) mapper.  Any phenotype mapping directly to the `object` label is a direct map.  Since the ontology has notions of parent and child, terms from any child nodes are inferred to be mapped to the node, the number of these is given in the `inferred mapping` column.
+#' @note We use mappings from study defined traits to the EFO ontology provided by the EBI/EMBL withthe GWAS Catalog.  Any phenotype mapping directly to the `object` label is a direct map.  Since the ontology has notions of parent and child, terms from any child nodes are inferred to be mapped to the node, the number of these is given in the `inferred mapping` column.
 #' @source EFO: https://www.ebi.ac.uk/efo/
 #' @keywords datasets
 #' @examples

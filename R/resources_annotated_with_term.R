@@ -1,4 +1,4 @@
-#' A function that finds which phenotypes from a collection of phenotypes (openGWAS for this package)
+#' A function that finds which phenotypes from a collection of phenotypes (The GWAS Catalog for this package)
 #' map to specific terms in an ontology (EFO for this package).
 #' @description
 #' This function relies on a SQLite database that contains mappings from a set of phenotypes to one or more
