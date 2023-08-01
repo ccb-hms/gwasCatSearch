@@ -2,7 +2,7 @@
 % Please edit documentation in R/resources_annotated_with_term.R
 \name{resources_annotated_with_term}
 \alias{resources_annotated_with_term}
-\title{A function that finds which phenotypes from a collection of phenotypes (openGWAS for this package)
+\title{A function that finds which phenotypes from a collection of phenotypes (The GWAS Catalog for this package)
 map to specific terms in an ontology (EFO for this package).}
 \usage{
 resources_annotated_with_term(
