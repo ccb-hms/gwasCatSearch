@@ -15,8 +15,8 @@
 #' @return
 #' A `data.frame` with columns:
 #' \describe{
-#'   \item{OpenGWAS ID}{The openGWAS ID for the trait.}
-#'   \item{OpenGWAS Trait}{The openGWAS text label for that trait.}
+#'   \item{STUDY.ACCESSION}{The openGWAS for the trait.}
+#'   \item{DISEASE_TRAIT}{The openGWAS text label for that trait.}
 #'   \item{Ontology Term}{The text description/label of the ontology term.}
 #'   \item{Ontology Term ID}{The label for the ontology term.}
 #'   \item{Mapping Confidence}{The confidence score from mapping the phenotype label to the ontology label.}
@@ -29,42 +29,44 @@
 #' ematch[1, ]
 #' @export
 resources_annotated_with_term <- function(search_terms, include_subclasses = TRUE, direct_subclasses_only = FALSE) {
-  ontology_name <- "efo"
   con <- gwasCatSearch_dbconn()
   if (include_subclasses) {
     if (direct_subclasses_only) {
-      ontology_table <- paste0(ontology_name, "_edges")
+      ontology_table <- "efo_edges"
     } else {
-      ontology_table <- paste0(ontology_name, "_entailed_edges")
+      ontology_table <- "efo_entailed_edges"
     }
   } else {
-    ontology_table <- paste0(ontology_name, "_edges")
+    ontology_table <- "efo_edges"
   }
 
   query <- paste0("SELECT DISTINCT
-                    m.`STUDY.ACCESSION`,
-                    m.`DISEASE.TRAIT`,
-                    m.MAPPED_TRAIT,
-                    m.PUBMEDID,
-                    m.MAPPED_TRAIT_URI,
-                    m.MAPPED_TRAIT_CURIE
-                  FROM `gwascatalog_metadata` m
-                LEFT JOIN ", ontology_table, " ee ON (m.MAPPED_TRAIT_CURIE = ee.Subject)")
+                    study.`STUDY.ACCESSION`,
+                    study.`DISEASE.TRAIT`,
+                    study.MAPPED_TRAIT,
+                    study.MAPPED_TRAIT_CURIE,
+                    study.MAPPED_TRAIT_URI
+                  FROM `gwascatalog_metadata` study
+                  WHERE 
+                    study.`STUDY.ACCESSION` IN (
+                     SELECT DISTINCT mapping.`STUDY.ACCESSION`
+                     FROM `gwascatalog_mappings` mapping
+                      LEFT JOIN ", ontology_table, " ee ON (mapping.MAPPED_TRAIT_CURIE = ee.Subject)")
 
   index <- 0
   where_clause <- "\nWHERE ("
   for (term in search_terms) {
     if (index == 0) {
-      where_clause <- paste0(where_clause, "m.MAPPED_TRAIT_CURIE = \'", term, "\'")
+      where_clause <- paste0(where_clause, "mapping.MAPPED_TRAIT_CURIE = \'", term, "\'")
     } else {
-      where_clause <- paste0(where_clause, " OR m.MAPPED_TRAIT_CURIE = \'", term, "\'")
+      where_clause <- paste0(where_clause, " OR mapping.MAPPED_TRAIT_CURIE = \'", term, "\'")
     }
     if (include_subclasses) {
       where_clause <- paste0(where_clause, " OR ee.Object = \'", term, "\'")
     }
     index <- index + 1
   }
-  query <- paste0(query, where_clause, ")")
+  query <- paste0(query, where_clause, ") \n )")
   results <- dbGetQuery(con, query)
   ## results$MappingConfidence = round(results$MappingConfidence, digits=3)
   return(results)

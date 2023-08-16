@@ -41,7 +41,7 @@ summary(ht2)
 
 ## Searching for matches from GWAS Catalog hits.
 
-Here we describe how to search for GWAS catalog hits that match a certain EFO identifier. For our example we use the EFO term [EFO:0007987](#0) which is labeled as *granulocyte count*. To do this we call the `resources_annotated_with_term` function. We provide the term identifier and then either ask only for the resources annotated specifically with the provided term (`ematch`) or for all those that either match directly, or that match to a child of the term provided (`allmatch`). There are 4 that match directly and another 106 that match for some children. We use a `datatable` so the reader can explore the first 20.
+Here we describe how to search for GWAS catalog hits that match a certain EFO identifier. For our example we use the EFO term [EFO:0007987](#0) which is labeled as *granulocyte count*. To do this we call the `resources_annotated_with_term` function. We provide the term identifier and then either ask only for the resources annotated specifically with the provided term (`ematch`) or for all those that either match directly, or that match to a child of the term provided (`allmatch`). There are `r efo_df["EFO:0007987", "Direct]` that match directly and another `r efo_df["EFO:0007987", "Inherited"] ` that match some child node and hence are inherited. We use a `datatable` so the reader can explore the first 20.
 
 ```{r}
 ematch = resources_annotated_with_term("EFO:0007987", include_subclasses=FALSE)
@@ -66,14 +66,17 @@ Let's look at the autoimmune diseases.
 
 ```{r autoimmune}
 
-ht3 = search_features(efo_tc, query = "\"autoimmune disease\"")
+ht3 = search_features(efo_tc, query = "\"autoimmune AND disease\"")
 dtxx = hits2DT(ht3, efo_df, efo_tc)
-DT::datatable(dtxx)
+DT::datatable(dtxx, escape=FALSE, rownames=FALSE)
+```
 
+
+```{r resourceAnnotatio}
 am = resources_annotated_with_term("EFO:0005140", include_subclasses = TRUE)
 dim(am)
 ## let's see which ones
-gg = grepl("*EFO_0005140", am[,4])
+gg = grepl("*EFO:0005140*", am[,"MAPPED_TRAIT_CURIE"])
 am[gg,]
 ```
 

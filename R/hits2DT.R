@@ -55,8 +55,11 @@ hits2DT <- function(hits, efoDF, tc) {
   for (i in 1:length(Queries)) {
     tmp <- rep(NA, nrow(matchedEFO))
     names(tmp) <- matchedEFO$Subject
-    docID <- as.character(Queries[[i]]$doc_id)
-    tmp[docID] <- as.character(Queries[[i]]$token)
+    sp1 = split(Queries[[i]]$token, Queries[[i]]$doc_id)
+    sp2 = sapply(sp1, function(x) paste(x, collapse=", "))
+    tmp[names(sp2)] = sp2
+    #docID <- as.character(Queries[[i]]$doc_id)
+    #tmp[docID] <- as.character(Queries[[i]]$token)
     outDF[[names(Queries[i])]] <- tmp
   }
   return(outDF)

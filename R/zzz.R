@@ -3,6 +3,12 @@
 
 .datacache <- new.env(parent = emptyenv())
 
+#' A function that allows the user to access the SQLite database tables provided with gwasCatSearch
+#' @description
+#' An instance of the SQLiteConnection class that has been opened on the database tables provided
+#' @examples
+#' RSQLite::dbListTables(gwasCatSearch_dbconn())
+#' @export
 gwasCatSearch_dbconn <- function() .datacache$dbconn
 
 .onLoad <- function(libname, pkgname) {
