@@ -2,7 +2,7 @@
 % Please edit documentation in R/hits2DT.R
 \name{hits2DT}
 \alias{hits2DT}
-\title{A function that takes the output of query against the EFO corpus and creates a datatable object.}
+\title{A function that takes the output of query against the EFO corpus and creates a datatable object}
 \usage{
 hits2DT(hits, efoDF, tc)
 }

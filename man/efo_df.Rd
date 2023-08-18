@@ -7,11 +7,12 @@
 \format{
 a data frame with observations on
 \describe{
-\item{\code{Subject}}{The EFO label.}
-\item{\code{Object}}{The EFO text string for the ontology entry.}
+\item{\code{Subject}}{The CURIE Identifier.}
+\item{\code{Object}}{The EFO text description for the ontology entry.}
 \item{\code{IRI}}{A URL linking to the EFO page for that term.}
+\item{\code{DiseaseLocation}}{A comma separated list of CURIE identifiers for annotated disease locations.}
 \item{\samp{Direct}}{The count of openGWAS phenotypes that were mapped directly to the EFO term.}
-\item{\samp{Inherited}}{The number of openGWAS phenotypes that were inferred to have the EFO term.}
+\item{\samp{Inherited}}{The count of openGWAS phenotypes that were inferred to have the EFO term.}
 }
 }
 \source{

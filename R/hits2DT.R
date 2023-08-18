@@ -1,4 +1,4 @@
-#' A function that takes the output of query against the EFO corpus and creates a datatable object.
+#' A function that takes the output of query against the EFO corpus and creates a datatable object
 #' @import corpustools
 #' @description
 #' Users query the corpus to find EFO ontology terms that match the query. Those hits can be processed
@@ -56,7 +56,7 @@ hits2DT <- function(hits, efoDF, tc) {
     tmp <- rep(NA, nrow(matchedEFO))
     names(tmp) <- matchedEFO$Subject
     sp1 = split(Queries[[i]]$token, Queries[[i]]$doc_id)
-    sp2 = sapply(sp1, function(x) paste(x, collapse=", "))
+    sp2 = sapply(sp1, function(x) { x = unique(tolower(x)); paste(x, collapse=", ")})
     tmp[names(sp2)] = sp2
     #docID <- as.character(Queries[[i]]$doc_id)
     #tmp[docID] <- as.character(Queries[[i]]$token)

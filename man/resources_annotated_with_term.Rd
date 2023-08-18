@@ -3,7 +3,7 @@
 \name{resources_annotated_with_term}
 \alias{resources_annotated_with_term}
 \title{A function that finds which phenotypes from a collection of phenotypes (The GWAS Catalog for this package)
-map to specific terms in an ontology (EFO for this package).}
+map to specific terms in an ontology (EFO for this package)}
 \usage{
 resources_annotated_with_term(
   search_terms,
@@ -21,8 +21,8 @@ resources_annotated_with_term(
 \value{
 A \code{data.frame} with columns:
 \describe{
-\item{OpenGWAS ID}{The openGWAS ID for the trait.}
-\item{OpenGWAS Trait}{The openGWAS text label for that trait.}
+\item{STUDY.ACCESSION}{The openGWAS for the trait.}
+\item{DISEASE_TRAIT}{The openGWAS text label for that trait.}
 \item{Ontology Term}{The text description/label of the ontology term.}
 \item{Ontology Term ID}{The label for the ontology term.}
 \item{Mapping Confidence}{The confidence score from mapping the phenotype label to the ontology label.}

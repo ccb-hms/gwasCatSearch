@@ -44,6 +44,7 @@
                                         text_columns = c("Object", "Synonyms", "Matches"))
   efo_tc$preprocess(use_stemming = use_stemming, remove_stopwords = remove_stop_words)
 
+  efo_df = efo_df[,c("Subject","Object","IRI","DiseaseLocation","Direct","Inherited")]
   if (save) {
     save(efo_tc, file = paste0(path, "/efo_tc.rda"), compress = "xz")
     save(efo_df, file = paste0(path, "/efo_df.rda"), compress = "xz")
@@ -54,6 +55,30 @@
 ##stash a few commands to get data in R
 ## gwascatmeta = RSQLite::dbGetQuery(gwasCatSearch:::gwasCatSearch_dbconn(), 
 ##                 "SELECT * from gwascatalog_metadata")
-## dbcon=gwasCatSearch:::gwasCatSearch_dbconn()
+## gwascatsyn = RSQLite::dbGetQuery(gwasCatSearch:::gwasCatSearch_dbconn(), "SELECT * from efo_synonyms")
 
+## dbcon=gwasCatSearch:::gwasCatSearch_dbconn()
+##gwascatsynQ = function(query) RSQLite::dbGetQuery(gwasCatSearch:::gwasCatSearch_dbconn(), query)
+
+
+#' A function to query the efo_synonyms table and return the set of known synonyms for the input ontology terms
+#' @description
+#' This function provides an interface to the SQL database containing ontology term synonyms. These are 
+#' synonyms provided as part of the ontology.
+#' @param Ontonames a character vector of the ontology CURIE symbols
+#' @details The function selects the appropriate rows and then splits them according to the input ontology terms.
+#' Any ontology term without synonyms will be dropped.
+#' @return A named list, each element of which is named with the CURIE symbol, and the elements are the text
+#' of the synonyms
+#' @author Robert Gentleman
+#' @examples 
+#' getSynonyms(c("EFO:0000094", "EFO:0000095"))
+#' @export
+getSynonyms = function(Ontonames) {
+  if( !is.character(Ontonames) | length(Ontonames)<1 )
+    stop("in correct input")
+  query = paste0( "SELECT * FROM efo_synonyms WHERE Subject IN ('", paste(Ontonames, collapse="','"), "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), query)
+  return(split(ans$Object, ans$Subject))
+}
 

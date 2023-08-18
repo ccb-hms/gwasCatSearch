@@ -41,7 +41,9 @@ summary(ht2)
 
 ## Searching for matches from GWAS Catalog hits.
 
-Here we describe how to search for GWAS catalog hits that match a certain EFO identifier. For our example we use the EFO term [EFO:0007987](#0) which is labeled as *granulocyte count*. To do this we call the `resources_annotated_with_term` function. We provide the term identifier and then either ask only for the resources annotated specifically with the provided term (`ematch`) or for all those that either match directly, or that match to a child of the term provided (`allmatch`). There are `r efo_df["EFO:0007987", "Direct]` that match directly and another `r efo_df["EFO:0007987", "Inherited"] ` that match some child node and hence are inherited. We use a `datatable` so the reader can explore the first 20.
+Here we describe how to search for GWAS catalog hits that match a certain EFO identifier. For our example we use the EFO term [EFO:0007987](#0) which is labeled as *granulocyte count*. To do this we call the `resources_annotated_with_term` function. We provide the term identifier and then either ask only for the resources annotated specifically with the provided term (`ematch`) or for all those that either match directly, or that match to a child of the term provided (`allmatch`). There are `r efo_df["EFO:0007987", "Direct"]` that match directly and another `r efo_df["EFO:0007987", "Inherited"] ` that match some child node and hence are inherited. We use a `datatable` so the reader can explore the first 20.
+
+When looking at the matches it is helpful to know that there are three types of granulocytes, neutrophils, basophils and eosinophils.  Which helps explain why a number of the matches are for these and not specifically for granulocytes. 
 
 ```{r}
 ematch = resources_annotated_with_term("EFO:0007987", include_subclasses=FALSE)
@@ -80,7 +82,7 @@ gg = grepl("*EFO:0005140*", am[,"MAPPED_TRAIT_CURIE"])
 am[gg,]
 ```
 
-We can compare with what the `gwasrapidd` vignette. Somehow even though the `study_ids` are unique, the PubMed Ids and titles are not.
+We can compare with what the `gwasrapidd` vignette. Somehow even though the `study_ids` are unique, the PubMed Ids and titles are not.  And note that you need to get the text for the EFO term exactly right.
 
 ```{r}
 gwrdd = gwasrapidd::get_studies(efo_trait = 'autoimmune disease')
@@ -89,6 +91,10 @@ gwrdd@studies$study_id
 gwrdd@publications$title
 
 gwrdd@publications$pubmed_id
+
+##make it diseases instead of disease and there are no matches
+gwrdd2 = gwasrapidd::get_studies(efo_trait = 'autoimmune diseases')
+gwrdd2$study_id
 
 ```
 
