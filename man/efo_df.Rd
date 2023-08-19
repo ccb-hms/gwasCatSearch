@@ -3,7 +3,7 @@
 \docType{data}
 \name{efo_df}
 \alias{efo_df}
-\title{A data frame containing the IDs and Labels for all EFO ontology classes.}
+\title{A data frame containing the IDs and Labels for all EFO ontology classes}
 \format{
 a data frame with observations on
 \describe{
@@ -22,7 +22,7 @@ EFO: https://www.ebi.ac.uk/efo/
 efo_df
 }
 \description{
-A data frame containing the IDs and Labels for all EFO ontology classes.
+A data frame containing the IDs and Labels for all EFO ontology classes
 }
 \note{
 We use mappings from study defined traits to the EFO ontology provided by the EBI/EMBL withthe GWAS Catalog.  Any phenotype mapping directly to the \code{object} label is a direct map.  Since the ontology has notions of parent and child, terms from any child nodes are inferred to be mapped to the node, the number of these is given in the \verb{inferred mapping} column.

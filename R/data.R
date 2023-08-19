@@ -1,4 +1,4 @@
-#' A data frame containing the IDs and Labels for all EFO ontology classes.
+#' A data frame containing the IDs and Labels for all EFO ontology classes
 #' @docType data
 #' @format a data frame with observations on
 #' \describe{
