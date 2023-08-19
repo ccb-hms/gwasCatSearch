@@ -15,11 +15,12 @@
 #' @return
 #' A `data.frame` with columns:
 #' \describe{
-#'   \item{STUDY.ACCESSION}{The openGWAS for the trait.}
-#'   \item{DISEASE_TRAIT}{The openGWAS text label for that trait.}
-#'   \item{Ontology Term}{The text description/label of the ontology term.}
-#'   \item{Ontology Term ID}{The label for the ontology term.}
-#'   \item{Mapping Confidence}{The confidence score from mapping the phenotype label to the ontology label.}
+#'   \item{STUDY.ACCESSION}{The GWAS catalog ID for the study.}
+#'   \item{PUBMEDID}{The PUBMEDID for the Study}
+#'   \item{DISEASE_TRAIT}{The GWAS Catalog text label for that trait.}
+#'   \item{MAPPED_TRAIT}{The text description/label of the ontology term.}
+#'   \item{MAPPED_TRAIT_CURIE}{The CURIE symbol for the mapped trait.}
+#'   \item{MAPPED_TRAIT_URI}{The URI for the ontology term.}
 #' }
 #' @references `text2term`
 #' @author Robert Gentleman
@@ -44,6 +45,7 @@ resources_annotated_with_term <- function(search_terms, include_subclasses = TRU
                     study.`STUDY.ACCESSION`,
                     study.`DISEASE.TRAIT`,
                     study.MAPPED_TRAIT,
+                    study.PUBMEDID,
                     study.MAPPED_TRAIT_CURIE,
                     study.MAPPED_TRAIT_URI
                   FROM `gwascatalog_metadata` study
