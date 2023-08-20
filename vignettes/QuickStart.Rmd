@@ -38,7 +38,7 @@ In the next code chunk we search for any EFO labels that match to both *granulo\
 ht2 = search_features(efo_tc, query = "granulo* AND rheum*")
 summary(ht2)
 ```
-### How the corpus is creaeted
+### How the corpus is created
 
 Each EFO term, and more generally, any term from an ontology is turned into a *document* by appending the text description (label) for that term, any synonyms for that term that are provided by the ontology and also the text description of any phenotype that has been directly mapped to that EFO term.  The rationale for the last part is that text descriptions that have been mapped to a specific EFO term are in essence also synonyms for that term.  That is essentially what the mapping implies.
 
@@ -90,7 +90,13 @@ slotNames(my_associations)
 my_associations@entrez_ids
 ```
 
-Let's look at the autoimmune diseases.
+## Let's look at the autoimmune diseases.
+
+In this example we are going to compare some of the results from the `gwasCatSearch` package with the results from the `gwasrapidd` package.
+
+First we search the corpus for documents that contain both the word *autoimmune* and the word *disease*, the AND between them tells corpustools that both words need to be found in the same *document*.  Recall that our documents are very short, they are just the text labels for the EFO terms, the synonyms and then the text descriptions of any phenotypes directly mapped to that EFO term.  So most are much shorter than even one sentence.  
+
+The EFO term EFO:0005140 has the text label *autoimmune disease* so it should show up, and you can see in the data table that it does.
 
 ```{r autoimmune}
 
@@ -99,16 +105,29 @@ dtxx = hits2DT(ht3, efo_df, efo_tc)
 DT::datatable(dtxx, escape=FALSE, rownames=FALSE)
 ```
 
+We can then take any of the EFO terms in that table and find the resources (in this case they are the papers, or publications, that contributed GWAS hits to the GWAS catalog) that have been associated with that EFO term.  As noted previously these can be either mapped directly or indirectly (ie if they were mapped to a specific kind of autoimmune disease such as Type I diabetes, then they would also be Inherited at EFO:0005140).
 
-```{r resourceAnnotatio}
+```{r resourceAnnotation}
+em = resources_annotated_with_term("EFO:0005140", include_subclasses = FALSE)
+nrow(em)
+```
+In the above code we get only directly annotated matches and can see that there were `r nrow(em)` documents that were mapped directly to EFO:0005140.
+Below we get all of the matches, both direct and inherited, from our data table above we know that there should be `r dtxx["EFO:0005140", "Direct"]` documents mapped directly to EFO:0005140
+and `r dtxx["EFO:0005140", "Inherited"]` documents that map to a term that is more specific than EFO:0005140, so `am` should have `r dtxx["EFO:0005140", "Direct"]+dtxx["EFO:0005140", "Inherited"]` rows.  
+
+
+```{r allmatches}
 am = resources_annotated_with_term("EFO:0005140", include_subclasses = TRUE)
 dim(am)
-## let's see which ones
+## let's see how many 
 gg = grepl("*EFO:0005140*", am[,"MAPPED_TRAIT_CURIE"])
-am[gg,]
+dim(am[gg,])
+
+## their study accession numbers
+am[gg, "STUDY.ACCESSION"]
 ```
 
-We can compare with what the `gwasrapidd` vignette. Somehow even though the `study_ids` are unique, the PubMed Ids and titles are not.  And note that you need to get the text for the EFO term exactly right.
+We can compare with what the `gwasrapidd` vignette returns. One thing to notice is that even though the `study_ids` (our STUDY.ACCESSION values) are unique, the PubMed IDs are not. So the GWAS Catalog is supporting the idea that there could be multiple *studies* per paper.  That seems like a good idea since some papers will report on GWAS for a variety of diseases, while others are focused on a single disease. And note that you need to get the text for the EFO term exactly right.
 
 ```{r}
 gwrdd = gwasrapidd::get_studies(efo_trait = 'autoimmune disease')
