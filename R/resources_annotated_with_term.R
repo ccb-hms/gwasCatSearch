@@ -29,47 +29,82 @@
 #' dim(ematch)
 #' ematch[1, ]
 #' @export
-resources_annotated_with_term <- function(search_terms, include_subclasses = TRUE, direct_subclasses_only = FALSE) {
-  con <- gwasCatSearch_dbconn()
-  if (include_subclasses) {
-    if (direct_subclasses_only) {
-      ontology_table <- "efo_edges"
-    } else {
-      ontology_table <- "efo_entailed_edges"
-    }
-  } else {
-    ontology_table <- "efo_edges"
-  }
-
-  query <- paste0("SELECT DISTINCT
-                    study.`STUDY.ACCESSION`,
-                    study.`DISEASE.TRAIT`,
-                    study.MAPPED_TRAIT,
-                    study.PUBMEDID,
-                    study.MAPPED_TRAIT_CURIE,
-                    study.MAPPED_TRAIT_URI
-                  FROM `gwascatalog_metadata` study
-                  WHERE 
-                    study.`STUDY.ACCESSION` IN (
-                     SELECT DISTINCT mapping.`STUDY.ACCESSION`
-                     FROM `gwascatalog_mappings` mapping
-                      LEFT JOIN ", ontology_table, " ee ON (mapping.MAPPED_TRAIT_CURIE = ee.Subject)")
-
-  index <- 0
-  where_clause <- "\nWHERE ("
-  for (term in search_terms) {
-    if (index == 0) {
-      where_clause <- paste0(where_clause, "mapping.MAPPED_TRAIT_CURIE = \'", term, "\'")
-    } else {
-      where_clause <- paste0(where_clause, " OR mapping.MAPPED_TRAIT_CURIE = \'", term, "\'")
-    }
+resources_annotated_with_term <-
+  function(search_terms,
+           include_subclasses = TRUE,
+           direct_subclasses_only = FALSE) {
+    if (!is.character(search_terms) || length(search_terms) < 1)
+      stop("invalid search_terms input")
+    
+    nsearch = length(search_terms)
+    ##SQLite has an expression depth of 1000 - so only about 200 terms at a time seems to work
+    ##now we split the search_terms into groups
+    
+    ngroups = floor(nsearch / 200) + 1
+    
+    gps = rep(1:ngroups, each = 200, length.out = nsearch)
+    search_terms = split(search_terms, gps)
+    
+    con <- gwasCatSearch_dbconn()
+    
     if (include_subclasses) {
-      where_clause <- paste0(where_clause, " OR ee.Object = \'", term, "\'")
+      if (direct_subclasses_only) {
+        ontology_table <- "efo_edges"
+      } else {
+        ontology_table <- "efo_entailed_edges"
+      }
+    } else {
+      ontology_table <- "efo_edges"
     }
-    index <- index + 1
+    for (i in seq_along(1:ngroups)) {
+      stsub = search_terms[[i]]
+      
+      query <- paste0(
+        "SELECT DISTINCT
+                      study.`STUDY.ACCESSION`,
+                      study.`DISEASE.TRAIT`,
+                      study.MAPPED_TRAIT,
+                      study.PUBMEDID,
+                      study.MAPPED_TRAIT_CURIE,
+                      study.MAPPED_TRAIT_URI
+                    FROM `gwascatalog_metadata` study
+                    WHERE
+                      study.`STUDY.ACCESSION` IN (
+                       SELECT DISTINCT mapping.`STUDY.ACCESSION`
+                       FROM `gwascatalog_mappings` mapping
+                        LEFT JOIN ",
+        ontology_table,
+        " ee ON (mapping.MAPPED_TRAIT_CURIE = ee.Subject)"
+      )
+      
+      index <- 0
+      where_clause <- "\nWHERE ("
+      for (term in stsub) {
+        if (index == 0) {
+          where_clause <-
+            paste0(where_clause,
+                   "mapping.MAPPED_TRAIT_CURIE = \'",
+                   term,
+                   "\'")
+        } else {
+          where_clause <-
+            paste0(where_clause,
+                   " OR mapping.MAPPED_TRAIT_CURIE = \'",
+                   term,
+                   "\'")
+        }
+        if (include_subclasses) {
+          where_clause <-
+            paste0(where_clause, " OR ee.Object = \'", term, "\'")
+        }
+        index <- index + 1
+      }
+      query <- paste0(query, where_clause, ") \n )")
+      results <- dbGetQuery(con, query)
+      if (i == 1)
+        ans = results
+      else
+        ans = rbind(ans, results)
+    }
+    return(ans)
   }
-  query <- paste0(query, where_clause, ") \n )")
-  results <- dbGetQuery(con, query)
-  ## results$MappingConfidence = round(results$MappingConfidence, digits=3)
-  return(results)
-}
