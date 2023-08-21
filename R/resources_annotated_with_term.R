@@ -77,29 +77,39 @@ resources_annotated_with_term <-
         " ee ON (mapping.MAPPED_TRAIT_CURIE = ee.Subject)"
       )
       
-      index <- 0
-      where_clause <- "\nWHERE ("
-      for (term in stsub) {
-        if (index == 0) {
-          where_clause <-
-            paste0(where_clause,
-                   "mapping.MAPPED_TRAIT_CURIE = \'",
-                   term,
-                   "\'")
-        } else {
-          where_clause <-
-            paste0(where_clause,
-                   " OR mapping.MAPPED_TRAIT_CURIE = \'",
-                   term,
-                   "\'")
-        }
-        if (include_subclasses) {
-          where_clause <-
-            paste0(where_clause, " OR ee.Object = \'", term, "\'")
-        }
-        index <- index + 1
+      testWhere = paste0("mapping.MAPPED_TRAIT_CURIE = \'", stsub,"\'")
+      if(length(testWhere) > 1)
+        testWhere = paste0(c("",rep("OR ",length(testWhere)-1)), testWhere)
+      if(include_subclasses) {
+        tWhere2 = paste0(" OR ee.Object = \'", stsub, "\'")
+        testWhere = paste0(testWhere, tWhere2, collapse=" ")
       }
-      query <- paste0(query, where_clause, ") \n )")
+
+      #Rafael's version - but the for loop is a bit messy and possibly inefficient
+      # index <- 0
+      # where_clause <- "\nWHERE ("
+      # for (term in stsub) {
+      #   if (index == 0) {
+      #     where_clause <-
+      #       paste0(where_clause,
+      #              "mapping.MAPPED_TRAIT_CURIE = \'",
+      #              term,
+      #              "\'")
+      #   } else {
+      #     where_clause <-
+      #       paste0(where_clause,
+      #              " OR mapping.MAPPED_TRAIT_CURIE = \'",
+      #              term,
+      #              "\'")
+      #   }
+      #   if (include_subclasses) {
+      #     where_clause <-
+      #       paste0(where_clause, " OR ee.Object = \'", term, "\'")
+      #   }
+      #   index <- index + 1
+      # }
+      #query <- paste0(query, where_clause, ") \n )")
+      query <- paste0(query, "\nWHERE (", testWhere, ") \n )")
       results <- dbGetQuery(con, query)
       if (i == 1)
         ans = results
