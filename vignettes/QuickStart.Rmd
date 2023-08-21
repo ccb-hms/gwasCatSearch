@@ -28,7 +28,11 @@ For example, leukemia is the parent of nodes such as 'acute leukemia' and 'lymph
 We will use the terminology that a study is mapped *directly* to an ontology term if the GWAS Catalog curators assigned that EFO term to the study. And a study is *mapped by inheritance* or *inherited* at a EFO (ontology) term if it was assigned *directly* to some child (descendant) of that EFO term.
 
 The set of study identifiers that come back from that search can then be used to query the annotated GWAS catalog.  Studies can be retrieved by direct match between tag and GWAS phenotype, or study retrieval can be based
-on broader semantic matching using term relationships in the EFO.  Each study in the GWAS catalog identifies one or more (FIXME:VINCE  not sure what the one in user selects one, refers to one what?) replicated SNP associations.  The user selects one, and then all catalog-replicated GWAS hits within a 1000kb window of this index
+on broader semantic matching using term relationships in the EFO.  
+Each study in the GWAS catalog identifies one or more 
+replicated SNP associations.  The user is
+required to select one SNP of interest, 
+and then all catalog-replicated GWAS hits within a 1000kb window of this index
 SNP are extracted for visualization.
 
 
