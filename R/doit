@@ -1,4 +1,0 @@
-kd <- corpustools::search_features(tc= efo_tc, query="kidney AND disease")
-kd
-head(hits2DT(kd, efo_df, efo_tc),10)
-
