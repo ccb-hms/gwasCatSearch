@@ -10,7 +10,7 @@ get_variant_context(
   pos = 6.9e+07,
   radius = 5e+05,
   focal_rec = NULL,
-  gwcat
+  gwdat
 )
 }
 \arguments{
@@ -24,7 +24,8 @@ get_variant_context(
 MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
 SNP for the visualization with a blue dot}
 
-\item{gwcat}{instance of gwaswloc from gwascat package}
+\item{gwdat}{instance of GRanges with mcols PVALUE_MLOG, \verb{STUDY ACCESSION},
+MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID}
 }
 \value{
 a data.frame with fields PVALUE_MLOG, STUDY.ACCESSION, MAPPED_TRAIT,
@@ -36,7 +37,7 @@ utility for extracting information about GWAS hits near a position,
 uses a snapshot of EBI GWAS catalog
 }
 \examples{
-data(gwascat_2023_06_24)
-mydf = get_variant_context(gwcat = gwascat_2023_06_24)
+data(gwc_gr)
+mydf = get_variant_context(gwdat = gwc_gr)
 head(mydf[, 1:6])
 }

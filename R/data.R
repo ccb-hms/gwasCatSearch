@@ -30,46 +30,22 @@
 #' summary(ht2)
 "efo_tc"
 
-#' A snapshot of the EBI GWAS catalog made 2023-06-24, as an extended GRanges instance
-#' @name gwascat_2023_06_24
+
+#' A restricted snapshot of the EBI GWAS catalog made 2023-08-28, as a GRanges instance
+#' @name gwc_gr
 #' @docType data
-#' @format The format is: Formal class 'gwaswloc' [package "gwascat"] with 8
-#' slots: extractDate, seqnames, ranges, strand, seqinfo, elementMetadata,
-#' elementType, metadata.  S4Vectors::mcols can be applied to this object to
-#' yield a DataFrame with 499094 observations
-#' on the following 38 variables.
-#' \describe{ \item{"DATE.ADDED.TO.CATALOG"}{a Date}
-#' \item{"PUBMEDID"}{a numeric vector} \item{list("FIRST.AUTHOR")}{a
-#' character vector} \item{"DATE"}{a Date} \item{list("JOURNAL")}{a
-#' character vector} \item{"LINK"}{a character vector}
-#' \item{"STUDY"}{a character vector} \item{list("DISEASE.TRAIT")}{a
-#' character vector} \item{"INITIAL.SAMPLE.SIZE"}{a character vector}
-#' \item{"REPLICATION.SAMPLE.SIZE"}{a character vector}
-#' \item{"REGION"}{a character vector} \item{list("CHR_ID")}{a character
-#' vector} \item{"CHR_POS"}{a numeric vector}
-#' \item{"REPORTED.GENE.S."}{a character vector}
+#' @format GRanges instance with mcols columns
+#' \describe{ 
+#' \item{"PUBMEDID"}{a numeric vector} 
+#' \item{"MAPPED_TRAIT"}{a character vector}
 #' \item{"MAPPED_GENE"}{a character vector}
-#' \item{"UPSTREAM_GENE_ID"}{a character vector}
-#' \item{"DOWNSTREAM_GENE_ID"}{a character vector}
-#' \item{"SNP_GENE_IDS"}{a character vector}
-#' \item{"UPSTREAM_GENE_DISTANCE"}{a character vector}
-#' \item{"DOWNSTREAM_GENE_DISTANCE"}{a character vector}
-#' \item{"STRONGEST.SNP.RISK.ALLELE"}{a character vector}
-#' \item{"SNPS"}{a character vector} \item{list("MERGED")}{a character
-#' vector} \item{"SNP_ID_CURRENT"}{a character vector}
-#' \item{"CONTEXT"}{a character vector} \item{list("INTERGENIC")}{a
-#' character vector} \item{"RISK.ALLELE.FREQUENCY"}{a numeric vector}
-#' \item{"P.VALUE"}{a numeric vector} \item{list("PVALUE_MLOG")}{a
-#' numeric vector} \item{"P.VALUE..TEXT."}{a character vector}
-#' \item{"OR.or.BETA"}{a numeric vector} \item{list("X95..CI..TEXT.")}{a
-#' character vector} \item{"PLATFORM..SNPS.PASSING.QC."}{a character
-#' vector} \item{"CNV"}{a character vector} \item{list("MAPPED_TRAIT")}{a
-#' character vector} \item{"MAPPED_TRAIT_URI"}{a character vector}
-#' \item{"STUDY.ACCESSION"}{a character vector}
-#' \item{"GENOTYPING.TECHNOLOGY"}{a character vector} }
+#' \item{"STUDY ACCESSION"}{a character vector}
+#' \item{"PVALUE_MLOG"}{a numeric vector}
+#' }
 #' @source This was created using makeCurrentGwascat in the Bioconductor gwascat package.
 #' @keywords datasets
 #' @examples
-#' data(gwascat_2023_06_24)
-#' tail(sort(table(S4Vectors::mcols(gwascat_2023_06_24)$MAPPED_GENE)))
-"gwascat_2023_06_24"
+#' data(gwc_gr)
+#' tail(sort(table(S4Vectors::mcols(gwc_gr)$MAPPED_GENE)))
+"gwc_gr"
+

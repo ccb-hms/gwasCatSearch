@@ -11,20 +11,22 @@
 #' @param focal_rec NULL or data.frame with one row with elements CHR_ID, CHR_POS, PVALUE_MLOG, STUDY.ACCESSION,
 #' MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
 #' SNP for the visualization with a blue dot
-#' @param gwcat instance of gwaswloc from gwascat package
+#' @param gwdat instance of GRanges with mcols PVALUE_MLOG, `STUDY ACCESSION`,
+#' MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID
 #' @return a data.frame with fields PVALUE_MLOG, STUDY.ACCESSION, MAPPED_TRAIT,
 #' SNP_ID_CURRENT, PUBMEDID, pos, mlogp, and tag, the latter an HTML string
 #' for use in tooltips
 #' @examples
-#' data(gwascat_2023_06_24)
-#' mydf = get_variant_context(gwcat = gwascat_2023_06_24)
+#' data(gwc_gr)
+#' mydf = get_variant_context(gwdat = gwc_gr)
 #' head(mydf[, 1:6])
 #' @export
-get_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwcat) {
- tt = IRanges::subsetByOverlaps(as(gwcat, "GRanges"), 
+get_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwdat) {
+ keyvars = c("PVALUE_MLOG", "STUDY ACCESSION", "MAPPED_TRAIT", "SNP_ID_CURRENT", "PUBMEDID")
+ stopifnot(all(keyvars %in% names(S4Vectors::mcols(gwdat))))
+ tt = IRanges::subsetByOverlaps(gwdat, 
        GenomicRanges::GRanges(chr, IRanges::IRanges(pos,width=1)+radius))
- mydf = as.data.frame(S4Vectors::mcols(tt))[,c("PVALUE_MLOG", "STUDY.ACCESSION", "MAPPED_TRAIT",
-        "SNP_ID_CURRENT", "PUBMEDID")]
+ mydf = as.data.frame(S4Vectors::mcols(tt))[,make.names(keyvars)]
  mydf$pos = GenomicRanges::start(tt)
  mydf$mlogp = pmin(70, mydf$PVALUE_MLOG)
  mydf$focal = FALSE
@@ -51,19 +53,21 @@ get_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwc
 #' @param focal_rec NULL or data.frame with one row with elements CHR_ID, CHR_POS, PVALUE_MLOG, STUDY.ACCESSION,
 #' MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
 #' SNP for the visualization with a blue dot
-#' @param gwcat instance of gwaswloc from gwascat package
+#' @param gwdat instance of GRanges with GWAS catalog p-values etc.
 #' @param main character(1) title for plot
 #' @return ggplotly is called
 #' @examples
-#' data(gwascat_2023_06_24)
-#' foc = S4Vectors::mcols(IRanges::subsetByOverlaps(as(gwascat_2023_06_24, "GRanges"), 
+#' data(gwc_gr)
+#' foc = S4Vectors::mcols(IRanges::subsetByOverlaps(gwc_gr,
 #'      GenomicRanges::GRanges("15:69287238")))
-#' foc = as.data.frame(foc)
-#' view_variant_context(gwcat=gwascat_2023_06_24, focal_rec=foc)
+#' foc = as.data.frame(foc)  # will fix names
+#' foc$CHR_POS = 69287238
+#' foc$CHR_ID = 15
+#' view_variant_context(gwdat=gwc_gr, focal_rec=foc)
 #' @export
-view_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwcat,
+view_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwdat,
   main="Manhattan plot for GWAS catalog hits, mouseover for details") {
- mydf = get_variant_context(chr=chr, pos=pos, radius=radius, focal_rec=focal_rec, gwcat=gwcat)
+ mydf = get_variant_context(chr=chr, pos=pos, radius=radius, focal_rec=focal_rec, gwdat=gwdat)
  pl = ggplot(mydf, aes(x=pos, y=mlogp, text=tag)) + geom_point() + xlab(sprintf("Pos on chr %s", chr)) +
          ylab("min(70, -log10 p)") + ggtitle(main)
  focind = which(mydf$focal)

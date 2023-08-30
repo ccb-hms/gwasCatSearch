@@ -62,8 +62,10 @@ server <- function(input, output, session) {
     ontoProc::onto_plot2(efo, input$gbuttons)
   })
   grab_resources = reactive({
-     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
-     dat = as.data.frame(gwascat_2023_06_24)
+#     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
+     data(gwc_gr)
+#     dat = as.data.frame(gwascat_2023_06_24)
+     dat = as.data.frame(gwc_gr)  # fixes names, so STUDY.ACCESSION
      last <- process_annotated()
      acc = unique(last$accstr[input$resources_rows_selected])
      validate(need(length(input$resources_rows_selected)>0, "no studies selected"))
@@ -77,23 +79,30 @@ server <- function(input, output, session) {
             "OR.or.BETA", "INITIAL.SAMPLE.SIZE", "REPLICATION.SAMPLE.SIZE")
      lk = input$resources_rows_selected  # watch
      dat = grab_resources()
-     dat[,fields2use]
+     #dat[,fields2use]
+     dat
    })
   output$snpviz <- plotly::renderPlotly({
-     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
+#     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
+     data(gwc_gr)
      snpind = input$snps_rows_selected
      validate(need(length(snpind)==1, "please select only one SNP for viz"))
      dat = grab_resources()
      kp = dat[snpind,]
-     gwasCatSearch::view_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, focal_rec=kp, gwcat=gwascat_2023_06_24)
+     kp$CHR_ID = kp$seqnames
+     kp$CHR_POS = kp$start
+     gwasCatSearch::view_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
      })
   output$snptab <- DT::renderDataTable({
-     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
+#     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
      snpind = input$snps_rows_selected
      validate(need(length(snpind)==1, "please select only one SNP for viz"))
      dat = grab_resources()
      kp = dat[snpind,]
-     gwasCatSearch::get_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, focal_rec=kp, gwcat=gwascat_2023_06_24)
+     kp$CHR_ID = kp$seqnames
+     kp$CHR_POS = kp$start
+     #gwasCatSearch::get_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
+     gwasCatSearch::get_variant_context(chr=kp$seqnames, pos=kp$start, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
      })
     
   output$showbuttons <- renderUI({
@@ -106,9 +115,25 @@ server <- function(input, output, session) {
       }
     }
     last <- process_annotated()
-    u <- unique(last$MAPPED_TRAIT_CURIE)
+    u <- unique(last$MAPPED_TRAIT_CURIE) # used to eliminate dups, before commas
+#
+# August 30 -- discovered that MAPPED_TRAIT_CURIE can be comma delimited
+#
+    u <- unique(unlist(strsplit(u, ",")))
+#
+# FIXME -- must allow setting of max num tags at UI
+#
     su <- u
     if (length(u) >= 15) su <- u[seq_len(15)]
+#
+# there can be NAs in efo$name[u]
+#
+    en = efo$name[u]
+    dr = which(is.na(en))
+    if (length(dr)>0) {
+       u = u[-dr]
+       su = su[-dr]
+       }
     names(u) <- efo$name[u]
     names(su) <- efo$name[su]
 

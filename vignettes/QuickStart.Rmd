@@ -1,5 +1,5 @@
 ---
-title: "gwasCatSearch Quick Start and More"
+title: "gwasCatSearch Quick Start"
 author: "Robert Gentleman"
 output: rmarkdown::html_vignette
 vignette: >

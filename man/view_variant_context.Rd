@@ -9,7 +9,7 @@ view_variant_context(
   pos = 6.9e+07,
   radius = 5e+05,
   focal_rec = NULL,
-  gwcat,
+  gwdat,
   main = "Manhattan plot for GWAS catalog hits, mouseover for details"
 )
 }
@@ -24,7 +24,7 @@ view_variant_context(
 MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
 SNP for the visualization with a blue dot}
 
-\item{gwcat}{instance of gwaswloc from gwascat package}
+\item{gwdat}{instance of GRanges with GWAS catalog p-values etc.}
 
 \item{main}{character(1) title for plot}
 }
@@ -35,9 +35,11 @@ ggplotly is called
 interactive visualization of GWAS hits near a position
 }
 \examples{
-data(gwascat_2023_06_24)
-foc = S4Vectors::mcols(IRanges::subsetByOverlaps(as(gwascat_2023_06_24, "GRanges"), 
+data(gwc_gr)
+foc = S4Vectors::mcols(IRanges::subsetByOverlaps(gwc_gr,
      GenomicRanges::GRanges("15:69287238")))
-foc = as.data.frame(foc)
-view_variant_context(gwcat=gwascat_2023_06_24, focal_rec=foc)
+foc = as.data.frame(foc)  # will fix names
+foc$CHR_POS = 69287238
+foc$CHR_ID = 15
+view_variant_context(gwdat=gwc_gr, focal_rec=foc)
 }

@@ -4,22 +4,22 @@
 \alias{variants_from_study}
 \title{given an accession, tabulate variants from GWAS catalog}
 \usage{
-variants_from_study(acc, gwcat)
+variants_from_study(acc, gwdat)
 }
 \arguments{
 \item{acc}{character() accession number(s) by EBI}
 
-\item{gwcat}{instance of gwascat's gwaswloc class}
+\item{gwdat}{instance of GRanges with \verb{STUDY ACCESSION} and other locus-level metadata}
 }
 \value{
-a data.frame with all relevant information about hits reported in the selected studies
+a data.frame with relevant information about hits reported in the selected studies
 }
 \description{
 given an accession, tabulate variants from GWAS catalog
 }
 \examples{
-data(gwascat_2023_06_24)
-tab = variants_from_study(acc="GCST007087", gwcat=gwascat_2023_06_24)
+data(gwc_gr)
+tab = variants_from_study(acc="GCST007087", gwdat=gwc_gr)
 dim(tab)
-head(tab[,1:8])
+head(tab)
 }
