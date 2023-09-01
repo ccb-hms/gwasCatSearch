@@ -1,5 +1,6 @@
 #' @import RSQLite
 #' @import DBI
+#' @import utils
 
 .datacache <- new.env(parent = emptyenv())
 
@@ -13,7 +14,11 @@ gwasCatSearch_dbconn <- function() .datacache$dbconn
 
 .onLoad <- function(libname, pkgname) {
   ## Connect to the SQLite DB
-  dbfile <- system.file("extdata", "gwascatalog_search.db", package = pkgname, lib.loc = libname)
+  ## shipped in package as a gzipped tarfile that will be untarred into temp dir
+  tarfile <- system.file("extdata", "gwascatalog_search.db.tar.gz", package=pkgname, lib.loc=libname)
+  td = tempdir()
+  untd <- utils::untar(tarfile, list=FALSE, exdir=td)
+  dbfile <- paste(td, "gwascatalog_search.db", sep="/")
   if (!file.exists(dbfile)) {
     stop("DB file'", dbfile, "' not found")
   }
