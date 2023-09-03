@@ -19,28 +19,20 @@ library(DT)
 
 The gwasCatSearch package provides functionality to search for different phenotypes within the GWAS catalog (<https://www.ebi.ac.uk/gwas/>) database. We used the mappings provided by the GWAS catalog for phenotypes to the EFO ontology (<https://www.ebi.ac.uk/efo/>). We then created a SQLite database that contains (among other things) a table that has the linearized form of the ontology. Annotations can be mapped directly to a term, or they can be inferred from any child term. Then given any EFO ontology label users can query the database to determine which, if any, GWAS catalog phenotypes have been mapped to that EFO term.
 
-The catalog is quite big and as of 7/29/2023 there were 84589 studies reported.  Each of those studies is associated with a published paper and there can be multiple studies associated with each paper.  In addition to the information about the publication the studies have been assigned one or more 'study trait/disease' and each of these is mapped to one or more terms in the EFO (or related) ontologies.  A major challenge for users is to find the set of relevant studies for some disease or set of diseases of interest.  To date we are unaware of any tools that try to provide corpus level searching of the disease traits or EFO trait identifiers that use tools such as stemming, removal of stop words etc.  In this package we have provided simple interface through the `corpustools` package. 
-Our search strategy is as follows,  for each EFO (and related ontologies) term we assemble the text description of that term, all ontology provided synonyms for that term and the 'study disease/traits' that were mapped directly to that ontology term.  These represent the documents in our corpus and when searching it is the concatanation of those terms that is used to identify matches.  Our function `search_features` performs that search and returns the set of EFO identifiers, plus some additional information about number of matches and what text was matched on.
+The catalog is quite big and as of 7/29/2023 there were 84589 studies reported. Each of those studies is associated with a published paper and there can be multiple studies associated with each paper. In addition to the information about the publication the studies have been assigned one or more 'study trait/disease' and each of these is mapped to one or more terms in the EFO (or related) ontologies. A major challenge for users is to find the set of relevant studies for some disease or set of diseases of interest. To date we are unaware of any tools that try to provide corpus level searching of the disease traits or EFO trait identifiers that use tools such as stemming, removal of stop words etc. In this package we have provided simple interface through the `corpustools` package. Our search strategy is as follows, for each EFO (and related ontologies) term we assemble the text description of that term, all ontology provided synonyms for that term and the 'study disease/traits' that were mapped directly to that ontology term. These represent the documents in our corpus and when searching it is the concatanation of those terms that is used to identify matches. Our function `search_features` performs that search and returns the set of EFO identifiers, plus some additional information about number of matches and what text was matched on.
 
-To find the set of studies that corresponds to those EFO terms, we next apply the function `resources_annotated_with_term`.  Which finds all the resources (studies in the GWAS catalog) that were annotated to a particular term.  Now, the terms come from an ontology and the ontologies are typically consistent with a tree structure.  The most specific terms are the leaves, and one moves up in the tree as terms become more general.
-For example, leukemia is the parent of nodes such as 'acute leukemia' and 'lymphoid leukemia'.  While 'lymphoid leukemia' is the parent of 'T-cell leukemia'.  When a user searches on the term leukemia they probably want to find all the terms not just the ones in leaves.  To manage that we use the structure in the ontology to support searching from a set of given nodes up the tree to find the more general nodes.  The notion is that the relationship between a child-node and a parent is that there is either a 'is-a' relationship or a 'has-a' relationship. This can be made more formal, and in the accompanying paper for this project more details are given.
+To find the set of studies that corresponds to those EFO terms, we next apply the function `resources_annotated_with_term`. Which finds all the resources (studies in the GWAS catalog) that were annotated to a particular term. Now, the terms come from an ontology and the ontologies are typically consistent with a tree structure. The most specific terms are the leaves, and one moves up in the tree as terms become more general. For example, leukemia is the parent of nodes such as 'acute leukemia' and 'lymphoid leukemia'. While 'lymphoid leukemia' is the parent of 'T-cell leukemia'. When a user searches on the term leukemia they probably want to find all the terms not just the ones in leaves. To manage that we use the structure in the ontology to support searching from a set of given nodes up the tree to find the more general nodes. The notion is that the relationship between a child-node and a parent is that there is either a 'is-a' relationship or a 'has-a' relationship. This can be made more formal, and in the accompanying paper for this project more details are given.
 
 We will use the terminology that a study is mapped *directly* to an ontology term if the GWAS Catalog curators assigned that EFO term to the study. And a study is *mapped by inheritance* or *inherited* at a EFO (ontology) term if it was assigned *directly* to some child (descendant) of that EFO term.
 
-The set of study identifiers that come back from that search can then be used to query the annotated GWAS catalog.  Studies can be retrieved by direct match between tag and GWAS phenotype, or study retrieval can be based
-on broader semantic matching using term relationships in the EFO.  
-Each study in the GWAS catalog identifies one or more 
-replicated SNP associations.  The user is
-required to select one SNP of interest, 
-and then all catalog-replicated GWAS hits within a 1000kb window of this index
-SNP are extracted for visualization.
-
+The set of study identifiers that come back from that search can then be used to query the annotated GWAS catalog. Studies can be retrieved by direct match between tag and GWAS phenotype, or study retrieval can be based on broader semantic matching using term relationships in the EFO.\
+Each study in the GWAS catalog identifies one or more replicated SNP associations. The user is required to select one SNP of interest, and then all catalog-replicated GWAS hits within a 1000kb window of this index SNP are extracted for visualization.
 
 While helpful, we then have the challenge of how to help a researcher find an EFO label that corresponds to a topic they are interested in. To help solve that challenge we took all the EFO term labels and created a searchable corpus using the corpustools R package (<https://cran.r-project.org/web/packages/corpustools/index.html>) so that users can start with ordinary words and then find EFO terms that might be of interest. The output of this search can be accessed programmatically or we provide a conversion to a datatable that can be viewed, sorted and searched.
 
 ## Searching the corpus
 
-In the first example below we search for any *document*, which in our case is just the text label for an EFO ontology term that contains a match to either *granulo\** or *rheum\**. We named these two arguments **Granuloma** and **Rheumatic**. The `summary` function tells how many terms matched and in how many *documents*. And then we created a table using `hitsasDT` and then rendered that using `datatable`. The output is searchable. Under the column labeled **Granuloma** are the actual words that were matched to *granulo\** and under the column labled **Rheumatic** are the words that matched to *rheum\**.  The `corpustools` package provides a lot of functionality for mapping back to the *documents* so you can locate exatly where the match appears, and what word in the document actually matched the query.  Here we report simply the set of unique words that were matched, across all documents, where we first make all words lower case.  This is just intended to be a summary of the results, and if you want to dig further into the matching etc. you should refer to the `corpustools` documentation and vignettes.
+In the first example below we search for any *document*, which in our case is just the text label for an EFO ontology term that contains a match to either *granulo\** or *rheum\**. We named these two arguments **Granuloma** and **Rheumatic**. The `summary` function tells how many terms matched and in how many *documents*. And then we created a table using `hitsasDT` and then rendered that using `datatable`. The output is searchable. Under the column labeled **Granuloma** are the actual words that were matched to *granulo\** and under the column labled **Rheumatic** are the words that matched to *rheum\**. The `corpustools` package provides a lot of functionality for mapping back to the *documents* so you can locate exatly where the match appears, and what word in the document actually matched the query. Here we report simply the set of unique words that were matched, across all documents, where we first make all words lower case. This is just intended to be a summary of the results, and if you want to dig further into the matching etc. you should refer to the `corpustools` documentation and vignettes.
 
 ```{r}
 hits = search_features(efo_tc, query = c('Granuloma# granulo*', 'Rheumatic# rheum*'))
@@ -49,23 +41,35 @@ hitsasDT = hits2DT(hits, efo_df, efo_tc)
 datatable(hitsasDT, escape=FALSE, rownames=FALSE)
 ```
 
-In the next code chunk we search for any EFO labels that match to both *granulo\** and *rheum\**. There are none.
+In the next code chunk we search for any EFO labels that match to both *granulo\** and *rheum\**. 
 
 ```{r}
 ht2 = search_features(efo_tc, query = "granulo* AND rheum*")
 summary(ht2)
 ```
+
+There are `r summary(ht2)$documents` documents (EFO terms) that matched both, simultaneously.
+
 ### How the corpus is created
 
-Each EFO term, and more generally, any term from an ontology is turned into a *document* by appending the text description (label) for that term, any synonyms for that term that are provided by the ontology and also the text description of any phenotype that has been directly mapped to that EFO term.  The rationale for the last part is that text descriptions that have been mapped to a specific EFO term are in essence also synonyms for that term.  That is essentially what the mapping implies.
+Each EFO term, and more generally, any term from an ontology is turned into a *document* by appending the text description (label) for that term, any synonyms for that term that are provided by the ontology and also the text description of any phenotype that has been directly mapped to that EFO term. The rationale for the last part is that text descriptions that have been mapped to a specific EFO term are in essence also synonyms for that term. That is essentially what the mapping implies.
 
-In the next code segment we show how to get the synonyms and the text labels for any phenotypes that have been directly mapped to a specific EFO term.
+In the next code segment we show how to get the synonyms and the text labels for any phenotypes that have been directly mapped to a specific EFO term. We consider the term
+EFO:0000095 which is labeled: chronic lymphocytic leukemia. 
 
 ```{r showSynonymDirectMapping}
 syns = getSynonyms("EFO:0000095")
-length(syns)
+length(syns$"EFO:0000095")
 syns$`EFO:0000095`[1:10]
 
+```
+
+ We first show 10 of the `r length(syns$"EFO:0000095")` synonyms provided by the EFO ontology.
+
+Next we identify the GWAS catalog studies that were mapped directly to the EFO term
+EFO:0000095.  The function `resources_annotated_with_term` returns a dataframe that contains information such as the GWAS catalog ID, the PubMed ID and so on.  GWAS Catalog studies that map to more than one EFO term have the terms concatenated with comma separators.  This does make some searching more complicated.
+
+```{r EFO-directmapping}
 ##Direct mapping to that EFO term
 
 dirMap = resources_annotated_with_term("EFO:0000095", include_subclasses=FALSE)
@@ -76,17 +80,16 @@ idx = match("GCST008721", dirMap$STUDY.ACCESSION)
 dirMap[idx,]
 
 ```
-We see that there are `r nrow(dirMap)` terms that are directly annotated to EFO:0000095.
-The `DISEASE.TRAIT` column gives the name from the paper, or analysis for the trait, while the `MAPPED_TRAIT` column gives the text label for the EFO term.
 
-Some of the phenotypes have been mapped to more than one EFO term. One example is the study GCST008721.  The title of the accompanying paper is *Genetic overlap between autoimmune diseases and non-Hodgkin lymphoma subtypes*, the PubMed ID is 31407831 and that explains a little of why this particular study is associated with two different EFO terms. They are looking at genetic overlap between two fairly different diseases.
+We see that there are `r nrow(dirMap)` terms that are directly annotated to EFO:0000095. The `DISEASE.TRAIT` column gives the name from the paper, or analysis for the trait, while the `MAPPED_TRAIT` column gives the text label for the EFO term.
 
+Some of the phenotypes have been mapped to more than one EFO term. One example is the study GCST008721. The title of the accompanying paper is *Genetic overlap between autoimmune diseases and non-Hodgkin lymphoma subtypes*, the PubMed ID is 31407831 and that explains a little of why this particular study is associated with two different EFO terms. They are looking at genetic overlap between two fairly different diseases.
 
 ## Searching for matches from GWAS Catalog hits.
 
-Here we describe how to search for GWAS catalog hits that match a certain EFO identifier. For our example we use the EFO term [EFO:0007987](#0) which is labeled as *granulocyte count*. To do this we call the `resources_annotated_with_term` function. We provide the term identifier and then either ask only for the resources annotated specifically with the provided term (`ematch`) or for all those that either match directly, or that match to a child of the term provided (`allmatch`). There are `r efo_df["EFO:0007987", "Direct"]` that match directly and another `r efo_df["EFO:0007987", "Inherited"] ` that match some child node and hence are inherited. We use a `datatable` so the reader can explore the first 20.
+Here we describe how to search for GWAS catalog hits that match a certain EFO identifier. For our example we use the EFO term [EFO:0007987](#0) which is labeled as *granulocyte count*. To do this we call the `resources_annotated_with_term` function. We provide the term identifier and then either ask only for the resources annotated specifically with the provided term (`ematch`) or for all those that either match directly, or that match to a child of the term provided (`allmatch`). There are `r efo_df["EFO:0007987", "Direct"]` that match directly and another `r efo_df["EFO:0007987", "Inherited"]` that match some child node and hence are inherited. We use a `datatable` so the reader can explore the first 20.
 
-When looking at the matches it is helpful to know that there are three types of granulocytes, neutrophils, basophils and eosinophils.  Which helps explain why a number of the matches are for these subtypes and not specifically for granulocytes. 
+When looking at the matches it is helpful to know that there are three types of granulocytes, neutrophils, basophils and eosinophils. Which helps explain why a number of the matches are for these subtypes and not specifically for granulocytes.
 
 ```{r}
 ematch = resources_annotated_with_term("EFO:0007987", include_subclasses=FALSE)
@@ -98,7 +101,7 @@ datatable(head(allmatch,n=20))
 
 ## Next Steps
 
-Given the Study Accession identifiers we can then access the actual SNPs, the risk alleles get nearby genes and perform a variety of downstream analysis. For this step we currently use the `gwasrapidd` package, which directly queries the EBIs web resources for detailed information. This can lead to small differences between what it reports and the data we have used to build the corpus.  The GWAS Catalog releases new data sets fairly regularly while we will rebuild the corpus only a few times per year. 
+Given the Study Accession identifiers we can then access the actual SNPs, the risk alleles get nearby genes and perform a variety of downstream analysis. For this step we currently use the `gwasrapidd` package, which directly queries the EBIs web resources for detailed information. This can lead to small differences between what it reports and the data we have used to build the corpus. The GWAS Catalog releases new data sets fairly regularly while we will rebuild the corpus only a few times per year.
 
 ```{r getSNPs}
 library("gwasrapidd")
@@ -111,7 +114,7 @@ my_associations@entrez_ids
 
 In this example we are going to compare some of the results from the `gwasCatSearch` package with the results from the `gwasrapidd` package.
 
-First we search the corpus for documents that contain both the word *autoimmune* and the word *disease*, the AND between them tells corpustools that both words need to be found in the same *document*.  Recall that our documents are very short, they are just the text labels for the EFO terms, the synonyms and then the text descriptions of any phenotypes directly mapped to that EFO term.  So most are much shorter than even one sentence.  
+First we search the corpus for documents that contain both the word *autoimmune* and the word *disease*, the AND between them tells corpustools that both words need to be found in the same *document*. Recall that our documents are very short, they are just the text labels for the EFO terms, the synonyms and then the text descriptions of any phenotypes directly mapped to that EFO term. So most are much shorter than even one sentence.
 
 The EFO term EFO:0005140 has the text label *autoimmune disease* so it should show up, and you can see in the data table that it does.
 
@@ -122,16 +125,14 @@ dtxx = hits2DT(ht3, efo_df, efo_tc)
 DT::datatable(dtxx, escape=FALSE, rownames=FALSE)
 ```
 
-We can then take any of the EFO terms in that table and find the resources (in this case they are the papers, or publications, that contributed GWAS hits to the GWAS catalog) that have been associated with that EFO term.  As noted previously these can be either mapped directly or indirectly (ie if they were mapped to a specific kind of autoimmune disease such as Type I diabetes, then they would also be Inherited at EFO:0005140).
+We can then take any of the EFO terms in that table and find the resources (in this case they are the papers, or publications, that contributed GWAS hits to the GWAS catalog) that have been associated with that EFO term. As noted previously these can be either mapped directly or indirectly (ie if they were mapped to a specific kind of autoimmune disease such as Type I diabetes, then they would also be Inherited at EFO:0005140).
 
 ```{r resourceAnnotation}
 em = resources_annotated_with_term("EFO:0005140", include_subclasses = FALSE)
 nrow(em)
 ```
-In the above code we get only directly annotated matches and can see that there were `r nrow(em)` documents that were mapped directly to EFO:0005140.
-Below we get all of the matches, both direct and inherited, from our data table above we know that there should be `r dtxx["EFO:0005140", "Direct"]` documents mapped directly to EFO:0005140
-and `r dtxx["EFO:0005140", "Inherited"]` documents that map to a term that is more specific than EFO:0005140, so `am` should have `r dtxx["EFO:0005140", "Direct"]+dtxx["EFO:0005140", "Inherited"]` rows.  
 
+In the above code we get only directly annotated matches and can see that there were `r nrow(em)` documents that were mapped directly to EFO:0005140. Below we get all of the matches, both direct and inherited, from our data table above we know that there should be `r dtxx["EFO:0005140", "Direct"]` documents mapped directly to EFO:0005140 and `r dtxx["EFO:0005140", "Inherited"]` documents that map to a term that is more specific than EFO:0005140, so `am` should have `r dtxx["EFO:0005140", "Direct"]+dtxx["EFO:0005140", "Inherited"]` rows.
 
 ```{r allmatches}
 am = resources_annotated_with_term("EFO:0005140", include_subclasses = TRUE)
@@ -144,7 +145,7 @@ dim(am[gg,])
 am[gg, "STUDY.ACCESSION"]
 ```
 
-We can compare with what the `gwasrapidd` vignette returns. One thing to notice is that even though the `study_ids` (our STUDY.ACCESSION values) are unique, the PubMed IDs are not. So the GWAS Catalog is supporting the idea that there could be multiple *studies* per paper.  That seems like a good idea since some papers will report on GWAS for a variety of diseases, while others are focused on a single disease. And note that you need to get the text for the EFO term exactly right.
+We can compare with what the `gwasrapidd` vignette returns. One thing to notice is that even though the `study_ids` (our STUDY.ACCESSION values) are unique, the PubMed IDs are not. So the GWAS Catalog is supporting the idea that there could be multiple *studies* per paper. That seems like a good idea since some papers will report on GWAS for a variety of diseases, while others are focused on a single disease. And note that you need to get the text for the EFO term exactly right.
 
 ```{r}
 gwrdd = gwasrapidd::get_studies(efo_trait = 'autoimmune disease')
