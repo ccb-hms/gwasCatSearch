@@ -62,9 +62,7 @@ server <- function(input, output, session) {
     ontoProc::onto_plot2(efo, input$gbuttons)
   })
   grab_resources = reactive({
-#     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
-     data(gwc_gr)
-#     dat = as.data.frame(gwascat_2023_06_24)
+     data("gwc_gr", package="gwasCatSearch")
      dat = as.data.frame(gwc_gr)  # fixes names, so STUDY.ACCESSION
      last <- process_annotated()
      acc = unique(last$accstr[input$resources_rows_selected])
@@ -84,7 +82,7 @@ server <- function(input, output, session) {
    })
   output$snpviz <- plotly::renderPlotly({
 #     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
-     data(gwc_gr)
+     data("gwc_gr", package="gwasCatSearch")
      snpind = input$snps_rows_selected
      validate(need(length(snpind)==1, "please select only one SNP for viz"))
      dat = grab_resources()
@@ -95,6 +93,7 @@ server <- function(input, output, session) {
      })
   output$snptab <- DT::renderDataTable({
 #     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
+     data("gwc_gr", package="gwasCatSearch")
      snpind = input$snps_rows_selected
      validate(need(length(snpind)==1, "please select only one SNP for viz"))
      dat = grab_resources()
