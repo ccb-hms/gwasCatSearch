@@ -55,7 +55,9 @@ server <- function(input, output, session) {
   })
   output$ontoviz <- renderPlot({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
-    if (!exists("efo")) efo <<- ontoProc::getOnto("efoOnto")
+#    if (!exists("efo")) efo <<- ontoProc::getOnto("efoOnto")
+    data("oi", package="gwasCatSearch")
+    efo = oi
     validate(need(!is.null(input$gbuttons), "Waiting for gbutton UI"))
     last <- process_annotated()
     validate(need(length(input$gbuttons)>1, "only one term present, nothing to plot"))
@@ -106,13 +108,15 @@ server <- function(input, output, session) {
     
   output$showbuttons <- renderUI({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
-    if (!exists("efo")) {
-      if (file.exists("efo.rda")) {
-        load("efo.rda")
-      } else {
-        efo <<- ontoProc::getOnto("efoOnto")
-      }
-    }
+#    if (!exists("efo")) {
+#      if (file.exists("efo.rda")) {
+#        load("efo.rda")
+#      } else {
+#        efo <<- ontoProc::getOnto("efoOnto")
+#      }
+    data("oi", package="gwasCatSearch")
+    efo <<- oi
+#    }
     last <- process_annotated()
     u <- unique(last$MAPPED_TRAIT_CURIE) # used to eliminate dups, before commas
 #

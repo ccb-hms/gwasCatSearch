@@ -1,5 +1,10 @@
+# this file holds source code that is used in server.R
+# defining reactive functions there
+# the functions are here to support unit testing, but need
+# to be synchronized with the server code
 
 #' query2table
+#' @param query character(1) corpustools::search_features query string
 #' @export
 query2table = function(query="(kidney AND disease)") {
   data("efo_tc", package = "gwasCatSearch")
@@ -11,6 +16,11 @@ query2table = function(query="(kidney AND disease)") {
 
 
 #' processtable
+#' @param query character(1) corpustools::search_features query string
+#' @param include_subclasses logical(1)
+#' @param direct_subclasses_only logical(1)
+#' @param sels numeric vector of indices to retain (mainly for row selections 
+#' in app)
 #' @export
 process_annotated = function (query = "(kidney AND disease)", 
      include_subclasses=TRUE, direct_subclasses_only=FALSE, sels = NULL) 

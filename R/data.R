@@ -49,3 +49,12 @@
 #' tail(sort(table(S4Vectors::mcols(gwc_gr)$MAPPED_GENE)))
 "gwc_gr"
 
+
+#' a static instance of an ontology_index representing the
+#' EFO from the SQLite database
+#' @format ontologyIndex ontology_index instance
+#' @note might be replaced by dynamic creation in .onLoad
+#' @examples
+#' data("oi", package="gwasCatSearch")
+#' oi
+"oi"

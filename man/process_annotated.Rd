@@ -11,6 +11,16 @@ process_annotated(
   sels = NULL
 )
 }
+\arguments{
+\item{query}{character(1) corpustools::search_features query string}
+
+\item{include_subclasses}{logical(1)}
+
+\item{direct_subclasses_only}{logical(1)}
+
+\item{sels}{numeric vector of indices to retain (mainly for row selections
+in app)}
+}
 \description{
 processtable
 }

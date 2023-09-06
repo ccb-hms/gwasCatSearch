@@ -68,13 +68,13 @@ get_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwd
 view_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwdat,
   main="Manhattan plot for GWAS catalog hits, mouseover for details") {
  mydf = get_variant_context(chr=chr, pos=pos, radius=radius, focal_rec=focal_rec, gwdat=gwdat)
- pl = ggplot(mydf, aes(x=pos, y=mlogp, text=tag)) + geom_point() + xlab(sprintf("Pos on chr %s", chr)) +
+ pl = ggplot(mydf, aes(x=pos, y=mlogp, text=tag)) + geom_point(colour="lightgrey") + xlab(sprintf("Pos on chr %s", chr)) +
          ylab("min(70, -log10 p)") + ggtitle(main)
  focind = which(mydf$focal)
  if (length(focind)>0) {
      ndf = mydf[focind[1],]
      pl = pl + geom_point(data=ndf, aes(x=pos,
-                    y=mlogp), colour="lightblue", size=1.3)
+                    y=mlogp), colour="red", size=1.5)
      }
  plotly::ggplotly(pl)
 }

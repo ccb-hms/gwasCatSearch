@@ -6,6 +6,9 @@
 \usage{
 query2table(query = "(kidney AND disease)")
 }
+\arguments{
+\item{query}{character(1) corpustools::search_features query string}
+}
 \description{
 query2table
 }
