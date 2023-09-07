@@ -28,6 +28,8 @@ gwasCatSearch_dbconn <- function() .datacache$dbconn
     synchronous = "off", flags = RSQLite::SQLITE_RO
   )
   assign("dbconn", dbconn, envir = .datacache)
+  assoc_gr = assocgr_from_db()
+  assign("gwc_gr", assoc_gr, envir = .datacache)
 }
 
 .onUnload <- function(libpath) {

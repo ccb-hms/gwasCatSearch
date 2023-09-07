@@ -1,5 +1,18 @@
 #
 
+# database fields for associations
+# [1] "STUDY.ACCESSION"           "REGION"                   
+# [3] "CHR_ID"                    "CHR_POS"                  
+# [5] "REPORTED.GENE.S."          "MAPPED_GENE"              
+# [7] "UPSTREAM_GENE_ID"          "DOWNSTREAM_GENE_ID"       
+# [9] "SNP_GENE_IDS"              "UPSTREAM_GENE_DISTANCE"   
+#[11] "DOWNSTREAM_GENE_DISTANCE"  "STRONGEST.SNP.RISK.ALLELE"
+#[13] "SNPS"                      "SNP_ID_CURRENT"           
+#[15] "RISK.ALLELE.FREQUENCY"     "P.VALUE"                  
+#[17] "PVALUE_MLOG"               "MAPPED_TRAIT"             
+#[19] "MAPPED_TRAIT_URI"          "MAPPED_TRAIT_CURIE"       
+#[21] "CHR_POSN"    
+
 #' utility for extracting information about GWAS hits near a position,
 #' uses a snapshot of EBI GWAS catalog
 #' @importFrom GenomicRanges start
@@ -9,20 +22,20 @@
 #' @param pos numeric(1) position of variant of interest
 #' @param radius numeric(1) radius of interval to present
 #' @param focal_rec NULL or data.frame with one row with elements CHR_ID, CHR_POS, PVALUE_MLOG, STUDY.ACCESSION,
-#' MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
+#' MAPPED_TRAIT, SNP_ID_CURRENT, this will be used to identify and annotate the "focal"
 #' SNP for the visualization with a blue dot
-#' @param gwdat instance of GRanges with mcols PVALUE_MLOG, `STUDY ACCESSION`,
-#' MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID
+#' @param gwdat instance of GRanges with mcols PVALUE_MLOG, `STUDY.ACCESSION`,
+#' MAPPED_TRAIT, SNP_ID_CURRENT, 
 #' @return a data.frame with fields PVALUE_MLOG, STUDY.ACCESSION, MAPPED_TRAIT,
-#' SNP_ID_CURRENT, PUBMEDID, pos, mlogp, and tag, the latter an HTML string
+#' SNP_ID_CURRENT, pos, mlogp, and tag, the latter an HTML string
 #' for use in tooltips
 #' @examples
-#' data(gwc_gr)
+#' gwc_gr = gwasCatSearch:::.datacache$gwc_gr
 #' mydf = get_variant_context(gwdat = gwc_gr)
 #' head(mydf[, 1:6])
 #' @export
 get_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwdat) {
- keyvars = c("PVALUE_MLOG", "STUDY ACCESSION", "MAPPED_TRAIT", "SNP_ID_CURRENT", "PUBMEDID")
+ keyvars = c("PVALUE_MLOG", "STUDY.ACCESSION", "MAPPED_TRAIT", "MAPPED_GENE", "SNP_ID_CURRENT" )
  stopifnot(all(keyvars %in% names(S4Vectors::mcols(gwdat))))
  tt = IRanges::subsetByOverlaps(gwdat, 
        GenomicRanges::GRanges(chr, IRanges::IRanges(pos,width=1)+radius))
@@ -34,13 +47,14 @@ get_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwd
    focal_rec$pos = focal_rec$CHR_POS
    focal_rec$mlogp = pmin(70, focal_rec$PVALUE_MLOG)
    focal_rec$focal = TRUE
-   mydf = rbind(mydf, focal_rec[c("PVALUE_MLOG", "STUDY.ACCESSION", "MAPPED_TRAIT",
-           "SNP_ID_CURRENT", "PUBMEDID", "pos", "mlogp", "focal")])
+   mydf = rbind(mydf, focal_rec[c("PVALUE_MLOG", "STUDY.ACCESSION", 
+           "MAPPED_TRAIT", "MAPPED_GENE",
+           "SNP_ID_CURRENT", "pos", "mlogp", "focal")])
    }
  mydf$tag = paste0("snp: ", mydf$SNP_ID_CURRENT, 
                  "<br>", "trait :", mydf$MAPPED_TRAIT, 
-                 "<br>", "acc: ", mydf$STUDY.ACCESSION,
-                 "<br>", "pmid:", mydf$PUBMEDID)
+                 "<br>", "gene :", mydf$MAPPED_GENE, 
+                 "<br>", "acc: ", mydf$STUDY.ACCESSION)
  mydf
 }
 
@@ -51,13 +65,13 @@ get_variant_context = function(chr=15, pos=69e6, radius=5e5, focal_rec=NULL, gwd
 #' @param pos numeric(1) position of variant of interest
 #' @param radius numeric(1) radius of interval to present
 #' @param focal_rec NULL or data.frame with one row with elements CHR_ID, CHR_POS, PVALUE_MLOG, STUDY.ACCESSION,
-#' MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
+#' MAPPED_TRAIT, SNP_ID_CURRENT; this will be used to identify and annotate the "focal"
 #' SNP for the visualization with a blue dot
 #' @param gwdat instance of GRanges with GWAS catalog p-values etc.
 #' @param main character(1) title for plot
 #' @return ggplotly is called
 #' @examples
-#' data(gwc_gr)
+#' gwc_gr = gwasCatSearch:::.datacache$gwc_gr
 #' foc = S4Vectors::mcols(IRanges::subsetByOverlaps(gwc_gr,
 #'      GenomicRanges::GRanges("15:69287238")))
 #' foc = as.data.frame(foc)  # will fix names

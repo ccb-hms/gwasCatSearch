@@ -50,7 +50,7 @@ DT::datatable(head(allmatch,n=20))
 Now we can use the `variants_from_study` function to obtain information about the GWAS hits such as the `rsID`, risk allele and effect size.
 
 ```{r lookupSNP}
-data(gwc_gr)
+gwc_gr = gwasCatSearch:::.datacache$gwc_gr
 lu1 = variants_from_study(allmatch$STUDY.ACCESSION[1],gwdat=gwc_gr)
 lu1$MAPPED_GENE
 

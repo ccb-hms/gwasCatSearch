@@ -19,7 +19,7 @@ uif <- function() {
 #        actionButton("addInput","Add another query"),
 #        uiOutput("newInps"),
         helpText("Be sure to refresh hits tab before viewing resources."),
-        checkboxInput("graphicson", "Enable graphics", FALSE),
+        checkboxInput("graphicson", "Enable graphics", TRUE),
         helpText("graphics startup may involve retrieving an ontology, can take 20 sec or so"),
         actionButton("stopBtn", "stop app"),
         width = 3

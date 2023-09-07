@@ -21,15 +21,15 @@ get_variant_context(
 \item{radius}{numeric(1) radius of interval to present}
 
 \item{focal_rec}{NULL or data.frame with one row with elements CHR_ID, CHR_POS, PVALUE_MLOG, STUDY.ACCESSION,
-MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
+MAPPED_TRAIT, SNP_ID_CURRENT, this will be used to identify and annotate the "focal"
 SNP for the visualization with a blue dot}
 
-\item{gwdat}{instance of GRanges with mcols PVALUE_MLOG, \verb{STUDY ACCESSION},
-MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID}
+\item{gwdat}{instance of GRanges with mcols PVALUE_MLOG, \code{STUDY.ACCESSION},
+MAPPED_TRAIT, SNP_ID_CURRENT,}
 }
 \value{
 a data.frame with fields PVALUE_MLOG, STUDY.ACCESSION, MAPPED_TRAIT,
-SNP_ID_CURRENT, PUBMEDID, pos, mlogp, and tag, the latter an HTML string
+SNP_ID_CURRENT, pos, mlogp, and tag, the latter an HTML string
 for use in tooltips
 }
 \description{
@@ -37,7 +37,7 @@ utility for extracting information about GWAS hits near a position,
 uses a snapshot of EBI GWAS catalog
 }
 \examples{
-data(gwc_gr)
+gwc_gr = gwasCatSearch:::.datacache$gwc_gr
 mydf = get_variant_context(gwdat = gwc_gr)
 head(mydf[, 1:6])
 }

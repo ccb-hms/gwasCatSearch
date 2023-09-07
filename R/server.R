@@ -64,7 +64,7 @@ server <- function(input, output, session) {
     ontoProc::onto_plot2(efo, input$gbuttons)
   })
   grab_resources = reactive({
-     data("gwc_gr", package="gwasCatSearch")
+     gwc_gr = gwasCatSearch:::.datacache$gwc_gr
      dat = as.data.frame(gwc_gr)  # fixes names, so STUDY.ACCESSION
      last <- process_annotated()
      acc = unique(last$accstr[input$resources_rows_selected])
@@ -83,8 +83,7 @@ server <- function(input, output, session) {
      dat
    })
   output$snpviz <- plotly::renderPlotly({
-#     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
-     data("gwc_gr", package="gwasCatSearch")
+     gwc_gr = gwasCatSearch:::.datacache$gwc_gr
      snpind = input$snps_rows_selected
      validate(need(length(snpind)==1, "please select only one SNP for viz"))
      dat = grab_resources()
@@ -94,29 +93,20 @@ server <- function(input, output, session) {
      gwasCatSearch::view_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
      })
   output$snptab <- DT::renderDataTable({
-#     if (!exists("gwascat_2023_06_24")) data("gwascat_2023_06_24", package="gwasCatSearch")
-     data("gwc_gr", package="gwasCatSearch")
+     gwc_gr = gwasCatSearch:::.datacache$gwc_gr
      snpind = input$snps_rows_selected
      validate(need(length(snpind)==1, "please select only one SNP for viz"))
      dat = grab_resources()
      kp = dat[snpind,]
      kp$CHR_ID = kp$seqnames
      kp$CHR_POS = kp$start
-     #gwasCatSearch::get_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
      gwasCatSearch::get_variant_context(chr=kp$seqnames, pos=kp$start, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
      })
     
   output$showbuttons <- renderUI({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
-#    if (!exists("efo")) {
-#      if (file.exists("efo.rda")) {
-#        load("efo.rda")
-#      } else {
-#        efo <<- ontoProc::getOnto("efoOnto")
-#      }
     data("oi", package="gwasCatSearch")
     efo <<- oi
-#    }
     last <- process_annotated()
     u <- unique(last$MAPPED_TRAIT_CURIE) # used to eliminate dups, before commas
 #

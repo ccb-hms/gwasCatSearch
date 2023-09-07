@@ -9,7 +9,7 @@ variants_from_study(acc, gwdat)
 \arguments{
 \item{acc}{character() accession number(s) by EBI}
 
-\item{gwdat}{instance of GRanges with \verb{STUDY ACCESSION} and other locus-level metadata}
+\item{gwdat}{instance of GRanges with \code{STUDY.ACCESSION} and other locus-level metadata}
 }
 \value{
 a data.frame with relevant information about hits reported in the selected studies
@@ -18,7 +18,7 @@ a data.frame with relevant information about hits reported in the selected studi
 given an accession, tabulate variants from GWAS catalog
 }
 \examples{
-data(gwc_gr)
+gwc_gr = gwasCatSearch:::.datacache$gwc_gr
 tab = variants_from_study(acc="GCST007087", gwdat=gwc_gr)
 dim(tab)
 head(tab)

@@ -21,7 +21,7 @@ view_variant_context(
 \item{radius}{numeric(1) radius of interval to present}
 
 \item{focal_rec}{NULL or data.frame with one row with elements CHR_ID, CHR_POS, PVALUE_MLOG, STUDY.ACCESSION,
-MAPPED_TRAIT, SNP_ID_CURRENT, PUBMEDID; this will be used to identify and annotate the "focal"
+MAPPED_TRAIT, SNP_ID_CURRENT; this will be used to identify and annotate the "focal"
 SNP for the visualization with a blue dot}
 
 \item{gwdat}{instance of GRanges with GWAS catalog p-values etc.}
@@ -35,7 +35,7 @@ ggplotly is called
 interactive visualization of GWAS hits near a position
 }
 \examples{
-data(gwc_gr)
+gwc_gr = gwasCatSearch:::.datacache$gwc_gr
 foc = S4Vectors::mcols(IRanges::subsetByOverlaps(gwc_gr,
      GenomicRanges::GRanges("15:69287238")))
 foc = as.data.frame(foc)  # will fix names

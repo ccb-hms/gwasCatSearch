@@ -30,26 +30,6 @@
 #' summary(ht2)
 "efo_tc"
 
-
-#' A restricted snapshot of the EBI GWAS catalog made 2023-08-28, as a GRanges instance
-#' @name gwc_gr
-#' @docType data
-#' @format GRanges instance with mcols columns
-#' \describe{ 
-#' \item{"PUBMEDID"}{a numeric vector} 
-#' \item{"MAPPED_TRAIT"}{a character vector}
-#' \item{"MAPPED_GENE"}{a character vector}
-#' \item{"STUDY ACCESSION"}{a character vector}
-#' \item{"PVALUE_MLOG"}{a numeric vector}
-#' }
-#' @source This was created using makeCurrentGwascat in the Bioconductor gwascat package.
-#' @keywords datasets
-#' @examples
-#' data(gwc_gr)
-#' tail(sort(table(S4Vectors::mcols(gwc_gr)$MAPPED_GENE)))
-"gwc_gr"
-
-
 #' a static instance of an ontology_index representing the
 #' EFO from the SQLite database
 #' @format ontologyIndex ontology_index instance
