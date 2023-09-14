@@ -31,10 +31,11 @@
 "efo_tc"
 
 #' a static instance of an ontology_index representing the
-#' EFO from the SQLite database
+#' EFO "is-a" content from the SQLite database
 #' @format ontologyIndex ontology_index instance
-#' @note might be replaced by dynamic creation in .onLoad
+#' @note Should be regenerated and stored whenever EFO content of the
+#' database changes.
 #' @examples
-#' data("oi", package="gwasCatSearch")
-#' oi
-"oi"
+#' data("efo_oi", package="gwasCatSearch")
+#' efo_oi
+"efo_oi"

@@ -1,3 +1,22 @@
+#' produce an ontology_index instance from GWASCatalogSearchDB sqlite
+#' @importFrom ontologyIndex ontology_index
+#' @importFrom dplyr tbl
+#' @param con SQLite connection via RSQLite/DBI dbConnect
+#' @note This is used in the server for the `search_gwascat()` app. 
+#' @examples
+#' rcon = gwasCatSearch:::.datacache$dbconn
+#' efo = make_oi(rcon)
+#' efo$name[1:5]
+#' efo$children[1:3] # do not disconnect or check will error
+#' @export
+make_oi = function(con) {
+ ll = as.data.frame(tbl(con, "efo_labels"))
+ nn = split(ll$Object, ll$Subject)
+ ed = as.data.frame(tbl(con, "efo_edges"))
+ pl = split(ed$Object, ed$Subject)[names(nn)]
+ ontology_index(name=nn, parents=pl)
+}
+
 #' this is called by search_gwascat, also symlinked to inst/app2 for shinyapps usage
 #' @param input formal element for shiny server component
 #' @param output formal element for shiny server component
@@ -6,6 +25,8 @@
 server <- function(input, output, session) {
   data("efo_tc", package = "gwasCatSearch")
   data("efo_df", package = "gwasCatSearch")
+  data("efo_oi", package = "gwasCatSearch")
+  oi = efo_oi
   ntab <- reactive({
    input$submit
    isolate({
@@ -56,8 +77,8 @@ server <- function(input, output, session) {
   output$ontoviz <- renderPlot({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
 #    if (!exists("efo")) efo <<- ontoProc::getOnto("efoOnto")
-    data("oi", package="gwasCatSearch")
-    efo = oi
+    data("efo_oi", package="gwasCatSearch")
+    efo = efo_oi
     validate(need(!is.null(input$gbuttons), "Waiting for gbutton UI"))
     last <- process_annotated()
     validate(need(length(input$gbuttons)>1, "only one term present, nothing to plot"))
@@ -105,8 +126,8 @@ server <- function(input, output, session) {
     
   output$showbuttons <- renderUI({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
-    data("oi", package="gwasCatSearch")
-    efo <<- oi
+    data("efo_oi", package="gwasCatSearch")
+    efo <<- efo_oi
     last <- process_annotated()
     u <- unique(last$MAPPED_TRAIT_CURIE) # used to eliminate dups, before commas
 #
