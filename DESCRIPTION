@@ -1,7 +1,7 @@
 Package: gwasCatSearch
 Type: Package
 Title: A package to support ontological search of the GWAS Catalog
-Version: 0.1.44
+Version: 0.1.45
 Authors@R:
     c(person(given = "Robert",
            family = "Gentleman",
@@ -18,7 +18,7 @@ License: CC BY 4.0 | file LICENSE
 VignetteBuilder: knitr
 Depends: corpustools, R (>= 3.5.0)
 Imports: methods, RSQLite, shinyjs, DBI, utils, DT, shiny, ontoProc,
-	ggplot2, plotly, GenomicRanges, S4Vectors, IRanges,
+	ggplot2, plotly, GenomicRanges, S4Vectors, IRanges, graph,
 	ontologyIndex, dplyr
 Suggests: knitr, rmarkdown, testthat, gwasrapidd
 Encoding: UTF-8

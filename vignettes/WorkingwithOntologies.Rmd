@@ -1,0 +1,60 @@
+---
+title: "Working with Ontologies"
+author: "Robert"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{gwasCatSearch Working with Ontologies}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+format: html
+editor: visual
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(gwasCatSearch)
+```
+
+## Using the ontologies
+The `efo_oi` data set provides access to information about the EFO ontology that has been organized along the lines of the ontologyIndex package from CRAN.
+
+```{r }
+efo_oi$name["EFO:0000095"]
+efo_oi$children["EFO:0000095"]
+efo_oi$parents["EFO:0000095"]
+```
+One of the parents of `EFO:0000095` is `MONDO:0004095` and we can see how many children it has
+by using the `children` table in the ontology index.
+If we use the `[[` accessor then we just get the vector of children. If instead we use the `[` accessor then we would get a list that is named by the input vector of terms where each element is the vector of children for the corresponding EFO term.
+```{r}
+x1 = efo_oi$children[["MONDO:0004095"]]
+
+x1
+```
+
+Now we will interact with the DB to get at the mappings to different terms.
+
+```{r dbmappings}
+
+ query = paste0("SELECT * FROM efo_labels WHERE Subject IN ('",
+                paste(x1, collapse = "','"),
+                "')")
+ mappedans = DBI::dbGetQuery(gwasCatSearch_dbconn(), query)
+ mappedans$Direct
+ mappedans$Inherited
+
+```
+
+Now we can look at some plotting for the graph and manipulations of the EFO tables
+```{r graphPlot}
+tags = c("EFO:0003884", "EFO:0004531", "EFO:0005208", "EFO:0009909", "EFO:0021409", "EFO:0021433")
+##assign the next one to get back the graph structure that is plotted
+xt = plotTags(tags)
+nn = graph::nodes(xt)
+##nodes have long names - suitable for printing we just want the CURIEs
+v1 = strsplit(nn, "\n")
+nodeEFO = sapply(v1, function(x) x[length(x)])
+subs=efo_df[nodeEFO,c("Direct","Inherited")]
+subs
+```

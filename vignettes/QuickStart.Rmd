@@ -41,7 +41,7 @@ hitsasDT = hits2DT(hits, efo_df, efo_tc)
 datatable(hitsasDT, escape=FALSE, rownames=FALSE)
 ```
 
-In the next code chunk we search for any EFO labels that match to both *granulo\** and *rheum\**. 
+In the next code chunk we search for any EFO labels that match to both *granulo\** and *rheum\**.
 
 ```{r}
 ht2 = search_features(efo_tc, query = "granulo* AND rheum*")
@@ -54,8 +54,7 @@ There are `r summary(ht2)$documents` documents (EFO terms) that matched both, si
 
 Each EFO term, and more generally, any term from an ontology is turned into a *document* by appending the text description (label) for that term, any synonyms for that term that are provided by the ontology and also the text description of any phenotype that has been directly mapped to that EFO term. The rationale for the last part is that text descriptions that have been mapped to a specific EFO term are in essence also synonyms for that term. That is essentially what the mapping implies.
 
-In the next code segment we show how to get the synonyms and the text labels for any phenotypes that have been directly mapped to a specific EFO term. We consider the term
-EFO:0000095 which is labeled: chronic lymphocytic leukemia. 
+In the next code segment we show how to get the synonyms and the text labels for any phenotypes that have been directly mapped to a specific EFO term. We consider the term EFO:0000095 which is labeled: chronic lymphocytic leukemia.
 
 ```{r showSynonymDirectMapping}
 syns = getSynonyms("EFO:0000095")
@@ -64,10 +63,9 @@ syns$`EFO:0000095`[1:10]
 
 ```
 
- We first show 10 of the `r length(syns$"EFO:0000095")` synonyms provided by the EFO ontology.
+We first show 10 of the `r length(syns$"EFO:0000095")` synonyms provided by the EFO ontology.
 
-Next we identify the GWAS catalog studies that were mapped directly to the EFO term
-EFO:0000095.  The function `resources_annotated_with_term` returns a dataframe that contains information such as the GWAS catalog ID, the PubMed ID and so on.  GWAS Catalog studies that map to more than one EFO term have the terms concatenated with comma separators.  This does make some searching more complicated.
+Next we identify the GWAS catalog studies that were mapped directly to the EFO term EFO:0000095. The function `resources_annotated_with_term` returns a dataframe that contains information such as the GWAS catalog ID, the PubMed ID and so on. GWAS Catalog studies that map to more than one EFO term have the terms concatenated with comma separators. This does make some searching more complicated.
 
 ```{r EFO-directmapping}
 ##Direct mapping to that EFO term

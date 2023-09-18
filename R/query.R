@@ -1,6 +1,8 @@
+## define the globals
+ globalVariables(c("efo", "efo_df", "efo_oi", "efo_tc", "mlogp"))
+
 ## internal helper function used to build the two data resources - this
 ## function needs to be run and the data updated whenever a new database is obtained
-
 
 ## README: we will get two more tables in the EFO db, one with all synonyms for each term
 ## and one with the set of input text descriptions mapped to each EFO term (they are essentially
@@ -82,3 +84,22 @@ getSynonyms = function(Ontonames) {
   return(split(ans$Object, ans$Subject))
 }
 
+#' A function to query the efo_edges table and return the set of parent terms for the input ontology terms
+#' @description
+#' This function provides an interface to the SQL database containing ontology edges. These are 
+#' @param Ontonames a character vector of the ontology CURIE symbols
+#' @details The function selects the appropriate rows from the efo_edges table.
+#' @return A named list, names are from the input Ontonames and the values are the set of parent terms.
+#' @author Robert Gentleman
+#' @examples 
+#' getParents(c("EFO:0000094", "EFO:0000095"))
+#' @export
+getParents = function(Ontonames) {
+  if (!is.character(Ontonames) | length(Ontonames) < 1)
+    stop("in correct input")
+  query = paste0("SELECT * FROM efo_edges WHERE Subject IN ('",
+                 paste(Ontonames, collapse = "','"),
+                 "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), query)
+  return(split(ans$Object, ans$Subject))
+}
