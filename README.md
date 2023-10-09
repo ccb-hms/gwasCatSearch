@@ -4,8 +4,7 @@ An R package to provide free text search, and ontology lookup for GWAS Catalog p
 
 To install the package, use `BiocManager::install("ccb-hms/gwasCatSearch")`.
 
-A shiny app is available at [https://vjcitn.shinyapps.io/gwasCatSearch](https://vjcitn.shinyapps.io/gwasCatSearch).
-
+A shiny app is available at [https://vjcitn.shinyapps.io/gwasCatSearch](https://vjcitn.shinyapps.io/gwasCatSearch) and [https://ccb-rstudio-connect.hms.harvard.edu/gwasCatSearch/](https://ccb-rstudio-connect.hms.harvard.edu/gwasCatSearch/)
 ---
 
 The representation of the [EBI GWAS catalog](https://www.ebi.ac.uk/gwas/) used
