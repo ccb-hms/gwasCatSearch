@@ -1,9 +1,9 @@
   name: test-and-connect-publish
   on:
     push:
-      branches: [main]
+      branches: [test-and-connect-publish]
     pull_request:
-      branches: [main]
+      branches: [test-and-connect-publish]
   
   jobs:
     test-and-connect-publish:
