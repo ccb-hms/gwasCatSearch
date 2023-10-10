@@ -20,7 +20,7 @@ Depends: corpustools, R (>= 3.5.0)
 Imports: methods, RSQLite, shinyjs, DBI, utils, DT, shiny, ontoProc,
 	ggplot2, plotly, GenomicRanges, S4Vectors, IRanges, graph,
 	ontologyIndex, dplyr
-Suggests: knitr, rmarkdown, testthat, gwasrapidd
+Suggests: knitr, rmarkdown, testthat, gwasrapidd, rsconnect
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: xz
