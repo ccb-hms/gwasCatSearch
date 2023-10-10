@@ -18,12 +18,7 @@
             r-version: 4.2.3
             use-public-rspm: true
 
-        - uses: r-lib/actions/setup-renv@v2
-            
-        - name: Test Shiny App
-          shell: Rscript {0}
-          run: |
-            shinytest2::test_app()
+        - uses: r-lib/actions/check-r-package@vs
             
         - name: Create manifest.json
           shell: Rscript {0}
