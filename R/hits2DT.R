@@ -7,7 +7,7 @@
 #' @param efoDF A dataframe containing the information about the EFO terms.
 #' @param tc A `tCorpus` object that was built using the same dataframe that is used for `efoDF`
 #' @details Once hits have been found, this function obtains that actual text string in the EFO term that was matched
-#' to the query.  The using the `iri` column in `efoDF` a link to the EFO on-line resource for the term is created.
+#' to the query.  Then using the `iri` column in `efoDF` a link to the EFO on-line resource for the term is created.
 #' Information about how many phenotypes map to the term, both directly and via inheritance are reported.
 #' @return
 #' A `datatable` object with columns:
@@ -19,6 +19,9 @@
 #'  \item{Others}{One column for each labeled search term in the call that created the `hits` object. If
 #'  those terms were labeled then the columns will have the same label. The value in the column is the actual word
 #'  in the EFO term that was matched on.}
+#'  \item{field}{If there is a column in the `tcorpus$tokens` table named `field`, the values in it
+#'  are aligned with the documents and returned. If there is no column named `field` then nothing
+#'  is added.}
 #' }
 #' @author R. Gentleman
 #' @seealso [corpustools::tCorpus()], [efo_df], [DT::datatable()]
@@ -62,5 +65,45 @@ hits2DT <- function(hits, efoDF, tc) {
     #tmp[docID] <- as.character(Queries[[i]]$token)
     outDF[[names(Queries[i])]] <- tmp
   }
+  ##see if there is info about where the map occurred and add it in
+  if( "field" %in% colnames(sub_tc$tokens)) {
+    sx1 = split(sub_tc$tokens$field, sub_tc$tokens$doc_id)
+    sx2 = sapply(sx1, function(x) {x = unique(tolower(x)); paste(x, collapse=", ")})
+    ##possibly paranoid, but make sure we align
+    tmp <- rep(NA, nrow(matchedEFO))
+    names(tmp) <- matchedEFO$Subject
+    tmp[names(sx2)] = sx2
+    outDF[["field"]] = tmp
+  }
   return(outDF)
+}
+
+#' A function that adds the field values to a `featureHits` object.
+#' @import corpustools
+#' @description
+#' Users query the corpus to find EFO ontology terms that match the query. This function adds the `field` information
+#' from the `tCorpus` to the `featureHits` object.
+#' @param hits A `featureHits` object from the corpustools package.
+#' @param tc A `tCorpus` object that was built using the same dataframe that is used for `efoDF`
+#' @details The hits are aligned with the appropriate rows in the `tc$tokens` data.frame and 
+#' the `field` values extracted and entered added to the `hits` dataframe of the `hits` object.
+#' @return
+#' A `featureHits` object a column added to the `hits` component providing information on which 
+#' field (subject, synonym or match) the hit was found in.
+#' @author R. Gentleman
+#' @seealso [corpustools::tCorpus()], [efo_df]
+#' @examples
+#' hits <- search_features(efo_tc, query = c("Infect# infectious*", "Pancreas# pancrea*"))
+#' summary(hits)
+#' hitswF <- addField2Hits(hits, efo_tc)
+#' @export
+addField2Hits = function(hits, tc) {
+  if (nrow(hits$hits) == 0) {
+    return(NULL)
+  }
+  ## find the indices in the tc for each hit
+  .i <- tc$get_token_id(doc_id = hits$hits$doc_id,
+                    token_id = hits$hits$token_id)
+  hits$hits = cbind(hits$hits, tc$tokens[.i, "field"])
+  return(hits)
 }

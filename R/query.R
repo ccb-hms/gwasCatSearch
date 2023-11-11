@@ -4,10 +4,6 @@
 ## internal helper function used to build the two data resources - this
 ## function needs to be run and the data updated whenever a new database is obtained
 
-## README: we will get two more tables in the EFO db, one with all synonyms for each term
-## and one with the set of input text descriptions mapped to each EFO term (they are essentially
-## like synonyms.). We will just past together each group (with a label for the group)
-## might also want to try to take some more advantage of the corpus stuff...
 ## we probably want to refactor the synonym and matching code to use a helper function
 ## we probably need some testing here for completeness and accuracy
 ## we probably need to figure out if we can drop some of the columns etc - these might be
@@ -15,8 +11,8 @@
 .makeCorpus <- function(path = getwd(), use_stemming = TRUE, remove_stop_words = TRUE, save = TRUE) {
   efo_df <- dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from efo_labels")
   row.names(efo_df) = efo_df$Subject
-  gwtrait_df <- dbGetQuery(gwasCatSearch_dbconn(),
-                           "SELECT \"DISEASE.TRAIT\", MAPPED_TRAIT FROM gwascatalog_metadata")
+ # gwtrait_df <- dbGetQuery(gwasCatSearch_dbconn(),
+ #                         "SELECT \"DISEASE.TRAIT\", MAPPED_TRAIT FROM gwascatalog_metadata")
   
   ## Synonyms
   efo_syn <- dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from efo_synonyms")
@@ -42,8 +38,11 @@
   efo_df$Matches = ""
   efo_df$Matches[mm] = sp3
   
+  ##at some point try setting remember_spaces=TRUE - this should retain the column
+  ##where the match occurs - and I am guessing we can filter on that
   efo_tc <- corpustools::create_tcorpus(efo_df, doc_column = "Subject", 
-                                        text_columns = c("Object", "Synonyms", "Matches"))
+                                        text_columns = c("Object", "Synonyms", "Matches"),
+                                        remember_spaces=TRUE, split_sentences=TRUE)
   efo_tc$preprocess(use_stemming = use_stemming, remove_stopwords = remove_stop_words)
 
   efo_df = efo_df[,c("Subject","Object","IRI","DiseaseLocation","Direct","Inherited")]
@@ -77,13 +76,70 @@
 #' getSynonyms(c("EFO:0000094", "EFO:0000095"))
 #' @export
 getSynonyms = function(Ontonames) {
-  if( !is.character(Ontonames) | length(Ontonames)<1 )
-    stop("in correct input")
+  if( !is.character(Ontonames) || (length(Ontonames)<1) )
+    stop("incorrect input")
   query = paste0( "SELECT * FROM efo_synonyms WHERE Subject IN ('", paste(Ontonames, collapse="','"), "')")
   ans = dbGetQuery(gwasCatSearch_dbconn(), query)
   return(split(ans$Object, ans$Subject))
 }
 
+#' A function to return the set of traits that were mapped to a given set of EFO terms
+#' @description
+#' This function provides an interface to the SQL table of matched traits to terms
+#' @param Ontonames a character vector of the ontology CURIE symbols
+#' @details The function extracts the matches, groups them by EFO CURIE label and returns a named list.
+#' @return A named list, each element of which is named with the CURIE symbol, and the elements are the text
+#' descriptions of the GWAS Catalog traits that mapped to that symbol.
+#' @author Robert Gentleman
+#' @examples 
+#' getMatchedTraits(c("EFO:0000094", "EFO:0000095"))
+#' @export
+getMatchedTraits = function(Ontonames) {
+  if( !is.character(Ontonames) || (length(Ontonames)<1) )
+    stop("incorrect input")
+  query = dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from gwascatalog_mappings")
+  sp1 = split(query$DISEASE.TRAIT , query$MAPPED_TRAIT_CURIE)
+  ans = sp1[Ontonames]
+  return(ans) 
+}
+
+#' A function to return the version information from the Ontology/EBI databases
+#' @description
+#' This function returns data.frame with one row for each resource that gives version information.
+#' @details The version number for the resource, if it has one, is given. Otherwise the download
+#' is given.
+#' @return A data.frame with one row per resource.
+#' @author Robert Gentleman
+#' @examples
+#' # example code
+#' getVersionInfo()
+#' @export
+getVersionInfo = function() {
+  query="SELECT * from version_info"
+  dbGetQuery(gwasCatSearch_dbconn(),query)
+}
+
+#' A function to return the disease locations from the efo_labels table.
+#' @description
+#' This function takes an input vector of ontology CURIE symbols and returns the inferred disease locations.
+#' @param Ontonames a character vector of the ontology CURIE symbols
+#' @details The function selects the appropriate values from the efo_labels table.
+#' @return A named vector of disease locations.
+#' @author Robert Gentleman
+#' @examples
+#' getDiseaseLocation(c("EFO:0000094", "EFO:0000095"))
+#' @export
+getDiseaseLocation = function(Ontonames) {
+  if (!is.character(Ontonames) | length(Ontonames) < 1)
+    stop("incorrect input")
+  query = paste0("SELECT DiseaseLocation FROM efo_labels WHERE Subject IN ('",
+                 paste(Ontonames, collapse = "','"),
+                 "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), query)
+  return(ans)
+}
+  
+#' 
 #' A function to query the efo_edges table and return the set of parent terms for the input ontology terms
 #' @description
 #' This function provides an interface to the SQL database containing ontology edges. These are 
@@ -96,7 +152,7 @@ getSynonyms = function(Ontonames) {
 #' @export
 getParents = function(Ontonames) {
   if (!is.character(Ontonames) | length(Ontonames) < 1)
-    stop("in correct input")
+    stop("incorrect input")
   query = paste0("SELECT * FROM efo_edges WHERE Subject IN ('",
                  paste(Ontonames, collapse = "','"),
                  "')")

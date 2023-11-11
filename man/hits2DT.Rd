@@ -23,6 +23,9 @@ A \code{datatable} object with columns:
 \item{Others}{One column for each labeled search term in the call that created the \code{hits} object. If
 those terms were labeled then the columns will have the same label. The value in the column is the actual word
 in the EFO term that was matched on.}
+\item{field}{If there is a column in the \code{tcorpus$tokens} table named \code{field}, the values in it
+are aligned with the documents and returned. If there is no column named \code{field} then nothing
+is added.}
 }
 }
 \description{
@@ -31,7 +34,7 @@ by \code{hits2DT} to produce a datatable which then provides some amount of inte
 }
 \details{
 Once hits have been found, this function obtains that actual text string in the EFO term that was matched
-to the query.  The using the \code{iri} column in \code{efoDF} a link to the EFO on-line resource for the term is created.
+to the query.  Then using the \code{iri} column in \code{efoDF} a link to the EFO on-line resource for the term is created.
 Information about how many phenotypes map to the term, both directly and via inheritance are reported.
 }
 \examples{
