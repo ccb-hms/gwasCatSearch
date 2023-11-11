@@ -58,29 +58,27 @@ In the first example below we search for any *document* that contains a match to
 
 ```{r}
 hits = search_features(efo_tc, query = c('Granuloma# granulo*', 'Rheumatic# rheum*'), context_level='sentence')
+hits = addField2Hits(hits, efo_tc)
 summary(hits)
 hits$hits[1:10,]
-table(hits$hits$sentence)
+table(hits$hits$field)
 ```
 
 We can see that there were `r nrow(hits)` hits.
-We see that most of the hits are in sentences 1, 2 or 3. But what we are most interested in might be which field the 
-For a hit in sentence 1 we expect it then to be in the name of the trait assigned to the specific EFO term.  We show how to examine those in the next code chunk.  These are going to be the values in the `Object` column of `efo_df`.
+We see that most of the hits are in the Matches and the Synonyms, which makes some sense, as these fields will tend to have multiple entries, so there is more text there to match. 
 
 ```{r CheckHitsTrait}
-## obtain the EFO ids for the hits in sentence 1
-testID = hits$hits$doc_id[hits$hits$sentence==1]
+## obtain the EFO ids for the hits in Object
+testID = as.character(hits$hits$doc_id[hits$hits$field=="Object"])
 length(testID)
 head(efo_df[testID, "Object"])
 
 ```
 
-There are two other ways that our query could have matched, one is via the synonyms that have been provided by the ontology and the second is that the query matches to the name of some other trait that has mapped directly to that term.
-First we will look at synonym matching
-```{r SynonymMatch}
-synID = hits$hits$doc_id[hits$hits$sentence==2]
-length(synID)
-
+To obtain the synonyms for any ontology term you can use the getSynonyms function. Notice that some of the synonyms are actually acronyms. This allows you to find features from acronyms.
+```{r GetSynonyms}
+  testID[1]
+  getSynonyms(testID[1])
 ```
 Similary we can look at the other matches, those are the names used for other traits in the GWAS catalog that map directly to the same ontological label.  These should all be in 
 ```{r}
@@ -187,7 +185,7 @@ dim(am[gg,])
 am[gg, "STUDY.ACCESSION"]
 ```
 
-We can compare with what the `gwasrapidd` vignette returns. One thing to notice is that even though the `study_ids` (our STUDY.ACCESSION values) are unique, the PubMed IDs are not. So the GWAS Catalog is supporting the idea that there could be multiple *studies* per paper. That seems like a good idea since some papers will report on GWAS for a variety of diseases, while others are focused on a single disease. When using the`gwasrapidd` package you need to get the text for the EFO term exactly right, there is no partial matching currently implemented.
+We can compare with what the `gwasrapidd` vignette returns. One thing to notice is that even though the `study_ids` (our STUDY.ACCESSION values) are unique, the PubMed IDs are not. So the GWAS Catalog is supporting the idea that there could be multiple *studies* per paper. That seems like a good idea since some papers will report on GWAS for a variety of diseases, while others are focused on a single disease. When using the `gwasrapidd` package you need to get the text for the EFO term exactly right, there is no partial matching currently implemented.
 
 ```{r}
 gwrdd = gwasrapidd::get_studies(efo_trait = 'autoimmune disease')

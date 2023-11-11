@@ -104,6 +104,6 @@ addField2Hits = function(hits, tc) {
   ## find the indices in the tc for each hit
   .i <- tc$get_token_id(doc_id = hits$hits$doc_id,
                     token_id = hits$hits$token_id)
-  hits$hits = cbind(hits$hits, tc$tokens[.i, "field"])
+  hits$hits = cbind(hits$hits, field = tc$tokens[.i, "field"])
   return(hits)
 }
