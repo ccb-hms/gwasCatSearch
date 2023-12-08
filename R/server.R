@@ -105,23 +105,31 @@ server <- function(input, output, session) {
    })
   output$snpviz <- plotly::renderPlotly({
      gwc_gr = gwasCatSearch:::.datacache$gwc_gr
-     snpind = input$snps_rows_selected
-     validate(need(length(snpind)==1, "please select only one SNP for viz"))
+#     snpind = input$snps_rows_selected
+#     validate(need(length(snpind)==1, "please select only one SNP for viz"))
      dat = grab_resources()
-     kp = dat[snpind,]
-     kp$CHR_ID = kp$seqnames
-     kp$CHR_POS = kp$start
-     gwasCatSearch::view_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
+     d4manh = ggmanh::manhattan_data_preprocess(dat, chr.colname="seqnames",
+            pos.colname="start", pval.colname="P.VALUE", chr.order=c(1:22, "X", "Y"))
+     gwasCatSearch::simple_ggmanh(d4manh, y.label="-log10 p", label.colname = "MAPPED_TRAIT")
+
+#
+#
+#
+#     kp = dat[snpind,]
+#     kp$CHR_ID = kp$seqnames
+#     kp$CHR_POS = kp$start
+#     gwasCatSearch::view_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
      })
   output$snptab <- DT::renderDataTable({
      gwc_gr = gwasCatSearch:::.datacache$gwc_gr
      snpind = input$snps_rows_selected
-     validate(need(length(snpind)==1, "please select only one SNP for viz"))
+#     validate(need(length(snpind)==1, "please select only one SNP for viz"))
      dat = grab_resources()
-     kp = dat[snpind,]
+     kp = dat#[snpind,]
      kp$CHR_ID = kp$seqnames
      kp$CHR_POS = kp$start
-     gwasCatSearch::get_variant_context(chr=kp$seqnames, pos=kp$start, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
+     #gwasCatSearch::get_variant_context(chr=kp$seqnames, pos=kp$start, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
+     kp
      })
     
   output$showbuttons <- renderUI({

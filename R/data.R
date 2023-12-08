@@ -39,3 +39,9 @@
 #' data("efo_oi", package="gwasCatSearch")
 #' efo_oi
 "efo_oi"
+
+#' a test data frame for manhattan plotting
+#' @format data.frame
+#' @docType data
+"fdat"
+
