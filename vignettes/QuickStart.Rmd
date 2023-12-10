@@ -35,7 +35,7 @@ We will use the terminology that a study is mapped *directly* to an ontology ter
 The set of study identifiers that come back from that search can then be used to query the annotated GWAS catalog. Studies can be retrieved by direct match between tag and GWAS phenotype, or study retrieval can be based on broader semantic matching using term relationships in the EFO.
 Each study in the GWAS catalog identifies one or more replicated SNP associations. The user is required to select one SNP of interest, and then all catalog-replicated GWAS hits within a 1000kb window of this index SNP are extracted for visualization.
 
-While helpful, we then have the challenge of how to help a researcher find an EFO label that corresponds to a topic they are interested in. To help solve that challenge we took all the EFO term labels and created a searchable corpus using the corpustools R package (<https://cran.r-project.org/web/packages/corpustools/index.html>) so that users can start with ordinary words and then find EFO terms that might be of interest. The output of this search can be accessed programmatically or we provide a conversion to a datatable that can be viewed, sorted and searched.
+While helpful, we then have the challenge of how to help a researcher find an EFO label that corresponds to a topic they are interested in. To help solve that challenge we took all the EFO term labels and created a searchable corpus using the `corpustools` R package (<https://cran.r-project.org/web/packages/corpustools/index.html>) so that users can start with ordinary words and then find EFO terms that might be of interest. The output of this search can be accessed programmatically or we provide a conversion to a datatable that can be viewed, sorted and searched.
 
 ### How the corpus is created
 
@@ -53,15 +53,17 @@ efo_tc$tokens[1,]
 ```
 There are `r nrow(efo_tc$tokens)` places where a token is mapped to one of the three *fields*, the trait (subject), the synonyms or the matched traits.  When we search for some query phrase that generates `hits` and these are matches to the rows of the `efo_tc$tokens` table.
 
-The meta-data tells us about the documents, there are `r nrow(efo_tc$meta)` documents, and the columns identify the ontology label, the IRI, disease location (when it is known) and the number of GWAS catelog traits that map either directly to the ontology label, or the number that are inherited (ie. they map to a more specific term).
+The meta-data tells us about the documents, there are `r nrow(efo_tc$meta)` documents, and the columns identify the ontology label, the IRI, disease location (when it is known) and the number of GWAS catelog traits that map either directly to the ontology label, or the number that are inherited (ie. they map to a more specific term).  This is essentially the same information as is contained in the `efo_df` data frame.
 ```{r tcMeta}
 dim(efo_tc$meta)
 colnames(efo_tc$meta)
 efo_tc$meta[1,]
+dim(efo_df)
+efo_df[1,]
 ```
 ## Searching the corpus
 
-In the first example below we search for any *document* that contains a match to either *granulo\** or *rheum\**. We named these two arguments **Granuloma** and **Rheumatic**. The `summary` function tells how many terms matched and in how many *documents*. We create a table using the `hitsasDT` function and render that using `datatable`. The output is searchable. Under the column labeled **Granuloma** are the actual words that were matched to *granulo\** and under the column labled **Rheumatic** are the words that matched to *rheum\**. The `corpustools` package provides a lot of functionality for mapping back to the *documents* so you can locate exatly where the match appears, and what word in the document actually matched the query. We have some examples below, but here we report simply the set of unique words that were matched, across all documents. This is just intended to be a summary of the results, and if you want to explore further you should refer to the `corpustools` documentation and vignettes.  We have built the corpus with the `split_sentences` argument set to `TRUE` so that we are able to identify which sentences have matches and we also report whether the match was in the subject, synonyms or matched trait labels. 
+In the first example below we search for any *document* that contains a match to either *granulo\** or *rheum\**. We named these two arguments **Granuloma** and **Rheumatic**. The `summary` function tells how many terms matched and in how many *documents*. We create a table using the `hitsasDT` function and render that using `datatable`. The output is searchable. Under the column labeled **Granuloma** are the actual words that were matched to *granulo\** and under the column labled **Rheumatic** are the words that matched to *rheum\**. The `corpustools` package provides a lot of functionality for mapping back to the *documents* so you can locate exactly where the match appears, and what word in the document actually matched the query. We have some examples below, but here we report simply the set of unique words that were matched, across all documents. This is just intended to be a summary of the results, and if you want to explore further you should refer to the `corpustools` documentation and vignettes.  We have built the corpus with the `split_sentences` argument set to `TRUE` so that we are able to identify which sentences have matches and we also report whether the match was in the subject, synonyms or matched trait labels. 
 
 ```{r}
 hits = search_features(efo_tc, query = c('Granuloma# granulo*', 'Rheumatic# rheum*'))
@@ -74,19 +76,22 @@ table(hits$hits$field)
 We can see that there were `r nrow(hits)` hits.
 We also see that most of the hits are in the `Matches` and the `Synonyms` fields, which makes some sense, as these fields will tend to have multiple entries, so there is more text to match. 
 
+Next we show how to map from the hits object to the data.frame that contains the information about the ontology.  This can be done by obtaining the EFO ids for
+terms you are interested in and then using those to select the appropriate rows in the `efo_df` object.  We show the values in the `Object` column of `efo_df` as these are the EFO text description for that EFO term.
+
 ```{r CheckHitsTrait}
 ## obtain the EFO ids for the hits in Object
 testID = as.character(hits$hits$doc_id[hits$hits$field=="Object"])
 length(testID)
 head(efo_df[testID, "Object"])
-
 ```
 
-To obtain the synonyms for any ontology term you can use the getSynonyms function. Notice that some of the synonyms are actually acronyms. This allows you to find features from acronyms.
+The synonyms and the matched traits are not stored in the `efo_df` but you can obtain them using the `getSynonyms` function or the `getMatchedTraits` function, respectively. Notice that some of the synonyms are actually acronyms. This allows users to find features from acronyms. The CURIE identifier for the first element of `testID` is `r testID[1]` and we have seen above that its text description is "rheumatoid arthritis".  We obtain the synonyms for that term in the code below.
 ```{r GetSynonyms}
-  testID[1]
   getSynonyms(testID[1])
 ```
+Where it is clear that these are not all really synonyms, some are the term itself, and at least one (rheumatic gout) seems to be in error, as this is an archaic term for gout, not for rheumatoid arthritis.
+
 Similary we can look at the other matches, those are the names used for other traits in the GWAS catalog that map directly to the same ontological label.  These names are not unique (so there can be repeated values) and there can be spelling or punctuation differences. The function `getMatchedTraits` is vectorized and so returns a list of length equal to the number of provided CURIE symbols.
 
 ```{r matchedTraits}
@@ -94,13 +99,13 @@ mT = getMatchedTraits(testID[1])[[1]]
 length(mT)
 length(unique(mT))
 ```
-In the code below we turn the hits into a searchable datatable.
+In the code below we turn the hits into a searchable datatable.  The code restricts this to the first 100 rows in order to keep the examples small.
 ```{r makeDT}
 hitsasDT = hits2DT(hits, efo_df, efo_tc)
 datatable(hitsasDT[1:100,], escape=FALSE, rownames=FALSE)
 ```
 
-In the next code chunk we search for any EFO labels that match to both *granulo\** and *rheum\**.
+Fairly complex search strategies can be employed, the interested reader is referred to the vignette for the `corpusTools` package as the syntax is quite unique to that package. In the next code chunk we show how an example using **and** where we search for any EFO labels that match to both *granulo\** and *rheum\**.
 
 ```{r searchAND}
 ht2 = search_features(efo_tc, query = "granulo* AND rheum*")
@@ -110,16 +115,8 @@ summary(ht2)
 There are `r summary(ht2)$documents` documents (EFO terms) that matched both, simultaneously.
 
 
-In the next code segment we show how to get the synonyms and the text labels for any phenotypes that have been directly mapped to a specific EFO term. We consider the term EFO:0000095 which is labeled: chronic lymphocytic leukemia.
 
-```{r showSynonymDirectMapping}
-syns = getSynonyms("EFO:0000095")
-length(syns$"EFO:0000095")
-syns$`EFO:0000095`[1:10]
 
-```
-
-We first show 10 of the `r length(syns$"EFO:0000095")` synonyms provided by the EFO ontology.
 
 Next we identify the GWAS catalog studies that were mapped directly to the EFO term EFO:0000095. The function `resources_annotated_with_term` returns a dataframe that contains information such as the GWAS catalog ID, the PubMed ID and so on. GWAS Catalog studies that map to more than one EFO term have the terms concatenated with comma separators. This does make some searching more complicated.
 
@@ -137,7 +134,7 @@ dirMap[idx,]
 
 We see that there are `r nrow(dirMap)` terms that are directly annotated to EFO:0000095. The `DISEASE.TRAIT` column gives the name used for the trait in the paper or analysis being reported on, while the `MAPPED_TRAIT` column gives the text label for the EFO term.
 
-Some of the phenotypes have been mapped to more than one EFO term. One example is the study GCST008721. The title of the accompanying paper is *Genetic overlap between autoimmune diseases and non-Hodgkin lymphoma subtypes*, the PubMed ID is 31407831 and that explains a little of why this particular study is associated with two different EFO terms. They are looking at genetic overlap between two fairly different diseases.
+Some of the phenotypes have been mapped to more than one EFO term. One example is the study GCST008721. The title of the accompanying paper is *Genetic overlap between autoimmune diseases and non-Hodgkin lymphoma subtypes*, which suggests why this particular study is associated with two different EFO terms. The paper reports on the genetic overlap between fairly different types of diseases.
 
 ## Searching for matches from GWAS Catalog hits.
 
@@ -153,6 +150,19 @@ dim(allmatch)
 datatable(head(allmatch,n=20))
 ```
 
+Now we might also want to find the papers that provided these results. For that we can
+look at the PUBMEDID column in the `allmatch` data frame. Where we see that some papers such as PubMedID 27863252 have contributed multiple values. The title of that paper is
+*The Allelic Landscape of Human Blood Cell Trait Variation and Links to Common Complex Disease*, which helps explain why the results have been separated into many different studies.
+
+```{r pubmedforhits}
+table(allmatch$PUBMEDID)
+```
+
+Now we can use the `variants_from_study` function to obtain information on the actual variants that were reported.  FIXME: we probably need to update this to use the DB tables or remove the DB tables and make the data more transparent.
+
+```{r getvariants}
+variants1 = variants_from_study(allmatch[1,1])
+```
 ## Next Steps
 
 Given the Study Accession identifiers we can then access the actual SNPs, the risk alleles get nearby genes and perform a variety of downstream analysis. For this step we currently use the `gwasrapidd` package, which directly queries the EBIs web resources for detailed information. This can lead to small differences between what it reports and the data we have used to build the corpus. The GWAS Catalog releases new data sets fairly regularly while we will rebuild the corpus only a few times per year.

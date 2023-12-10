@@ -19,7 +19,19 @@ library(gwasCatSearch)
 ## Using the ontologies
 The `efo_oi` data set provides access to information about the EFO ontology that has been organized along the lines of the ontologyIndex package from CRAN. In the code below we start with an ontology term print its name and then find the parents and children of that term.
 
-```{r }
+The ontology index contains information about children, parents and ancestors for different terms in an ontology. By default the tool uses *is-a* relationships to define these terms.
+The ontology_index object is just a list of ‘vectors and lists’ of term properties, indexed by the IDs of the terms:
+```{r holder, echo=FALSE}
+##    property     class
+## 1        id character
+## 2      name character
+## 3   parents      list
+## 4  children      list
+## 5 ancestors      list
+## 6  obsolete   logical
+```
+
+```{r , echo=TRUE}
 efo_oi$name["EFO:0000095"]
 efo_oi$children["EFO:0000095"]
 efo_oi$parents["EFO:0000095"]
@@ -58,7 +70,7 @@ We might also wonder if there are GWAS hits for related phenotypes that are in s
 
 Our goal is to find a set of GWAS phenotypes that
 
-```{r parentmappings}
+```{r parentmappings, eval=FALSE}
 query = paste0("SELECT * FROM efo_labels WHERE Subject IN ('",
                 paste(efo_oi$parents[["EFO:0000095"]], collapse = "','"),
                 "')")
@@ -69,7 +81,7 @@ query = paste0("SELECT * FROM efo_labels WHERE Subject IN ('",
 
 Now we can look at some plotting for the graph and manipulations of the EFO tables.
 
-```{r graphPlot}
+```{r graphPlot, eval=FALSE}
 #tags = c("EFO:0003884", "EFO:0004531", "EFO:0005208", "EFO:0009909", "EFO:0021409", #"EFO:0021433")
 ##assign the next one to get back the graph structure that is plotted
 #get "EFO:0000095" and

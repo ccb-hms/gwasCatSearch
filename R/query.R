@@ -159,3 +159,28 @@ getParents = function(Ontonames) {
   ans = dbGetQuery(gwasCatSearch_dbconn(), query)
   return(split(ans$Object, ans$Subject))
 }
+
+#' 
+#' A function to query the uberon_labels table and return the text descriptions for the input Uberon terms
+#' @description
+#' This function provides an interface to the SQL database containing Uberon labels. 
+#' @param UberonIDs a character vector of the ontology CURIE symbols
+#' @details The function selects the appropriate rows from the uberon_labels table.
+#' @return A named vector, names are from the input UberonIDs and the values are the corresponding text descriptions.
+#' @author Robert Gentleman
+#' @examples 
+#' getUberonText(c("UBERON:0001004", "UBERON:0000474"))
+#' @export
+getUberonText = function(UberonIDs) {
+  if (!is.character(UberonIDs) | length(UberonIDs) < 1)
+    stop("incorrect input")
+  query = paste0("SELECT * FROM uberon_labels WHERE Subject IN ('",
+                 paste(UberonIDs, collapse = "','"),
+                 "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), query)
+  rval=ans$Object
+  names(rval) = ans$Subject
+  notmapped = setdiff(UberonIDs, names(rval))
+  rval[notmapped] = NA
+  return(rval)
+}

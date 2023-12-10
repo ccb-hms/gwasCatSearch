@@ -2,9 +2,9 @@
 % Please edit documentation in R/variants_from_study.R
 \name{variants_from_study}
 \alias{variants_from_study}
-\title{given an accession, tabulate variants from GWAS catalog}
+\title{given a set of Study Accession IDs extract the corresponding variants from GWAS catalog}
 \usage{
-variants_from_study(acc = "GCST90131906")
+variants_from_study(acc)
 }
 \arguments{
 \item{acc}{character() accession number(s) by EBI}
@@ -13,7 +13,7 @@ variants_from_study(acc = "GCST90131906")
 a data.frame with relevant information about hits reported in the selected studies
 }
 \description{
-given an accession, tabulate variants from GWAS catalog
+given a set of Study Accession IDs extract the corresponding variants from GWAS catalog
 }
 \examples{
 tab = variants_from_study(acc="GCST007087")

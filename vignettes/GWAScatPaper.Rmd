@@ -2,11 +2,12 @@
 title: "Paper"
 author: "RG"
 date: "2023-06-23"
-vignette: 
+output: rmarkdown::html_vignette
+vignette: >
   %\VignetteIndexEntry{Paper}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-output: html_document
+format: html
 ---
 
 ```{r setup, include=FALSE}
@@ -50,15 +51,14 @@ DT::datatable(head(allmatch,n=20))
 Now we can use the `variants_from_study` function to obtain information about the GWAS hits such as the `rsID`, risk allele and effect size.
 
 ```{r lookupSNP}
-gwc_gr = gwasCatSearch:::.datacache$gwc_gr
-lu1 = variants_from_study(allmatch$STUDY.ACCESSION[1],gwdat=gwc_gr)
+lu1 = variants_from_study(allmatch$STUDY.ACCESSION[1])
 lu1$MAPPED_GENE
 
 ```
 
 And then we can visualize the variant context using `view_variant_context`.
 
-```{r plotContext, echo=FALSE}
+```{r plotContext, echo=FALSE, eval=FALSE}
 view_variant_context(chr=lu1$seqnames[1], pos=lu1$start[1], radius=5e+05,
                      gwdat=gwc_gr, main="Manhattan Plot")
 ```

@@ -1,7 +1,7 @@
 Package: gwasCatSearch
 Type: Package
 Title: A package to support ontological search of the GWAS Catalog
-Version: 0.1.6
+Version: 0.1.7
 Authors@R:
     c(person(given = "Robert",
            family = "Gentleman",
