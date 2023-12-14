@@ -10,12 +10,10 @@ variants_from_study = function (acc)
 {
     if (!is.character(acc) | length(acc) < 1)
      stop("incorrect input")
-    ##con = gwasCatSearch:::.datacache$dbconn
     con = gwasCatSearch_dbconn()
     q1 = paste0("SELECT * FROM gwascatalog_associations WHERE [STUDY.ACCESSION] IN ('",
                 paste(acc, collapse = "','"),
                 "')")
-    ##assocdf = as.data.frame(dplyr::tbl(con, "gwascatalog_associations"))
     assocdf = dbGetQuery(con, q1)
     suppressWarnings({
         assocdf$CHR_POSN = as.numeric(assocdf$CHR_POS)
@@ -23,7 +21,6 @@ variants_from_study = function (acc)
     bad = which(is.na(assocdf$CHR_POSN))
     if (length(bad) > 1) 
         assocdf = assocdf[-bad, ]
-    ##dplyr::filter(assocdf, STUDY.ACCESSION %in% acc)
     assocdf
 }
 
