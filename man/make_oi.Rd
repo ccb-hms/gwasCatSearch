@@ -2,22 +2,27 @@
 % Please edit documentation in R/server.R
 \name{make_oi}
 \alias{make_oi}
-\title{produce an ontology_index instance from GWASCatalogSearchDB sqlite}
+\title{produce an ontology_index instance from GWASCatalogSearchDB sqlite
+using only a vector of EFO curies}
 \usage{
-make_oi(con)
+make_oi(tags)
 }
 \arguments{
 \item{con}{SQLite connection via RSQLite/DBI dbConnect}
 }
 \description{
 produce an ontology_index instance from GWASCatalogSearchDB sqlite
+using only a vector of EFO curies
 }
 \note{
 This is used in the server for the \code{search_gwascat()} app.
 }
 \examples{
-rcon = gwasCatSearch:::.datacache$dbconn
-efo = make_oi(rcon)
-efo$name[1:5]
-efo$children[1:3] # do not disconnect or check will error
+tags = c("DOID:10113", "DOID:7551", 
+     "EFO:0000549", "EFO:0000584", "EFO:0000638", 
+     "EFO:0000650", "EFO:0000694")
+oo = make_oi(tags) 
+oo
+if (requireNamespace("ontoProc"))
+   ontoProc::onto_plot2(oo, names(oo$name))
 }

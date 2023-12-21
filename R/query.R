@@ -305,3 +305,24 @@ EFOdescendants = function( EFOID) {
   names(av) = ans$Object
   return(av)
 }
+
+#' A function to query the efo_labels table and return the term labels for the input EFO IDs
+#' @description
+#' This function provides an interface to the SQL database containing EFO entailed edges. 
+#' @param EFOID a character vector of the EFO CURIE symbols
+#' @details The function returns the set of descendents for the input terms.
+#' @examples
+#' EFOlabels(c("EFO:0000768", "MONDO:0002429"))
+#' @export
+EFOlabels = function (EFOID) 
+{
+    if (!is.character(EFOID) | length(EFOID) < 1) 
+        stop("incorrect input")
+    q1 = paste0("SELECT * from efo_labels where Subject IN ('", 
+        paste(EFOID, collapse = "','"), "')")
+    ans = dbGetQuery(gwasCatSearch_dbconn(), q1)
+    av = ans$Object
+    names(av) = ans$Subject
+    return(av)
+}
+

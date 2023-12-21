@@ -3,6 +3,7 @@
 export(EFOancestors)
 export(EFOchildren)
 export(EFOdescendants)
+export(EFOlabels)
 export(EFOparents)
 export(addField2Hits)
 export(getDiseaseLocation)

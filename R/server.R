@@ -1,21 +1,38 @@
 #' produce an ontology_index instance from GWASCatalogSearchDB sqlite
+#' using only a vector of EFO curies
 #' @importFrom ontologyIndex ontology_index
 #' @importFrom dplyr tbl
 #' @param con SQLite connection via RSQLite/DBI dbConnect
 #' @note This is used in the server for the `search_gwascat()` app. 
 #' @examples
-#' rcon = gwasCatSearch:::.datacache$dbconn
-#' efo = make_oi(rcon)
-#' efo$name[1:5]
-#' efo$children[1:3] # do not disconnect or check will error
+#' tags = c("DOID:10113", "DOID:7551", 
+#"      "EFO:0000278", "EFO:0000342", "EFO:0000405", 
+#'      "EFO:0000549", "EFO:0000584", "EFO:0000638", 
+#'      "EFO:0000650", "EFO:0000694")
+#' oo = make_oi(tags) 
+#' oo
+#' if (requireNamespace("ontoProc"))
+#'    ontoProc::onto_plot2(oo, names(oo$name))
 #' @export
-make_oi = function(con) {
- ll = as.data.frame(tbl(con, "efo_labels"))
- nn = split(ll$Object, ll$Subject)
- ed = as.data.frame(tbl(con, "efo_edges"))
- pl = split(ed$Object, ed$Subject)[names(nn)]
- ontology_index(name=nn, parents=pl)
+make_oi = function (tags) 
+{
+    tags = unique(tags)
+    anc = EFOancestors(tags)
+    cands = c(unique(anc), tags)
+    pars = EFOparents(cands)
+    up = unname(pars)
+    np = names(pars)
+    sp = split(up, np)
+    labs = EFOlabels(names(sp))
+    bad = setdiff(names(sp), names(labs))
+    if (length(bad) > 0) {
+        drop = match(bad, names(sp))
+        sp = sp[-drop]
+        sp = sp[names(labs)]
+    }
+    ontology_index(name = labs, parents = sp)
 }
+
 
 #' this is called by search_gwascat, also symlinked to inst/app2 for shinyapps usage
 #' @param input formal element for shiny server component
@@ -25,8 +42,6 @@ make_oi = function(con) {
 server <- function(input, output, session) {
   data("efo_tc", package = "gwasCatSearch")
   data("efo_df", package = "gwasCatSearch")
-  data("efo_oi", package = "gwasCatSearch")
-  oi = efo_oi
   ntab <- reactive({
    input$submit
    isolate({
@@ -39,11 +54,7 @@ server <- function(input, output, session) {
   output$hits <- DT::renderDataTable(
     ntab(),
     escape = FALSE, rownames=FALSE
-    #   ntab(), escape=FALSE,
-    #                options = list(dom = 'Bfrtip',
-    #               buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))
   )
-
 
   process_annotated <- reactive({
     tab <- ntab()
@@ -77,65 +88,49 @@ server <- function(input, output, session) {
   output$ontoviz <- renderPlot({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
 #    if (!exists("efo")) efo <<- ontoProc::getOnto("efoOnto")
-    data("efo_oi", package="gwasCatSearch")
-    efo = efo_oi
     validate(need(!is.null(input$gbuttons), "Waiting for gbutton UI"))
     last <- process_annotated()
     validate(need(length(input$gbuttons)>1, "only one term present, nothing to plot"))
+    efo = make_oi(input$gbuttons)
     ontoProc::onto_plot2(efo, input$gbuttons)
   })
   grab_resources = reactive({
-     gwc_gr = gwasCatSearch:::.datacache$gwc_gr
-     dat = as.data.frame(gwc_gr)  # fixes names, so STUDY.ACCESSION
+     con = gwasCatSearch_dbconn()
+     dat = dbGetQuery(con, "select * from gwascatalog_associations")
      last <- process_annotated()
      acc = unique(last$accstr[input$resources_rows_selected])
      validate(need(length(input$resources_rows_selected)>0, "no studies selected"))
      dat = dat[which(dat$STUDY.ACCESSION %in% acc),]
      validate(need(nrow(dat)>0, "no values found in SNPS"))
+     dat$seqnames = dat$`CHR_ID`
+     dat$start = as.numeric(dat$`CHR_POS`)
      dat
      })
      
   output$snps <- DT::renderDataTable({
-     fields2use = c("SNPS", "REGION", "CHR_ID", "CHR_POS", "MAPPED_GENE", "CONTEXT",
-            "OR.or.BETA", "INITIAL.SAMPLE.SIZE", "REPLICATION.SAMPLE.SIZE")
+#     fields2use = c("SNPS", "REGION", "CHR_ID", "CHR_POS", "MAPPED_GENE", "CONTEXT",
+#            "OR.or.BETA", "INITIAL.SAMPLE.SIZE", "REPLICATION.SAMPLE.SIZE")
      lk = input$resources_rows_selected  # watch
      dat = grab_resources()
-     #dat[,fields2use]
      dat
    })
   output$snpviz <- plotly::renderPlotly({
-     gwc_gr = gwasCatSearch:::.datacache$gwc_gr
-#     snpind = input$snps_rows_selected
-#     validate(need(length(snpind)==1, "please select only one SNP for viz"))
      dat = grab_resources()
      d4manh = ggmanh::manhattan_data_preprocess(dat, chr.colname="seqnames",
-            pos.colname="start", pval.colname="P.VALUE", chr.order=c(1:22, "X", "Y"))
+            pos.colname="start", pval.colname="P-VALUE", chr.order=c(1:22, "X", "Y"))
      gwasCatSearch::simple_ggmanh(d4manh, y.label="-log10 p", label.colname = "MAPPED_TRAIT")
-
-#
-#
-#
-#     kp = dat[snpind,]
-#     kp$CHR_ID = kp$seqnames
-#     kp$CHR_POS = kp$start
-#     gwasCatSearch::view_variant_context(chr=kp$CHR_ID, pos=kp$CHR_POS, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
      })
   output$snptab <- DT::renderDataTable({
-     gwc_gr = gwasCatSearch:::.datacache$gwc_gr
      snpind = input$snps_rows_selected
-#     validate(need(length(snpind)==1, "please select only one SNP for viz"))
      dat = grab_resources()
-     kp = dat#[snpind,]
+     kp = dat
      kp$CHR_ID = kp$seqnames
      kp$CHR_POS = kp$start
-     #gwasCatSearch::get_variant_context(chr=kp$seqnames, pos=kp$start, radius=5e5, focal_rec=kp, gwdat=gwc_gr)
      kp
      })
     
   output$showbuttons <- renderUI({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
-    data("efo_oi", package="gwasCatSearch")
-    efo <<- efo_oi
     last <- process_annotated()
     u <- unique(last$MAPPED_TRAIT_CURIE) # used to eliminate dups, before commas
 #
@@ -150,6 +145,7 @@ server <- function(input, output, session) {
 #
 # there can be NAs in efo$name[u]
 #
+    efo = make_oi(u)
     en = efo$name[u]
     dr = which(is.na(en))
     if (length(dr)>0) {
@@ -183,25 +179,5 @@ server <- function(input, output, session) {
   output$sessinf = renderPrint({
     sessionInfo()
     })
-
-#
-# potential approach for multiple input boxes
-#  ids <<- NULL
-#
-#  observeEvent(input$addInput,{
-#    print(ids)
-#    if (is.null(ids)){
-#      ids <<- 1
-#    }else{
-#      ids <<- c(ids, max(ids)+1)
-#    }
-#    output$newInps <- renderUI({
-#      tagList(
-#        lapply(1:length(ids),function(i){
-#          textInput(paste0("txtInput",ids[i]), sprintf("query #%d",ids[i]+1))
-#        })
-#      )
-#    })
-#  })
 
 }
