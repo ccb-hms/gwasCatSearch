@@ -2,8 +2,8 @@
 #' using only a vector of EFO curies
 #' @importFrom ontologyIndex ontology_index
 #' @importFrom dplyr tbl
-#' @param con SQLite connection via RSQLite/DBI dbConnect
-#' @note This is used in the server for the `search_gwascat()` app. 
+#' @param tags character() vector of `XXX:nnnnnnn` tags where
+#' the XXX are prefixes of CURIE tags, such as `EFO` or `DOID`.
 #' @examples
 #' tags = c("DOID:10113", "DOID:7551", 
 #"      "EFO:0000278", "EFO:0000342", "EFO:0000405", 
@@ -87,7 +87,6 @@ server <- function(input, output, session) {
   })
   output$ontoviz <- renderPlot({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
-#    if (!exists("efo")) efo <<- ontoProc::getOnto("efoOnto")
     validate(need(!is.null(input$gbuttons), "Waiting for gbutton UI"))
     last <- process_annotated()
     validate(need(length(input$gbuttons)>1, "only one term present, nothing to plot"))

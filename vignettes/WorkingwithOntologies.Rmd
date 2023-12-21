@@ -4,7 +4,7 @@ author: "Robert"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{gwasCatSearch Working with Ontologies}
+  %\VignetteIndexEntry{Working with Ontologies}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 format: html
@@ -17,7 +17,8 @@ library(gwasCatSearch)
 ```
 
 ## Using the ontologies
-The `efo_oi` data set provides access to information about the EFO ontology that has been organized along the lines of the ontologyIndex package from CRAN. In the code below we start with an ontology term print its name and then find the parents and children of that term.
+We have functions that allow
+exploration of the EFO ontology along the lines of the ontologyIndex package from CRAN. In the code below we start with an ontology term print its name and then find the parents and children of that term.
 
 The ontology index contains information about children, parents and ancestors for different terms in an ontology. By default the tool uses *is-a* relationships to define these terms.
 The ontology_index object is just a list of ‘vectors and lists’ of term properties, indexed by the IDs of the terms:
@@ -32,15 +33,24 @@ The ontology_index object is just a list of ‘vectors and lists’ of term prop
 ```
 
 ```{r , echo=TRUE}
-efo_oi$name["EFO:0000095"]
-efo_oi$children["EFO:0000095"]
-efo_oi$parents["EFO:0000095"]
+EFOlabels("EFO:0000095")
+EFOchildren("EFO:0000095")
+EFOparents("EFO:0000095")
+```
+We'll produce a "little" ontology_index instance for
+illustration.
+```{r dolit}
+litoi = make_oi("EFO:0000095") 
+litoi
 ```
 One of the parents of `EFO:0000095` is `EFO:0000220` and we can see how many children it has
 by using the `children` table in the ontology index.
+```{r chk}
+litoi$children["EFO:0000095"]
+```
 If we use the `[[` accessor then we just get the vector of children. If instead we use the `[` accessor then we would get a list that is named by the input vector of terms where each element is the vector of children for the corresponding EFO term.
 ```{r}
-x1 = efo_oi$children[["EFO:0000220"]]
+x1 = litoi$children[["EFO:0000220"]]
 
 x1
 ```
@@ -72,7 +82,7 @@ Our goal is to find a set of GWAS phenotypes that
 
 ```{r parentmappings, eval=FALSE}
 query = paste0("SELECT * FROM efo_labels WHERE Subject IN ('",
-                paste(efo_oi$parents[["EFO:0000095"]], collapse = "','"),
+                paste(litoi$parents[["EFO:0000095"]], collapse = "','"),
                 "')")
  pans = DBI::dbGetQuery(gwasCatSearch_dbconn(), query)
  pans$Direct
@@ -87,7 +97,7 @@ Now we can look at some plotting for the graph and manipulations of the EFO tabl
 #get "EFO:0000095" and
 tags = c(x1, "EFO:0000095")
 ##plotTags seems to cause some big download
-xt = plotTags(tags)
+xt = plotTags(tags) ## could use make_oi and onto_plot2
 nn = graph::nodes(xt)
 ##nodes have long names - suitable for printing we just want the CURIEs
 v1 = strsplit(nn, "\n")

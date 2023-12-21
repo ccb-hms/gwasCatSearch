@@ -8,14 +8,12 @@ using only a vector of EFO curies}
 make_oi(tags)
 }
 \arguments{
-\item{con}{SQLite connection via RSQLite/DBI dbConnect}
+\item{tags}{character() vector of \code{XXX:nnnnnnn} tags where
+the XXX are prefixes of CURIE tags, such as \code{EFO} or \code{DOID}.}
 }
 \description{
 produce an ontology_index instance from GWASCatalogSearchDB sqlite
 using only a vector of EFO curies
-}
-\note{
-This is used in the server for the \code{search_gwascat()} app.
 }
 \examples{
 tags = c("DOID:10113", "DOID:7551", 

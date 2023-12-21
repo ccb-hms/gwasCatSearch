@@ -1,5 +1,5 @@
 ## define the globals
- globalVariables(c("efo", "efo_df", "efo_oi", "efo_tc", "mlogp"))
+ globalVariables(c("efo", "efo_df", "efo_tc", "mlogp"))
 
 ## internal helper function used to build the two data resources - this
 ## function needs to be run and the data updated whenever a new database is obtained

@@ -25,7 +25,6 @@ The query
 
 
 ```{r }
-
 q1 = "(glomerul* AND filtration) OR urate OR (chronic AND kidney AND disease) OR (urea AND nitrogen)"
 hts = search_features(efo_tc, query = q1)
 hitsasDT = hits2DT(hts, efo_df, efo_tc)
@@ -51,16 +50,15 @@ DT::datatable(head(allmatch,n=20))
 Now we can use the `variants_from_study` function to obtain information about the GWAS hits such as the `rsID`, risk allele and effect size.
 
 ```{r lookupSNP}
-lu1 = variants_from_study(allmatch$STUDY.ACCESSION[1])
+lu1 = variants_from_study(allmatch$STUDY.ACCESSION)
+names(lu1)
 lu1$MAPPED_GENE
-
 ```
 
-And then we can visualize the variant context using `view_variant_context`.
+And then we can visualize these variants using `simple_ggmanh`:
 
-```{r plotContext, echo=FALSE, eval=FALSE}
-view_variant_context(chr=lu1$seqnames[1], pos=lu1$start[1], radius=5e+05,
-                     gwdat=gwc_gr, main="Manhattan Plot")
+```{r plotContext, echo=FALSE, eval=TRUE}
+simple_ggmanh(lu1, label.colname="MAPPED_TRAIT")
 ```
 
 ## Perhaps there are other terms that are interesting

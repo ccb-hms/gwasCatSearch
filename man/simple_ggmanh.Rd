@@ -5,14 +5,16 @@
 \title{produce plotly-capable manhattanplot based on ggmanh}
 \usage{
 simple_ggmanh(
-  x,
+  indf,
+  pos.colname = "CHR_POS",
+  chr.colname = "CHR_ID",
   chromosome = NULL,
   rescale = TRUE,
   rescale.ratio.threshold = 5,
   signif.rel.pos = 0.4,
   color.by.highlight = FALSE,
   label.colname = NULL,
-  pval.colname = "P.VALUE",
+  pval.colname = "P-VALUE",
   x.label = "Chromosome",
   y.label = "-log10 p",
   point.size = 0.75,
@@ -25,7 +27,11 @@ simple_ggmanh(
 )
 }
 \arguments{
-\item{x}{MPdata instance from ggmanh::manhattan_data_preprocess}
+\item{indf}{data.frame as produced by \code{variants_from_study}}
+
+\item{pos.colname}{character(1) defaults to "CHR_POS"}
+
+\item{chr.colname}{character(1) defaults to "CHR_ID"}
 
 \item{chromosome}{character(1) or NULL, should be removed for gwasCatSearch}
 
@@ -64,13 +70,13 @@ produce plotly-capable manhattanplot based on ggmanh
 }
 \note{
 Association records with missing p-values are eliminated before
-plotting.
+plotting.  Note also that the position column in \code{indf} is coerced to numeric mode.
 }
 \examples{
-data(fdat)
-dd = ggmanh::manhattan_data_preprocess(fdat, chr.colname="seqnames",
-   pos.colname="start", pval.colname="P.VALUE", chr.order=c(1:22, "X", "Y"))
-ww = simple_ggmanh(dd, y.label="-log10 p", 
-       label.colname = "MAPPED_TRAIT", pval.colname="P.VALUE")
+con = gwasCatSearch_dbconn()
+toprecs = DBI::dbGetQuery(con, "select * from gwascatalog_associations limit 20")
+toprecs$CHR_POS = as.numeric(toprecs$CHR_POS)
+ww = simple_ggmanh(toprecs, y.label="-log10 p", 
+       label.colname = "MAPPED_TRAIT", pval.colname="P-VALUE")
 plotly::ggplotly(ww, tooltip="text")
 }

@@ -29,19 +29,3 @@
 #' ht2 <- search_features(efo_tc, query = "infectious* AND pancrea*")
 #' summary(ht2)
 "efo_tc"
-
-#' a static instance of an ontology_index representing the
-#' EFO "is-a" content from the SQLite database
-#' @format ontologyIndex ontology_index instance
-#' @note Should be regenerated and stored whenever EFO content of the
-#' database changes.
-#' @examples
-#' data("efo_oi", package="gwasCatSearch")
-#' efo_oi
-"efo_oi"
-
-#' a test data frame for manhattan plotting
-#' @format data.frame
-#' @docType data
-"fdat"
-
