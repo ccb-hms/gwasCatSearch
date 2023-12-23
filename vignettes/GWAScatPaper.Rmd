@@ -25,10 +25,11 @@ The query
 
 
 ```{r }
+
 q1 = "(glomerul* AND filtration) OR urate OR (chronic AND kidney AND disease) OR (urea AND nitrogen)"
 hts = search_features(efo_tc, query = q1)
 hitsasDT = hits2DT(hts, efo_df, efo_tc)
-DT::datatable(hitsasDT, escape=FALSE, rownames=FALSE)
+DT::datatable(hitsasDT[1:100,], escape=FALSE, rownames=FALSE)
 ```
 
 At this point all we have done is asked which terms in the ontology match our search. The next part of the process is to identify which, if any, of those terms have studies in the GWAS catalog that actually map to that term. 
@@ -38,6 +39,7 @@ The mapping can come in two ways:
 
 ## Mapping to the Ontologies and finding the roll-ups
 
+Here we look for GWAS hits that map to the EFO term `EFO:0009909`, which is the trait *chronic kidney disease*. We use the `resources_annotated_with_term` function to find all studies that are mapped to this term.
 
 ```{r pressure, echo=FALSE}
 ematch = resources_annotated_with_term("EFO:0009909", include_subclasses=FALSE)
@@ -47,19 +49,14 @@ dim(allmatch)
 DT::datatable(head(allmatch,n=20))
 ```
 
+
+
+
 Now we can use the `variants_from_study` function to obtain information about the GWAS hits such as the `rsID`, risk allele and effect size.
 
-```{r lookupSNP}
-lu1 = variants_from_study(allmatch$STUDY.ACCESSION)
-names(lu1)
-lu1$MAPPED_GENE
-```
 
-And then we can visualize these variants using `simple_ggmanh`:
 
-```{r plotContext, echo=FALSE, eval=TRUE}
-simple_ggmanh(lu1, label.colname="MAPPED_TRAIT")
-```
+
 
 ## Perhaps there are other terms that are interesting
 
@@ -67,6 +64,57 @@ simple_ggmanh(lu1, label.colname="MAPPED_TRAIT")
 q2 = "Infectious AND disease"
 hts2 = search_features(efo_tc, query = q2)
 hitsasDT2 = hits2DT(hts2, efo_df, efo_tc)
-DT::datatable(hitsasDT2, escape=FALSE, rownames=FALSE)
+DT::datatable(hitsasDT2[1:100,], escape=FALSE, rownames=FALSE)
 ```
 
+Now lets get all the EFO terms and then get the resources that are annotated at those terms.
+When obtaining the hits, we want to include all the subclasses, so we get everything that is either mapped to directly or a more specific description and hence should also be an infectious disease. We will then drop any duplicated studies and extract the SNPs reported for each study.
+```{r getresources}
+efo2 = unique(as.character(hts2$hits$doc_id))
+ra2 = resources_annotated_with_term(efo2)
+
+assoc2 <- granges_from_study(ra2$STUDY.ACCESSION)
+assoc3 = assoc2[assoc2$P.VALUE<1e-8,]
+##look at all the associations
+NROW(assoc3)
+##how many are reported more than once...
+sum(duplicated(assoc3$SNP_ID_CURRENT))
+##and produce a plot
+pp = ggmanh::manhattan_data_preprocess(assoc3, pval.colname="P.VALUE")
+ggmanh::manhattan_plot(pp, plot.title="Infectious Diseases")
+```
+
+Then one can also look at whether the same genes are implicated across studies.
+Note that there are `r NROW(assoc3)` associations that are plotted. The interested reaader can explore a number of different aspects of these mappings.
+
+```{r lookatHits}
+sort(table(assoc3$MAPPED_GENE),dec=TRUE)[1:10]
+tt = sort(table(assoc3$MAPPED_TRAIT_CURIE), dec=TRUE)
+tt[1:10]
+```
+
+Then look at some of the traits that show up often.  The top two hits are for lymphocyte counts. Out of the top 10, only one seems to actually be an infectious disease. The others are autoimmune, COPD, and measurements of lymphocytes. 
+```{r maptotraits}
+efo_df[names(tt)[1],]
+efo_df[names(tt)[2],]
+
+```
+
+So, we might want to be able to find out how COPD gets mapped in to infectious disease. Could these be the result of some of the more complex comparisons that get reported.
+Maybe we need to cull the studies that have multiple traits associated with them.
+
+Returning to the example from the Quick Start vignette. Where we saw that some studies
+have been mapped to more than one EFO term. For study GCST008721, the title of the accompanying paper is *Genetic overlap between autoimmune diseases and non-Hodgkin lymphoma subtypes*, which suggests why this particular study is associated with two different EFO terms.
+
+So, we might want to include this study in an infectious disease analysis, or in a study of the genetics of non-Hodgkin lymphoma, but we probably would not want to pull in all papers that reported on non-Hodgkin lymphoma.
+
+
+
+Maybe what will work here is splitting by commas then trying to find out if each term on its own will map to an infectious disease.
+
+
+```{r multipletraits}
+mtraits = assoc3$MAPPED_TRAIT_CURIE
+g1 = grepl(",", mtraits, fixed=TRUE)
+mtraits = unique(mtraits[g1])
+```
