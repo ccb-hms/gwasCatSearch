@@ -53,6 +53,56 @@
   return(efo_tc)
 }
 
+##make a searchable corpus based on the GWAS catalog entries
+##there are repeated STUDY.ACCESSION values because we have unrolled
+##the EFO labels
+.makeGWCcorpus = function(path = getwd(), use_stemming = TRUE, remove_stop_words = TRUE, save = TRUE) {
+  gwc_df <- dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from gwascatalog_mappings")
+  ##get the CURIEs mapped to each study
+  studyCuries = split(gwc_df$MAPPED_TRAIT_CURIE, gwc_df$STUDY.ACCESSION)
+  
+  ## Synonyms = efo_synonyms is very large - many ontologies
+  efo_syn <- dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from efo_synonyms")
+  efo_syn = efo_syn[efo_syn$Subject %in% gwc_df$MAPPED_TRAIT_CURIE,]
+   ##unroll this and then paste together all synonyms - use punctuation as a separator since
+  ##is should get ignored by corpus tools
+  sp1 = split(efo_syn[,2], efo_syn[,1], drop=TRUE)
+  ##collapse terms into a single value
+  sp3 = sapply(sp1, function(x) paste(x, collapse=" *:* "))
+  ##add in all the other CURIEs with no synonyms - as the empty string
+  extras = setdiff(gwc_df$MAPPED_TRAIT_CURIE, names(sp3))
+  nv = as.vector(mode="list", rep("", length(extras)))
+  names(nv) = extras
+  sp3 = c(sp3, nv)
+  synperstudy = sapply(studyCuries, 
+                       function(x)
+                         sapply(sp3[x], function(y) paste(y, collapse=" *::* "))
+  )
+  mtraitperstudy = sapply(studyCuries,
+                          function(x) paste(efo_df[x, "Object"], collapse=" *:* "))
+ ##Build up a set of matched traits
+  ##split them by the CURIE they map to
+  xx = unique(gwc_df[,c(1,2)])
+  row.names(xx) = xx[,1]
+  mm = match(names(synperstudy), row.names(xx))
+  xx$Synonyms = ""
+  xx$Synonyms[mm] = synperstudy
+  xx$Trait = ""
+  mm = match(names(mtraitperstudy), row.names(xx))
+  xx$Trait[mm] = mtraitperstudy
+  
+  gwc_tc <- corpustools::create_tcorpus(xx, doc_column = "STUDY.ACCESSION", 
+                                        text_columns = c("DISEASE.TRAIT", "Synonyms", "Trait"),
+                                        remember_spaces=TRUE, split_sentences=TRUE)
+  gwc_tc$preprocess(use_stemming = use_stemming, remove_stopwords = remove_stop_words)
+  
+  if (save) {
+    save(gwc_tc, file = paste0(path, "/gwc_tc.rda"), compress = "xz")
+    save(xx, file = paste0(path, "/xx.rda"), compress = "xz")
+  }
+  return(gwc_tc)
+}
+ 
 ##stash a few commands to get data in R
 ## gwascatmeta = RSQLite::dbGetQuery(gwasCatSearch:::gwasCatSearch_dbconn(), 
 ##                 "SELECT * from gwascatalog_metadata")
@@ -93,6 +143,7 @@ getSynonyms = function(Ontonames) {
 #' @author Robert Gentleman
 #' @examples 
 #' getMatchedTraits(c("EFO:0000094", "EFO:0000095"))
+#' ckdMatches = getMatchedTraits("EFO:0003884")
 #' @export
 getMatchedTraits = function(Ontonames) {
   if( !is.character(Ontonames) || (length(Ontonames)<1) )

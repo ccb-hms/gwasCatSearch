@@ -21,6 +21,7 @@ The function extracts the matches, groups them by EFO CURIE label and returns a 
 }
 \examples{
 getMatchedTraits(c("EFO:0000094", "EFO:0000095"))
+ckdMatches = getMatchedTraits("EFO:0003884")
 }
 \author{
 Robert Gentleman

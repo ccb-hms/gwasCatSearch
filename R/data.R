@@ -29,3 +29,15 @@
 #' ht2 <- search_features(efo_tc, query = "infectious* AND pancrea*")
 #' summary(ht2)
 "efo_tc"
+
+#' A tCorpus object built using GWAS Catalog Studies.
+#' @docType data
+#' @format a tCorpus R6 object where documents are GWAS Catalog studies, suitable for searching
+#' @seealso [efo_tc], [corpustools::tCorpus()]
+#' @source The data are created from `gwc_tc`
+#' @references GWAS catalog: https://www.ebi.ac.uk/gwas/
+#' @examples
+#' gwc_tc
+#' htg <- search_features(gwc_tc, query = "leuk*")
+#' summary(htg)
+"gwc_tc"

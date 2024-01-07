@@ -17,11 +17,14 @@ library("DT")
 ```
 
 ## Example 1
+Here we use the EFO (ontology) labels as the basis for constructing our searchable corpus.
+This probably has some uses, but it does not seem to be as helpful as it could be.
+
 Example in kidney function traits (Li et al., 2020) PMID 32764137
+Chronic Kidney Disease is now problematic - there are 7K studies
+The query:
 
-The query
-
-(glomerul* AND filtration) OR urate OR (chronic AND kidney AND disease) OR (urea AND nitrogen) produces, via search_features and hits2DT, 7 ontologic tags:
+(glomerul* AND filtration) OR urate OR (chronic AND kidney AND disease) OR (urea AND nitrogen) produces, via `search_features` and `hits2DT`, 7 ontologic tags:
 
 
 ```{r }
@@ -36,6 +39,20 @@ At this point all we have done is asked which terms in the ontology match our se
 The mapping can come in two ways:
 - direct: the study was mapped to that term specifically
 - indirect: the study maps to a term because it mapped directly to a more specific term and hence it is inferred to map to the current ontology term.
+
+Let's try to understand how we got to seven thousand studies and why 40 are mapped directly to Gout.
+```{r exploreMappings}
+##get all traits that mapped directly to CKD
+z2 =getMatchedTraits(c("EFO:0003884"))
+
+##we see gout show up in our datatable - 40 direct and 1 inherited
+##this code gets the traits that map directly to Gout
+dirMap = resources_annotated_with_term("EFO:0004274", include_subclasses=FALSE)
+##first should be 40
+length(unique(dirMap$STUDY.ACCESSION))
+##second is 22 - 12/31/23 - 
+length(unique(dirMap$PUBMEDID))
+```
 
 ## Mapping to the Ontologies and finding the roll-ups
 
@@ -118,3 +135,36 @@ mtraits = assoc3$MAPPED_TRAIT_CURIE
 g1 = grepl(",", mtraits, fixed=TRUE)
 mtraits = unique(mtraits[g1])
 ```
+
+## Pivot to a corpus based on the GWAS Catalog study IDs.
+
+Here, we build a corpus based on the GWAS study IDs.
+The internal function to do this is `.makeGWCcorpus`, which will create a corpus
+where for each study (e.g. GCST006286), we that there are two entries for this study
+representing two distinct mappings of the study disease trait to different ontology terms.
+
+```{r GWCexp1}
+dbGetQuery = DBI::dbGetQuery
+gwc_df <- dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from gwascatalog_mappings")
+mm = match("GCST006286", gwc_df$STUDY.ACCESSION)
+gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST006286"),]
+```
+
+We assemble the DISEASE.TRAIT, the MAPPED_TRAIT and all synonyms for these terms
+that have been provided by the ontologies.  These three sets of descriptions are used
+when searching the corpus for matches. 
+
+Thus, we can find studies that have good matches to the input terms. But this would not
+allow us to find studies that have been mapped to terms that are related to these through
+the ontology.  Here we are just making use of the ontologies to give us synonyms.
+
+```{r GWCexp2}
+##find all the studies that map to leukemia
+htl = search_features(gwc_tc, query="leuk*")
+htlf = addField2Hits(htl, gwc_tc)
+tt = table(htlf$hits$field)
+tt
+```
+There were `r length(unique(htlf$hits$doc_id))` unique documents that were identified.
+We can see that there were `r tt["DISEASE.TRAIT"]` cases where a match was to the DISEASE.TRAIT,
+`r tt["Synonyms"]` matches to synonyms provided by the ontologies, and `r tt["Trait"]` matches to the text description used by the ontology for the trait.
