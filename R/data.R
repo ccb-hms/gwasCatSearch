@@ -41,3 +41,22 @@
 #' htg <- search_features(gwc_tc, query = "leuk*")
 #' summary(htg)
 "gwc_tc"
+
+
+#' 
+#' A data frame containing the GWAS catalog studies and EFO mappings
+#' @docType data
+#' @format A data frame with observations on
+#' \describe{
+#'    \item{\code{STUDY.ACCESSION}}{The GWAS Catalog ID.}
+#'    \item{\code{DISEASE.TRAIT}}{The text description for the trait being studied.}
+#'    \item{\code{MAPPED_TRAIT}}{The text description of EFO term mapped to that trait.}
+#'    \item{\code{MAPPED_TRAIT_URI}}{The URI for the mapped EFO term.}
+#'    \item{\samp{MAPPED_TRAIT_CURIE}}{The CURIE for the mapped EFO term.}
+#' }
+#' @note We use mappings from study defined traits to EFO as provided by the GWAS Catalog
+#' @source EFO: https://www.ebi.ac.uk/efo/
+#' @keywords datasets
+#' @export
+"gwc_df" 
+

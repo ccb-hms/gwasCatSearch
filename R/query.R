@@ -1,5 +1,5 @@
 ## define the globals
- globalVariables(c("efo", "efo_df", "efo_tc", "mlogp"))
+ globalVariables(c("efo", "efo_df", "efo_tc", "gwc_df", "mlogp"))
 
 ## internal helper function used to build the two data resources - this
 ## function needs to be run and the data updated whenever a new database is obtained
@@ -64,8 +64,8 @@
   ## Synonyms = efo_synonyms is very large - many ontologies
   efo_syn <- dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from efo_synonyms")
   efo_syn = efo_syn[efo_syn$Subject %in% gwc_df$MAPPED_TRAIT_CURIE,]
-   ##unroll this and then paste together all synonyms - use punctuation as a separator since
-  ##is should get ignored by corpus tools
+  ##unroll this and then paste together all synonyms - use punctuation as a separator since
+  ##it should get ignored by corpus tools
   sp1 = split(efo_syn[,2], efo_syn[,1], drop=TRUE)
   ##collapse terms into a single value
   sp3 = sapply(sp1, function(x) paste(x, collapse=" *:* "))
@@ -98,7 +98,7 @@
   
   if (save) {
     save(gwc_tc, file = paste0(path, "/gwc_tc.rda"), compress = "xz")
-    save(xx, file = paste0(path, "/xx.rda"), compress = "xz")
+    #save(gwc_df, file = paste0(path, "/gwc_df.rda"), compress = "xz")
   }
   return(gwc_tc)
 }

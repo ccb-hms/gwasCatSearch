@@ -146,7 +146,6 @@ representing two distinct mappings of the study disease trait to different ontol
 ```{r GWCexp1}
 dbGetQuery = DBI::dbGetQuery
 gwc_df <- dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from gwascatalog_mappings")
-mm = match("GCST006286", gwc_df$STUDY.ACCESSION)
 gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST006286"),]
 ```
 

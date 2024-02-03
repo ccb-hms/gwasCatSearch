@@ -12,6 +12,8 @@
 #' @export
 gwasCatSearch_dbconn <- function() .datacache$dbconn
 
+gwc_df <-NULL
+
 .onLoad <- function(libname, pkgname) {
   ## Connect to the SQLite DB
   ## shipped in package as a gzipped tarfile that will be untarred into temp dir
@@ -27,7 +29,12 @@ gwasCatSearch_dbconn <- function() .datacache$dbconn
     dbname = dbfile, cache_size = 64000L,
     synchronous = "off", flags = RSQLite::SQLITE_RO
   )
+ 
   assign("dbconn", dbconn, envir = .datacache)
+  ##no idea why we can't do this one
+  ns = topenv()
+  ns$gwc_df = dbGetQuery(dbconn, "SELECT * from gwascatalog_mappings")
+
 ## drop caching of the large granges object
 #  assoc_gr = assocgr_from_db()
 #  assign("gwc_gr", assoc_gr, envir = .datacache)
