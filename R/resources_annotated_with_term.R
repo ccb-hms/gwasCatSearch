@@ -28,6 +28,8 @@
 #' ematch <- resources_annotated_with_term("EFO:0005297", include_subclasses = FALSE)
 #' dim(ematch)
 #' ematch[1, ]
+#' em2 <- resources_annotated_with_term(c("EFO:1000830", "EFO:0004239"), include_subclasses=TRUE)
+#' em3 <- resources_annotated_with_term(c("EFO:0004220", "EFO:1000049"), include_sublasses=FALSE)
 #' @export
 resources_annotated_with_term <-
   function(search_terms,
@@ -84,6 +86,9 @@ resources_annotated_with_term <-
         tWhere2 = paste0(" OR ee.Object = \'", stsub, "\'")
         testWhere = paste0(testWhere, tWhere2, collapse=" ")
       }
+      ##now if we have more than one thing in testWhere - collapse
+      if(!include_subclasses && length(testWhere)>1)
+        testWhere = paste0(testWhere, collapse=" ")
 
       #Rafael's version - but the for loop is a bit messy and possibly inefficient
       # index <- 0

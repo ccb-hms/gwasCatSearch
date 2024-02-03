@@ -21,10 +21,10 @@ Here we use the EFO (ontology) labels as the basis for constructing our searchab
 This probably has some uses, but it does not seem to be as helpful as it could be.
 
 Example in kidney function traits (Li et al., 2020) PMID 32764137
-Chronic Kidney Disease is now problematic - there are 7K studies
+Chronic Kidney Disease is now problematic - there are 7K EFO terms that are found.
 The query:
 
-(glomerul* AND filtration) OR urate OR (chronic AND kidney AND disease) OR (urea AND nitrogen) produces, via `search_features` and `hits2DT`, 7 ontologic tags:
+(glomerul* AND filtration) OR urate OR (chronic AND kidney AND disease) OR (urea AND nitrogen) produces, via `search_features` and `hits2DT`, retrieves a table with over 7,000 rows.
 
 
 ```{r }
@@ -32,10 +32,50 @@ The query:
 q1 = "(glomerul* AND filtration) OR urate OR (chronic AND kidney AND disease) OR (urea AND nitrogen)"
 hts = search_features(efo_tc, query = q1)
 hitsasDT = hits2DT(hts, efo_df, efo_tc)
+nrow(hitsasDT)
 DT::datatable(hitsasDT[1:100,], escape=FALSE, rownames=FALSE)
 ```
 
-At this point all we have done is asked which terms in the ontology match our search. The next part of the process is to identify which, if any, of those terms have studies in the GWAS catalog that actually map to that term. 
+At this point all we have done is asked which EFO terms match our search. And by match our search we mean that one or more of the elements of the text search is found in either the name of the EFO term, the EFO provided synonyms for that term, or the names of the set of GWAS catalog studies that the EBI has annotated with that same term.
+
+Each term in the EFO ontology has:
+1) a name
+2) a set of known synonyms (provided by the ontology)
+3) we can determine all studies that the EBI has mapped to that term and these would all, at least in some reasonable sense, also be synonyms for the EFO term.
+
+```{r tryChildren}
+#first find the EFO term for infectious diseases
+gg = grep("^infectious disease$", efo_df$Object, ignore.case=TRUE )
+efo_df[gg,]
+
+##now look at all the more specific terms
+z2 = EFOdescendants("EFO:0005741")
+length(z2)
+
+efo_id = efo_df[z2,]
+##d
+## how many studies map directly to one of these terms
+table(efo_id$Direct)
+## one has 249 - and it is COVID, which makes some sense
+efo_id[which.max(efo_id$Direct),]
+
+##drop those with 0 mapping to them
+efo_ids = efo_id[efo_id$Direct>0,]
+##now how do we get all of those studies and do a Manhattan plot on them.
+
+dirMap = resources_annotated_with_term(efo_ids$Subject, include_subclasses=FALSE)
+dim(dirMap)
+
+```
+
+##FIXME: need some way to look at the text descriptions and see if they are sensible
+
+
+```
+
+Where this can go wrong is that the synonyms might be inaccurate and some investigation suggests that this true in many cases.  
+
+The next part of the process is to identify which, if any, of those terms have studies in the GWAS catalog that actually map to that term. 
 The mapping can come in two ways:
 - direct: the study was mapped to that term specifically
 - indirect: the study maps to a term because it mapped directly to a more specific term and hence it is inferred to map to the current ontology term.
