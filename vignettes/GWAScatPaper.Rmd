@@ -68,12 +68,19 @@ pmtab[1:10]
 ```
 
 And now we see that there are in fact `r length(gg)` terms that have been labeled this way. Further,
-if we look at the PUBMEDIDs associated with these traits we see that there are `r sum(pmtab>1000)` papers that report more than 1000 traits.
+if we look at the PUBMEDIDs associated with these traits we see that there are `r sum(pmtab>1000)` papers that report more than 1000 traits.  Given the PubMed IDs it is easy to find the papers. 
+
+We can then create
+```{r ckdmanh, plot=TRUE}
+vars = variants_from_study(gwc_df$STUDY.ACCESSION[gg])
+simple_ggmanh(vars, y.label="-log10 p", plot.title = "Chronic Kidney Disease",
+       label.colname = "MAPPED_TRAIT", pval.colname="P-VALUE")
+
+```
 
 So from the datatable we can see that the EFO label for chronic kidney disease is EFO:0003884 and that there were 71 studies that mapped directly to that term, and 47	that are associated with that term, but likely were mapped to more specific types of chronic kidney disease (FIXME: is it easy to figure out what those reall were mapped to?).  Next we want to look at the studies that were 
 
 ```{r findresources}
-ht1 = 
 #find the resources annotated with this term
 dirMap = resources_annotated_with_term("EFO:0003884", include_subclasses=FALSE)
 #see if any papers are giving rise to multple studies
@@ -86,21 +93,8 @@ dim(vv)
 
 
 
-Chronic Kidney Disease is now problematic - there are 7K EFO terms that are found.
-The query:
 
-(glomerul* AND filtration) OR urate OR (chronic AND kidney AND disease) OR (urea AND nitrogen) produces, via `search_features` and `hits2DT`, retrieves a table with over 7,000 rows.
-
-
-```{r }
-
-q1 = "(glomerul* AND filtration) OR urate OR (chronic AND kidney AND disease) OR (urea AND nitrogen)"
-hts = search_features(efo_tc, query = q1)
-hitsasDT = hits2DT(hts, efo_df, efo_tc)
-nrow(hitsasDT)
-DT::datatable(hitsasDT[1:100,], escape=FALSE, rownames=FALSE)
-```
-
+## Vague Study Definitions
 
 Now, one challenge might be that some of the EFO terms are just too vague, and have too many studies that map to them.  We report on those with more than 500 directly mapping studies in the code below.
 
@@ -169,7 +163,7 @@ length(unique(dirMap$PUBMEDID))
 
 ## Mapping to the Ontologies and finding the roll-ups
 
-Here we look for GWAS hits that map to the EFO term `EFO:0009909`, which is the trait *chronic kidney disease*. We use the `resources_annotated_with_term` function to find all studies that are mapped to this term.
+Here we look for GWAS hits that map to the EFO term `EFO:0009909`, which is the trait *stage 5chronic kidney disease*. We use the `resources_annotated_with_term` function to find all studies that are mapped to this term.
 
 ```{r pressure, echo=FALSE}
 ematch = resources_annotated_with_term("EFO:0009909", include_subclasses=FALSE)
