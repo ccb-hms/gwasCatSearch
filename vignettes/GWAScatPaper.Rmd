@@ -16,11 +16,76 @@ library("gwasCatSearch")
 library("DT")
 ```
 
-## Example 1
-Here we use the EFO (ontology) labels as the basis for constructing our searchable corpus.
-This probably has some uses, but it does not seem to be as helpful as it could be.
+## Introduction
 
-Example in kidney function traits (Li et al., 2020) PMID 32764137
+The GWAS Catalog (cite gwascatalog) reports on a set of curated GWAS association studies. Since 2010, delivery and development of the Catalog has been a collaborative project between the EMBL-EBI and NHGRI. 
+As of 2024-01-30, the GWAS Catalog contains 6715 publications, 571148 top associations and 67322 full summary statistics. GWAS Catalog data is currently mapped to Genome Assembly GRCh38.p14 and dbSNP Build 156.
+
+Among the curation activities is a process of mapping the traits that are studied to the EFO (cite EFO).
+In part this allows one to search for studies about a particular disease, but for a variety of reasons this search can be quite complicated. Here we report on some tools and approaches that can be used to help find GWAS studies according to specific criteria.
+
+To create our searchable corpus we think of each EFO term as a *document*.  The EFO provides
+a text description of the term as well as a known set of synonyms.  For the purposes
+of analyzing the GWAS catalog, we could also consider any GWAS trait that was mapped directly to a EFO term as a synonym for that term.
+
+At this point all we have done is asked which EFO terms match our search. And by match our search we mean that one or more of the elements of the text search is found in either the name of the EFO term, the EFO provided synonyms for that term, or the names of the set of GWAS catalog studies that the EBI has annotated with that same term.
+
+## Example 1
+
+Here we use the EFO (ontology) labels as the basis for constructing our searchable corpus.
+
+Suppose we are interested in kidney function traits, and in trying to find GWAS studies that
+report on these traits.
+
+
+```{r gwasCatPubMed}
+q1 = "chronic AND kidney AND disease"
+hts = search_features(efo_tc, query = q1)
+hts = addField2Hits(hts, efo_tc )
+hitsasDT = hits2DT(hts, efo_df, efo_tc)
+nrow(hitsasDT)
+DT::datatable(hitsasDT[1:100,], escape=FALSE, rownames=FALSE)
+```
+
+We could start with a search of EFO for chronic kidney disease. After running the code above
+we find that there were `r nrow(hitsasDT)` different EFO terms that have a hit, at least according to the methods we have used.  This seems somewhat too large to be helpful. In the next code chunk we explore some of the issues.  First we can look to see where the matches to *chronic kidney disease* are occurring.  We can look at the `hits` object, and also at the `datatable`, the former gives one record for each *hit*, while the latter gives an indication of what type of string was matched on.
+The `Object` is the text description of the EFO term, the `Synonyms` are the EFO provided synonyms for the term, and the `Matches` are the GWAS catalog trait descriptions for traits that mapped directly to that EFO term.  For example, for `r hitsasDT$EFO[1]` the string *chronic kidney disease* was matched only to other GWAS catalog traits (since only matches were found).
+
+```{r why7K}
+table(hts$hits$field)
+table(hitsasDT$field)
+```
+
+This means that the bulk of the EFO terms are showing up due to finding the text string in some other GWAS catalog trait. So there must be a lot of GWAS catalog traits that contain that string.  So we can try to find out about this by querying the `gwc_df` data.frame.
+
+```{r gwcmetadtable}
+gg = grep("chronic kidney disease", gwc_df$DISEASE.TRAIT, ignore.case=T)
+length(gg)
+gwc_df[gg[1:10], "DISEASE.TRAIT"]
+ckdPMIDs = GWCATID2PMID(gwc_df$STUDY.ACCESSION[gg])
+pmtab = sort(table(ckdPMIDs), dec=TRUE)
+pmtab[1:10]
+```
+
+And now we see that there are in fact `r length(gg)` terms that have been labeled this way. Further,
+if we look at the PUBMEDIDs associated with these traits we see that there are `r sum(pmtab>1000)` papers that report more than 1000 traits.
+
+So from the datatable we can see that the EFO label for chronic kidney disease is EFO:0003884 and that there were 71 studies that mapped directly to that term, and 47	that are associated with that term, but likely were mapped to more specific types of chronic kidney disease (FIXME: is it easy to figure out what those reall were mapped to?).  Next we want to look at the studies that were 
+
+```{r findresources}
+ht1 = 
+#find the resources annotated with this term
+dirMap = resources_annotated_with_term("EFO:0003884", include_subclasses=FALSE)
+#see if any papers are giving rise to multple studies
+sort(table(dirMap$PUBMEDID), dec=TRUE)[1:10]
+## we see one that has 10 studies PMID 34662886
+##when we retrieve it, we see that there are a lot of GWAS studies reported
+vv = PubMed2GWASCAT("34662886")
+dim(vv)
+```
+
+
+
 Chronic Kidney Disease is now problematic - there are 7K EFO terms that are found.
 The query:
 
@@ -36,12 +101,21 @@ nrow(hitsasDT)
 DT::datatable(hitsasDT[1:100,], escape=FALSE, rownames=FALSE)
 ```
 
-At this point all we have done is asked which EFO terms match our search. And by match our search we mean that one or more of the elements of the text search is found in either the name of the EFO term, the EFO provided synonyms for that term, or the names of the set of GWAS catalog studies that the EBI has annotated with that same term.
 
-Each term in the EFO ontology has:
-1) a name
-2) a set of known synonyms (provided by the ontology)
-3) we can determine all studies that the EBI has mapped to that term and these would all, at least in some reasonable sense, also be synonyms for the EFO term.
+Now, one challenge might be that some of the EFO terms are just too vague, and have too many studies that map to them.  We report on those with more than 500 directly mapping studies in the code below.
+
+```{r studies2EFO}
+
+manystudies = efo_df[efo_df$Direct>500,]
+DT::datatable(manystudies[,c(1,2,5,6)], rownames=FALSE)
+
+
+```
+
+## Approach 2 - 
+
+Here we instead start with a general type of disease, say infectious disease and then try to 
+find all GWAS studies that report on infectious diseases.  So, first we find the node/term in the EFO ontology that corresponds to infectious disease.  All infectious diseases should be annotated in the EFO as descendants of that EFO term.
 
 ```{r tryChildren}
 #first find the EFO term for infectious diseases
@@ -63,15 +137,13 @@ efo_id[which.max(efo_id$Direct),]
 efo_ids = efo_id[efo_id$Direct>0,]
 ##now how do we get all of those studies and do a Manhattan plot on them.
 
+##now here I think one can just do a manhattan plot - maybe coloring covid differently?
 dirMap = resources_annotated_with_term(efo_ids$Subject, include_subclasses=FALSE)
 dim(dirMap)
-
 ```
 
-##FIXME: need some way to look at the text descriptions and see if they are sensible
+## FIXME: need some way to look at the text descriptions and see if they are sensible
 
-
-```
 
 Where this can go wrong is that the synonyms might be inaccurate and some investigation suggests that this true in many cases.  
 
@@ -81,6 +153,7 @@ The mapping can come in two ways:
 - indirect: the study maps to a term because it mapped directly to a more specific term and hence it is inferred to map to the current ontology term.
 
 Let's try to understand how we got to seven thousand studies and why 40 are mapped directly to Gout.
+
 ```{r exploreMappings}
 ##get all traits that mapped directly to CKD
 z2 =getMatchedTraits(c("EFO:0003884"))
@@ -207,3 +280,11 @@ tt
 There were `r length(unique(htlf$hits$doc_id))` unique documents that were identified.
 We can see that there were `r tt["DISEASE.TRAIT"]` cases where a match was to the DISEASE.TRAIT,
 `r tt["Synonyms"]` matches to synonyms provided by the ontologies, and `r tt["Trait"]` matches to the text description used by the ontology for the trait.
+
+
+## Citations - to be fixed up
+
+Nature
+. 2021 Nov;599(7886):628-634. doi: 10.1038/s41586-021-04103-z. Epub 2021 Oct 18.
+Exome sequencing and analysis of 454,787 UK Biobank participants
+PMID: 34662886

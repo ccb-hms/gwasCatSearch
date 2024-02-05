@@ -377,3 +377,44 @@ EFOlabels = function (EFOID)
     return(av)
 }
 
+
+#' A function to query the gwascatalog_metadata table and return the subset of it that corresponds
+#' to the input PubMed IDs.
+#' @description
+#' This function provides an interface to the SQL database containing the GWAS catalog metadata. 
+#' @param PMID a character vector of the PubMed IDs.
+#' @details The function returns the rows of the metadata table with PubMed IDs matching the input.
+#' @examples
+#' pmdf = PubMed2GWASCAT(c("34662886"))
+#' dim(pmdf)
+#' @export
+PubMed2GWASCAT = function(PMID)
+{
+  if( !is.character(PMID) | length(PMID) < 1 )
+    stop("incorrect input")
+  q1 = paste0("SELECT * from gwascatalog_metadata where PUBMEDID IN ('",
+              paste(PMID, collapse = "','"), "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), q1)
+  return(ans)
+}
+
+#' A function to query the gwascatalog_metadata table and return the set of PubMed IDs
+#' that correspond to the input set of GWAS catalog Study Accession numbers.
+#' @description
+#' This function provides an interface to the SQL database containing the GWAS catalog metadata. Note that
+#' one PubMed ID can give rise to many thousand GWAS catalog studies.
+#' @param GWCATID a character vector of the GWAS catalog Study Accession numbers.
+#' @details The function returns a vector PubMed IDs matching the input.
+#' @examples
+#' gwid = GWCATID2PMID(c("GCST010478"))
+#' length(gwid)
+#' @export
+GWCATID2PMID = function(GWCATID)
+{  if( !is.character(GWCATID) | length(GWCATID) < 1 )
+  stop("incorrect input")
+  
+  q1 = paste0("SELECT PUBMEDID from gwascatalog_metadata where `STUDY.ACCESSION` IN ('",
+              paste(GWCATID, collapse = "','"), "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), q1)
+  return(ans[[1]])
+  }

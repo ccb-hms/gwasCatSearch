@@ -46,7 +46,7 @@ ematch <- resources_annotated_with_term("EFO:0005297", include_subclasses = FALS
 dim(ematch)
 ematch[1, ]
 em2 <- resources_annotated_with_term(c("EFO:1000830", "EFO:0004239"), include_subclasses=TRUE)
-em3 <- resources_annotated_with_term(c("EFO:0004220", "EFO:1000049"), include_sublasses=FALSE)
+em3 <- resources_annotated_with_term(c("EFO:0004220", "EFO:1000049"), include_subclasses=FALSE)
 }
 \references{
 \code{text2term}
