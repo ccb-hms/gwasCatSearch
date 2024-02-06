@@ -275,6 +275,28 @@ There were `r length(unique(htlf$hits$doc_id))` unique documents that were ident
 We can see that there were `r tt["DISEASE.TRAIT"]` cases where a match was to the DISEASE.TRAIT,
 `r tt["Synonyms"]` matches to synonyms provided by the ontologies, and `r tt["Trait"]` matches to the text description used by the ontology for the trait.
 
+## Can we search on Uberon categories.
+
+Seems to be possible. Big question is how to get any sort of document processing going - 
+
+```{r uberon}
+lungU = "UBERON:0002048"
+lungEFO = grepl(lungU, efo_df$DiseaseLocation)
+
+
+efo_tc$meta$Lung = lungEFO
+
+efo_lung = efo_df[lungEFO,]
+##FIXME - here it would be good to get some form of graph completion of the EFO labels
+
+
+efo_tcLung = subset(efo_tc, subset_meta = Lung == TRUE)
+efo_tcLung2 = subset(efo_tcLung, subset=freq_filter(token, min=5))
+dtmLung = get_dtm(efo_tcLung, "feature")
+csums = apply(dtmLung, 2, sum, na.rm=T)
+sort(csums/sum(csums),dec=T)[1:10]
+
+```
 
 ## Citations - to be fixed up
 
