@@ -295,7 +295,7 @@ efo_tcLung2 = subset(efo_tcLung, subset=freq_filter(token, min=5))
 dtmLung = get_dtm(efo_tcLung, "feature")
 csums = apply(dtmLung, 2, sum, na.rm=T)
 sort(csums/sum(csums),dec=T)[1:10]
-
+dtm_wordcloud(dtmLung)
 ```
 
 ## Citations - to be fixed up
