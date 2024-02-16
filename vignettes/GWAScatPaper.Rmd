@@ -172,9 +172,7 @@ efo_id[which.max(efo_id$Direct),]
 
 ##drop those with 0 mapping to them
 efo_ids = efo_id[efo_id$Direct>0,]
-##now how do we get all of those studies and do a Manhattan plot on them.
 
-##now here I think one can just do a manhattan plot - maybe coloring covid differently?
 dirMap = resources_annotated_with_term(efo_ids$Subject, include_subclasses=FALSE)
 dim(dirMap)
 ```
@@ -240,6 +238,30 @@ efo_df[setd3,"Object"]
 
 ```
 
+We end this section by creating a Manhattan plot based on the studies that were identified using the first strategy. 
+
+```{r getresources}
+
+IDassoc <- granges_from_study(dirMap$STUDY.ACCESSION)
+IDassoc2 = IDassoc[IDassoc$P.VALUE<1e-8,]
+
+NROW(IDassoc2)
+##how many are reported more than once...
+sum(duplicated(IDassoc2$SNP_ID_CURRENT))
+##and produce a plot
+```
+
+```{r IDmanh, plot=TRUE, fig.align='center', fig.width=7, fig.cap="Manhattan Plot for Infectious Disease", warning=FALSE, fig.height=5, fig.path="figure/"}
+pp = variants_from_study(dirMap$STUDY.ACCESSION)
+pp = pp[IDassoc$P.VALUE<1e-8,]
+
+#pp = ggmanh::manhattan_data_preprocess(IDassoc2, pval.colname="P.VALUE")
+simple_ggmanh(pp, y.label="-log10 p",
+       label.colname = "MAPPED_TRAIT", pval.colname="P-VALUE")
+
+##ggmanh::manhattan_plot(pp, plot.title="Infectious Diseases", y.label="-log10 p")
+```
+
 ## Search for GWAS studies by Disease Location
 
 In recent versions of the EFO the curators have begun to include disease location information.
@@ -262,7 +284,7 @@ efo_lung = efo_df[lungEFO,]
 
 In the code below we subset first to the set of terms that have an association with the lung and then to the set of tokens that have more than 5 occurrances. And finally we create a word cloud based on the frequency of the tokens that remain.  These are based on occurance in the EFO corpus.
 
-```{r subsetLung}
+```{r subsetLung, warning=FALSE}
 efo_tcLung = subset(efo_tc, subset_meta = Lung == TRUE)
 efo_tcLung2 = subset(efo_tcLung, subset=freq_filter(token, min=5))
 dtmLung = get_dtm(efo_tcLung, "feature")
@@ -275,25 +297,15 @@ dtm_wordcloud(dtmLung)
 
 ## Exploring the GWAS metadata
 
-FIXME: Explain how to look at genes, or manhattan plot etc
-describe use of granges here
-
 Once we have a set of GWAS studies that we are interested in we can access the metadata
-about which variants, where they are in the genome, etc.  This information is quite
-large and we use a SQLite database as the main tool for storing and accessing the data.
-
-These data are accessed via either `granges_from_study` if you want a `granges` object that
-can be integrated with a variety of Bioconductor @citeBioc tools for analyzing and plotting genomic data, or `variants_from_study` which returns a dataframe with 21 columns providing a set of
-metadata.
-
-719 ranges and 21 metadata columns:
+about which variants are implicated, where they are in the genome, the p-value and effect size to name a few.  This data is quite large and we use a SQLite database as the main tool for storing and accessing the data. The data are accessed via either `granges_from_study` if you want a `granges` object that can be integrated with a variety of Bioconductor @citeBioc tools for analyzing and plotting genomic data, or `variants_from_study` which returns a dataframe with 21 columns providing a set of metadata.
 
 ```{r from_studyfuncs}
 
 tab = granges_from_study(acc="GCST007087")
 tab3 = variants_from_study(acc="GCST007087")
 names(tab3)
-
+##do we care that these two are not the same dimenions?  
 
 ```
 
@@ -437,17 +449,4 @@ participants PMID: 34662886
 
 Surapaneni A, Schlosser P, Zhou L, Liu C, Chatterjee N, Arking DE, Dutta D, Coresh J, Rhee EP, Grams ME. Identification of 969 protein quantitative trait loci in an African American population with kidney disease attributed to hypertension. Kidney Int. 2022 Nov;102(5):1167-1177. doi: 10.1016/j.kint.2022.07.005. Epub 2022 Jul 21. PMID: 35870639.
 
-```{r getresources, eval=FALSE}
-efo2 = unique(as.character(hts2$hits$doc_id))
-ra2 = resources_annotated_with_term(efo2)
 
-assoc2 <- granges_from_study(ra2$STUDY.ACCESSION)
-assoc3 = assoc2[assoc2$P.VALUE<1e-8,]
-##look at all the associations
-NROW(assoc3)
-##how many are reported more than once...
-sum(duplicated(assoc3$SNP_ID_CURRENT))
-##and produce a plot
-pp = ggmanh::manhattan_data_preprocess(assoc3, pval.colname="P.VALUE")
-ggmanh::manhattan_plot(pp, plot.title="Infectious Diseases")
-```
