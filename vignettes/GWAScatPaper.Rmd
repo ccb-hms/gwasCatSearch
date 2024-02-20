@@ -2,11 +2,17 @@
 title: "Ontology and Corpus Aided Searching of Complex Data Resources"
 author: "RoGe, VC, RaGo"
 date: "2023-06-23"
-output: rmarkdown::html_vignette
+output: 
+  html_document:
 vignette: >
   %\VignetteIndexEntry{Ontology and Corpus Aided Searching of Complex Data Resources}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+
+bibliography: references.bib
+
+link-citations: true
+
 format: html
 ---
 
@@ -18,6 +24,7 @@ library("DT")
 
 ## Introduction
 
+
 Larger and more complex biomedical data sets are becoming increasingly
 available and they provide substantial opportunities for discovery.
 Realizing the potential for discovery is challenged by the complexity of
@@ -25,14 +32,14 @@ the data, the inherent relationships between phenotypes and the need for
 data analysts to be able to navigate some of the complexities of both
 biological and medical terminologies. In this paper we explore using
 corpus search tools (as exemplified in the `corpustools` package
-@citeCorpustools) to help search through the set of traits that are
+@atteveldtCorpustoolsManagingQuerying2023) to help search through the set of traits that are
 reported by the GWAS catalog. These traits have been hand curated by the
 EBI and mapped to terms in the Experimental Factor Ontology (EFO,
-@citeEFO). However, the tools available for searching these data are
+@maloneModelingSampleVariables2010). However, the tools available for searching these data are
 mainly variants of regular expression matching, which as very limited
 expressivity for the complex nature of medical and biological terms.
 
-The GWAS Catalog (cite gwascatalog) reports on a set of curated GWAS
+The GWAS Catalog (@sollisNHGRIEBIGWASCatalog2023) reports on a set of curated GWAS
 association studies. Since 2010, delivery and development of the Catalog
 has been a collaborative project between the EMBL-EBI and NHGRI. As of
 2024-01-30, the GWAS Catalog contains 6715 publications, 571148 top
@@ -40,21 +47,21 @@ associations and 67322 full summary statistics. GWAS Catalog data is
 currently mapped to Genome Assembly GRCh38.p14 and dbSNP Build 156.
 
 Among the curation activities is a process of mapping the traits that
-are studied to the EFO (cite EFO). In part this allows one to search for
+are studied to the EFO (@maloneModelingSampleVariables2010). In part this allows one to search for
 studies about a particular disease, but for a variety of reasons this
 search can be quite complicated. Here we report on tools and
 approaches that can be used to help find GWAS studies according to
 specific criteria. We create two searchable corpora, one that is EFO
 centric and the other that is GWAS trait centric. There are a number of 
 anomalies in both the EFO and the GWAS catalog that make it essential that
-we have effective tools for cross-referencing searches. Our software is contained in the `gwasCatSearch` package (@citegwasCatSearch) 
+we have effective tools for cross-referencing searches. Our software is contained in the `gwasCatSearch` package (@gentlemanGwasCatSearchPackageSupport2024a) 
 which is open source and freely available.
 
 ## Methods
 
 ### Data
 We obtain data from the GWAS Catalog and transform it into a set of tables using tools in the GWASCatalogSearchDB (https://github.com/ccb-hms/GWASCatalogSearchDB). This processing produces
-a number of tables that can be accessed via a SQL database; we use SQLite (@cite(SQLite)). These tables include the raw data from the EBI, several tables organized around the Experimental Factor Ontology (EFO), the Uber-anatomy ontology (UBERON, https://www.ebi.ac.uk/ols4/ontologies/uberon).
+a number of tables that can be accessed via a SQL database; we use SQLite (@sqlite2020hipp). These tables include the raw data from the EBI, several tables organized around the Experimental Factor Ontology (EFO), the Uber-anatomy ontology (UBERON, https://www.ebi.ac.uk/ols4/ontologies/uberon).
 An ontology is a set of concepts and categories that describe a subject area or domain of knowledge that expresses their properties and the relations between them. Ontologies form one of the bases for knowledge engineering and representation and are important in understanding and referencing biomedical entities. One of the challenges that needs to be addressed is the fact that the same concept might usefully appear in different ontologies and users will need tools to help identify similar concepts. A second challenge is that to be useful the ontologies must be accessible and typically that means using the web or a database implementation. There are two useful constructs that help with this, the compact uniform resource identifiers (CURIEs), and the internationalized resource identifiers (IRIs)  which in ontology space are used as *names* terms in the ontology. A CURIE has three parts: a prefix; a delimiter; and a unique local (to the ontology described by the prefix) identifier from the given nomenclature. The CURIE EFO:0005305 which represents the concept *atrioventricular node disease* has a prefix of EFO, a delimiter of a colon (:) and a unique local identifier of 0005305.  The corresponding IRI for that term is http://www.ebi.ac.uk/efo/EFO_0005305, which gives a web location that can be examined by a user.
 
 FIXME: Rafael's description of how UBERON mapping is done - note one could try to build an UBERON based corpus...
@@ -268,7 +275,7 @@ In recent versions of the EFO the curators have begun to include disease locatio
 This information is encoded using the UBERON ontology. To use this functionality you would first identify the UBERON CURIE that represents the location of interest.  In the code below we look for diseases associated with the lung.  FIXME: Vince - any sort of EFO graph that we could use to represent the disease categories associated with lung?
 
 In the code below we identify the appropriate CURIE and then find all EFO terms that have been annotated with that term. FIXME - can there be sub-terms? and do we need some tools to roll up?
-We next add a column to the metadata for the `efo_tc` corpus. This then allows us to subset the corpus and then we can carry out analyses based on the subset. Details on these capabilities are given in the @citecorpustools package vignette.
+We next add a column to the metadata for the `efo_tc` corpus. This then allows us to subset the corpus and then we can carry out analyses based on the subset. Details on these capabilities are given in the @atteveldtCorpustoolsManagingQuerying2023 package vignette.
 
 ```{r uberon, warning=FALSE}
 lungU = "UBERON:0002048"
@@ -298,7 +305,7 @@ dtm_wordcloud(dtmLung)
 ## Exploring the GWAS metadata
 
 Once we have a set of GWAS studies that we are interested in we can access the metadata
-about which variants are implicated, where they are in the genome, the p-value and effect size to name a few.  This data is quite large and we use a SQLite database as the main tool for storing and accessing the data. The data are accessed via either `granges_from_study` if you want a `granges` object that can be integrated with a variety of Bioconductor @citeBioc tools for analyzing and plotting genomic data, or `variants_from_study` which returns a dataframe with 21 columns providing a set of metadata.
+about which variants are implicated, where they are in the genome, the p-value and effect size to name a few.  This data is quite large and we use a SQLite database as the main tool for storing and accessing the data. The data are accessed via either `granges_from_study` if you want a `granges` object that can be integrated with a variety of Bioconductor @ tools for analyzing and plotting genomic data, or `variants_from_study` which returns a dataframe with 21 columns providing a set of metadata.
 
 ```{r from_studyfuncs}
 
@@ -422,7 +429,7 @@ And now we see that there are in fact `r length(unique(gwc_df[gg, "STUDY.ACCESSI
 with these traits we see that there are `r sum(pmtab>1000)` papers that
 report more than 1000 traits. Given the PubMed IDs it is easy to find
 the papers. The paper associated with PMID 35870639 which reports more than 
-6,700 studies is titled: Identification of 969 protein quantitative trait loci in an African American population with kidney disease attributed to hypertension @citeckdPaper.
+6,700 studies is titled: Identification of 969 protein quantitative trait loci in an African American population with kidney disease attributed to hypertension @@surapaneniIdentification969Protein2022.
 
 
 We end this example by creating a Manhattan plot based on the studies that contain the string *chronic kidney disease*.
@@ -441,12 +448,7 @@ simple_ggmanh(vars, y.label="-log10 p", plot.title = "Chronic Kidney Disease",
 Another potential issue is that the EFO provided synonyms might be inaccurate. Further investigation of those issues is also recommended. FIXME: maybe Rafael has some ideas.
 
 
-## Citations - to be fixed up
+## Citations
 
-Nature . 2021 Nov;599(7886):628-634. doi: 10.1038/s41586-021-04103-z.
-Epub 2021 Oct 18. Exome sequencing and analysis of 454,787 UK Biobank
-participants PMID: 34662886
-
-Surapaneni A, Schlosser P, Zhou L, Liu C, Chatterjee N, Arking DE, Dutta D, Coresh J, Rhee EP, Grams ME. Identification of 969 protein quantitative trait loci in an African American population with kidney disease attributed to hypertension. Kidney Int. 2022 Nov;102(5):1167-1177. doi: 10.1016/j.kint.2022.07.005. Epub 2022 Jul 21. PMID: 35870639.
 
 
