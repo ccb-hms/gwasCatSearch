@@ -64,7 +64,8 @@ We obtain data from the GWAS Catalog and transform it into a set of tables using
 a number of tables that can be accessed via a SQL database; we use SQLite (@sqlite2020hipp). These tables include the raw data from the EBI, several tables organized around the Experimental Factor Ontology (EFO), the Uber-anatomy ontology (UBERON, https://www.ebi.ac.uk/ols4/ontologies/uberon).
 An ontology is a set of concepts and categories that describe a subject area or domain of knowledge that expresses their properties and the relations between them. Ontologies form one of the bases for knowledge engineering and representation and are important in understanding and referencing biomedical entities. One of the challenges that needs to be addressed is the fact that the same concept might usefully appear in different ontologies and users will need tools to help identify similar concepts. A second challenge is that to be useful the ontologies must be accessible and typically that means using the web or a database implementation. There are two useful constructs that help with this, the compact uniform resource identifiers (CURIEs), and the internationalized resource identifiers (IRIs)  which in ontology space are used as *names* terms in the ontology. A CURIE has three parts: a prefix; a delimiter; and a unique local (to the ontology described by the prefix) identifier from the given nomenclature. The CURIE EFO:0005305 which represents the concept *atrioventricular node disease* has a prefix of EFO, a delimiter of a colon (:) and a unique local identifier of 0005305.  The corresponding IRI for that term is http://www.ebi.ac.uk/efo/EFO_0005305, which gives a web location that can be examined by a user.
 
-FIXME: Rafael's description of how UBERON mapping is done - note one could try to build an UBERON based corpus...
+The disease location information was extracted directly from EFO statements of the form:  X has_disease_location Y, where Y is typically an UBERON (@Uberon2012) term representing an anatomical location. If a term does not have an explicitly stated location relationship, we determine if it has an inferred location. This is done by recursively checking if a parent in the ontology hierarchy has a location. The first location found is used, and if none is found then it is marked as missing. 
+For example, *bronchitis*  (EFO:0009661) does not have an explicitly stated location in EFO, but it inherits one from its immediate parent (*bronchial disease*), which has location *bronchus*, (UBERON:0002185).
 
 As part of the processing we construct two dataframes, one based on the EFO terms `efo_df` and the other based on the GWAS catalog studies `gwc_df`. These are described in Table 1. We create two different corpora for searching. One based on the EFO and
 the relationships inherent in it, `efo_tc`, and the second based on the GWAS
@@ -341,74 +342,75 @@ efo_df[names(tt)[2],]
 
 
 ## Challenges
-1) the issue found with CKD
-2) Vague study definitions
-3) Inaccuracies in EFO and other metadata
 
-## Vague Study Definitions
+While the GWAS catalog has provided mappings to EFO there remain some substantial challenges
+for those attempting to use it to find and organize their searches.  These include vague EFO assignments where hundreds of phenotypes have been mapped to an EFO term, papers that give rise to thousands of GWAS studies, inaccuracies and inconsistencies in the EFO, and a lack of clarity on the explicit rationale for mapping a trait to an EFO term.  We give examples of each of these.
 
-A second challenge that a data analyst is must face is that some of EFO terms that were used are too
-vague. By that we mean that they have too many studies that map to them and hence are unlikely to be informative about the sort of specific questions we might want to address. These are
-relatively easy to find. We used the cutoff of 500 studies, and in the code/table below we show the set of EFO terms that have more than 500 GWAS studies that have been directly mapped to them. 
+### Vague Study Definitions
+
+Sometimes the EFO terms used are very generic and hence don't provide much resolution of phenotypes.
+By that we mean that they have too many studies that map to them and hence are unlikely to be informative about the sort of specific questions we might want to address. These are
+relatively easy to find. Using a cutoff of 500 GWAS studies we obtain the set of EFO terms that have more than 500 GWAS studies that have been directly mapped to them. 
 
 
-```{r studies2EFO}
+```{r studies2EFO, echo=FALSE}
 
 manystudies = efo_df[efo_df$Direct>500,]
-DT::datatable(manystudies[,c(1,2,5,6)], rownames=FALSE)
-
+knitr::kable(manystudies[,c(1,2,5,6)], row.names=FALSE, caption="List of EFO terms with more than 500 Studies", label="tab:xx")
 
 ```
 
-One can then get a sense of the actual traits that were mapped to these by using one querying the GWAS catalog dataframe. We will look at EFO:0004725, which is *metabolite measurement*. In the code below we see that this EFO term is really a catch-all for a wide variety of chemical measurements and hence unlikely to be helpful providing insight into the commonality of terms that were mapped directly to it. 
+One can then get a sense of the actual traits that were mapped to these by using one querying the GWAS catalog dataframe. We will look at EFO:0004725, which is *metabolite measurement*. We identify
+all GWAS studies that were directly mapped to EFO:0004725 and then examine the GWAS trait strings.
+In are we see that this EFO term is really a catch-all for a wide variety of chemical measurements and hence unlikely to be helpful providing insight into the commonality of terms that were mapped directly to it. 
 
 ##FIXME: Ask Rafael about other ideas here - maybe there is some sort of diversity index that could be computed per EFO term that says something about how related the terms mapped there are
 
-```{r vagueTraits}
+```{r vagueTraits, echo=FALSE}
 metabTraits = gwc_df[gwc_df$MAPPED_TRAIT_CURIE=="EFO:0004725", "DISEASE.TRAIT"]
 zz = table(metabTraits)
-sort(zz,dec=T)[1:10]
-
+knitr::kable(sort(zz,dec=T)[1:10], row.names=FALSE, caption="GWAS disease traits mapping to EFO:0004725")
 ```
 
 ### Mapping not so great
-In this example we are looking for kidney function traits, and in particular we
-will search for *chronic kidney disease* in the EFO-based corpus.
+In this example we are examine kidney function traits, and in particular we
+will search for *chronic AND kidney AND disease* in the EFO-based corpus. This string should find EFO terms that have matchs to all three words that are close to each other.
 
-```{r gwasCatPubMed}
+```{r gwasCatPubMed, echo=FALSE}
 q1 = "chronic AND kidney AND disease"
 hts = search_features(efo_tc, query = q1)
 hts = addField2Hits(hts, efo_tc )
 hitsasDT = hits2DT(hts, efo_df, efo_tc)
 ```
 
-#### Table 1. CKD EFO Hits (first 100)
 ```{r DT, fig.cap="CKD EFO Hits", echo=FALSE}
-DT::datatable(hitsasDT[1:100,], escape=FALSE, rownames=FALSE)
+knitr::kable(hitsasDT[1:10,], escape=FALSE, row.names=FALSE, caption="CKD EFO Hits (first 10)")
+##DT::datatable(hitsasDT[1:100,], escape=FALSE, rownames=FALSE, caption="CKD EFO Hits (first 100)")
 ```
 
-After running the code above we find that there were `r nrow(hitsasDT)`
-different EFO terms that have a hit. This seems very large. In the next
-code chunk we explore some of the issues. We first look for a EFO term that
-is just *kidney disease*, since we anticipate that all different form so kidney
-disease will be descendants of that term (node in the EFO graph).
+Surprisingly we find that there were `r nrow(hitsasDT)`
+different EFO terms that have a hit. This seems very large to
+understand what is happening we start by looking 
+code chunk we explore some of the issues. If we consider the EFO node for
+*kidney disease* we anticipate that all different forms of kidney
+disease will be descendants of that node. And we expect that all `r nrow(hitsasDT)`
+hits will map to some one of those nodes.
 
-```{r ckdEFO}
+```{r ckdEFO, echo=FALSE}
 kdEFO = grep("^kidney disease$", efo_df$Object, ignore.case = TRUE)
 efo_df[kdEFO,]
 ackd = EFOdescendants("EFO:0003086")
-
 ```
 
-So, there are only `r length(ackd)` EFO terms that are more specific than the term *kidney disease* so it is a bit surprising that there are so many EFO terms that we found with our search.  It is also surprising that if we add the total number of GWAS studies that mapped directly to EFO:0003086 or were inherited by mapping to more specific terms we only get `r efo_df["EFO:0003086","Direct"] + efo_df["EFO:0003086","Inherited"]` GWAS studies.  This suggests that there are a very large number of studies where the GWAS trait contains the phrase *chronic kidney disease* that were not mapped to any EFO kidney disease. 
+There are only `r length(ackd)` EFO terms that are more specific than the term *kidney disease* and the total number of GWAS studies that mapped directly to EFO:0003086 or were inherited we only get `r efo_df["EFO:0003086","Direct"] + efo_df["EFO:0003086","Inherited"]` GWAS studies.  This suggests that there are a very large number of studies where the GWAS trait contains the phrase *chronic kidney disease* that were not mapped to any EFO kidney disease. 
 
 We next try to understand what is happening.  Recall that we constructed our documents by combining the name of the EFO trait (Object), the EFO synonyms (Synonyms) and all GWAS traits that were directly mapped to that EFO trait (Matches) into one *document*.  We can query the corpus to determine which of these three parts any match was made to.
 the matches to *chronic kidney disease* are occurring. For example, for `r hitsasDT$EFO[1]`
 the string *chronic kidney disease* was matched only to other GWAS
 catalog traits (since only matches were found).
 
-```{r why7K}
-table(hitsasDT$field)
+```{r why7K, echo=FALSE}
+knitr::kable(table(hitsasDT$field))
 ```
 
 This means that the bulk of the EFO terms are showing up due to finding
@@ -416,8 +418,15 @@ the text string in the name of some other GWAS catalog trait and for some reason
 that trait was not mapped to kidney disease. We next query the GWAS catalog traits.
 The dataframe `gwc_df` contains the names of all traits in the `DISEASE.TRAIT` column.
 
+##FIXME- the matches are largely in the measurement area
+
 ```{r gwcmetadtable}
 gg = grep("chronic kidney disease", gwc_df$DISEASE.TRAIT, ignore.case=T)
+
+gl= grepl("chronic kidney disease", gwc_df$DISEASE.TRAIT, ignore.case=T)
+gwsub= gwc_df[gl,]
+r1 = grep("measurement",gwsub$MAPPED_TRAIT,  ignore.case = TRUE)
+length(r1)
 
 ##gwc_df[gg[1:10], "DISEASE.TRAIT"]
 ckdPMIDs = GWCATID2PMID(unique(gwc_df$STUDY.ACCESSION[gg]))
@@ -447,6 +456,13 @@ simple_ggmanh(vars, y.label="-log10 p", plot.title = "Chronic Kidney Disease",
 
 Another potential issue is that the EFO provided synonyms might be inaccurate. Further investigation of those issues is also recommended. FIXME: maybe Rafael has some ideas.
 
+
+#### Other Hierarchies
+
+While much of the EFO of interest is organized around *diseases* (EFO:0000408) there is also
+a *measurement* (EFO:0001444) node, with about 8,700 terms nested under it. These tend to be measurements of some of the very same diseases that are arranged under the *disease*  node. Unfortunately, there is no easy way to go between the two. They are not related in the EFO hierarchy and we have been unable to find an organizing principle.  Users likely will want to search under both of these high level nodes for matches to any disease, gene or phenotype of interest.   For example, in our infectious disease example we see that there are nodes 
+*susceptibility to infectious disease measurement* (EFO:0008422) and
+*infectious disease biomarker* (EFO:0006843) which may also be relevant.
 
 ## Citations
 
