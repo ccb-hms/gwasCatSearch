@@ -19,6 +19,7 @@ format: html
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library("gwasCatSearch")
+library("kableExtra")
 library("DT")
 ```
 
@@ -61,10 +62,10 @@ which is open source and freely available.
 
 ### Data
 We obtain data from the GWAS Catalog and transform it into a set of tables using tools in the GWASCatalogSearchDB (https://github.com/ccb-hms/GWASCatalogSearchDB). This processing produces
-a number of tables that can be accessed via a SQL database; we use SQLite (@sqlite2020hipp). These tables include the raw data from the EBI, several tables organized around the Experimental Factor Ontology (EFO), the Uber-anatomy ontology (UBERON, https://www.ebi.ac.uk/ols4/ontologies/uberon).
+a number of tables that can be accessed via a SQL database; we use SQLite (@sqlite2020hipp). These tables include the raw data from the EBI, several tables organized around the Experimental Factor Ontology (EFO), the Uber-anatomy ontology (UBERON @Uberon2012 ).
 An ontology is a set of concepts and categories that describe a subject area or domain of knowledge that expresses their properties and the relations between them. Ontologies form one of the bases for knowledge engineering and representation and are important in understanding and referencing biomedical entities. One of the challenges that needs to be addressed is the fact that the same concept might usefully appear in different ontologies and users will need tools to help identify similar concepts. A second challenge is that to be useful the ontologies must be accessible and typically that means using the web or a database implementation. There are two useful constructs that help with this, the compact uniform resource identifiers (CURIEs), and the internationalized resource identifiers (IRIs)  which in ontology space are used as *names* terms in the ontology. A CURIE has three parts: a prefix; a delimiter; and a unique local (to the ontology described by the prefix) identifier from the given nomenclature. The CURIE EFO:0005305 which represents the concept *atrioventricular node disease* has a prefix of EFO, a delimiter of a colon (:) and a unique local identifier of 0005305.  The corresponding IRI for that term is http://www.ebi.ac.uk/efo/EFO_0005305, which gives a web location that can be examined by a user.
 
-The disease location information was extracted directly from EFO statements of the form:  X has_disease_location Y, where Y is typically an UBERON (@Uberon2012) term representing an anatomical location. If a term does not have an explicitly stated location relationship, we determine if it has an inferred location. This is done by recursively checking if a parent in the ontology hierarchy has a location. The first location found is used, and if none is found then it is marked as missing. 
+The disease location information was extracted directly from EFO statements of the form:  X has_disease_location Y, where Y is typically an UBERON term representing an anatomical location. If a term does not have an explicitly stated location relationship, we determine if it has an inferred location. This is done by recursively checking if a parent in the ontology hierarchy has a location. The first location found is used, and if none is found then it is marked as missing. 
 For example, *bronchitis*  (EFO:0009661) does not have an explicitly stated location in EFO, but it inherits one from its immediate parent (*bronchial disease*), which has location *bronchus*, (UBERON:0002185).
 
 As part of the processing we construct two dataframes, one based on the EFO terms `efo_df` and the other based on the GWAS catalog studies `gwc_df`. These are described in Table 1. We create two different corpora for searching. One based on the EFO and
@@ -88,6 +89,23 @@ any system that process disease, medical or epidemiological data.  There are man
 
 Given the structure of the ontology we can introduce the concept of an *inherited* mapping. A mapping at a node E is inherited if it was a direct mapping to some descendant of E.  Basically this is
 providing a way to find, and hence examine, the EFO terms that map to more specific versions of an EFO term.  So, while we might want to know the GWAS catalog traits that map to cancer, we may also want to find the traits that map to more specific types of cancer.  This concept allows us to do that in a rigorous way.
+
+### Some important characteristics of the GWAS Catalog
+
+Here we explore some of the characteristics of the Catalog in order to facilitate some of the discussion in the remainder of the paper.
+
+
+```{r cmpTableofMappingCounts, echo=FALSE, }
+pp = table(gwc_df$STUDY.ACCESSION)
+pps = sort(pp,dec=T)[1:10]
+ptab = table(pp)
+ptab = c(ptab[1:9], sum(ptab[10:length(ptab)]))
+names(ptab)[10] = "10+"
+kable_styling(kbl(ptab, col.names=c("Count"), caption="Number of EFO terms per Study"), bootstrap_options = "striped", full_width = FALSE)
+```
+
+There are `r length(unique(gwc_df$STUDY.ACCESSION))` studies reported.  Each study can be mapped to one or more EFO terms. We counted the number of EFO terms each study was mapped to and report those in Table xx. The counts range from 1 to `r max(ptab)` with the study `r names(pp)[which.max(pp)]` having the most, `r ptab[which.max(pp)]`.
+
 
 ### A search corpus based on EFO
 
@@ -356,7 +374,7 @@ relatively easy to find. Using a cutoff of 500 GWAS studies we obtain the set of
 ```{r studies2EFO, echo=FALSE}
 
 manystudies = efo_df[efo_df$Direct>500,]
-knitr::kable(manystudies[,c(1,2,5,6)], row.names=FALSE, caption="List of EFO terms with more than 500 Studies", label="tab:xx")
+knitr::kable(manystudies[,c(1,2,5,6)], row.names=FALSE, caption="List of EFO terms with more than 500 Studies", label="tab:xx", full_width=FALSE)
 
 ```
 
@@ -373,6 +391,7 @@ knitr::kable(sort(zz,dec=T)[1:10], row.names=FALSE, caption="GWAS disease traits
 ```
 
 ### Mapping not so great
+
 In this example we are examine kidney function traits, and in particular we
 will search for *chronic AND kidney AND disease* in the EFO-based corpus. This string should find EFO terms that have matchs to all three words that are close to each other.
 
@@ -404,6 +423,13 @@ ackd = EFOdescendants("EFO:0003086")
 
 There are only `r length(ackd)` EFO terms that are more specific than the term *kidney disease* and the total number of GWAS studies that mapped directly to EFO:0003086 or were inherited we only get `r efo_df["EFO:0003086","Direct"] + efo_df["EFO:0003086","Inherited"]` GWAS studies.  This suggests that there are a very large number of studies where the GWAS trait contains the phrase *chronic kidney disease* that were not mapped to any EFO kidney disease. 
 
+FIXME: here trying to figure out what is going on..
+```{r msmt, echo=TRUE}
+msmtdesc = EFOdescendants("EFO:0001444")
+dtandmsmt = intersect(msmtdesc, row.names(hitsasDT))
+length(dtandmsmt)
+
+```
 We next try to understand what is happening.  Recall that we constructed our documents by combining the name of the EFO trait (Object), the EFO synonyms (Synonyms) and all GWAS traits that were directly mapped to that EFO trait (Matches) into one *document*.  We can query the corpus to determine which of these three parts any match was made to.
 the matches to *chronic kidney disease* are occurring. For example, for `r hitsasDT$EFO[1]`
 the string *chronic kidney disease* was matched only to other GWAS
@@ -418,10 +444,12 @@ the text string in the name of some other GWAS catalog trait and for some reason
 that trait was not mapped to kidney disease. We next query the GWAS catalog traits.
 The dataframe `gwc_df` contains the names of all traits in the `DISEASE.TRAIT` column.
 
-##FIXME- the matches are largely in the measurement area
+FIXME- the matches are largely in the measurement area - see above
 
 ```{r gwcmetadtable}
+
 gg = grep("chronic kidney disease", gwc_df$DISEASE.TRAIT, ignore.case=T)
+
 
 gl= grepl("chronic kidney disease", gwc_df$DISEASE.TRAIT, ignore.case=T)
 gwsub= gwc_df[gl,]
