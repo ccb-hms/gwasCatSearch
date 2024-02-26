@@ -101,7 +101,7 @@ pps = sort(pp,dec=T)[1:10]
 ptab = table(pp)
 ptab = c(ptab[1:9], sum(ptab[10:length(ptab)]))
 names(ptab)[10] = "10+"
-kable_styling(kbl(ptab, col.names=c("Count"), caption="Number of EFO terms per Study"), bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(t(ptab), caption="Number of EFO Studies by EFO terms per Study"), bootstrap_options = "striped", full_width = FALSE)
 ```
 
 There are `r length(unique(gwc_df$STUDY.ACCESSION))` studies reported.  Each study can be mapped to one or more EFO terms. We counted the number of EFO terms each study was mapped to and report those in Table xx. The counts range from 1 to `r max(ptab)` with the study `r names(pp)[which.max(pp)]` having the most, `r ptab[which.max(pp)]`.
@@ -116,21 +116,35 @@ for any GWAS study that has been mapped **directly** to that EFO term.  Our rati
 is that the curators assigned that trait description to the specific EFO term, so it 
 is essentially, in their eyes, a synonym.
 
+
+```{r exampleEFO, echo=FALSE}
+##these functions return named lists, one element for each provided EFO term
+ckdSyns = getSynonyms("EFO:0003086")[[1]]
+nsyn = length(ckdSyns)
+##if odd add a blank
+if( nsyn %% 2 ) { 
+  ckdSyns = c(ckdSyns, "")
+  half = (nsyn+1)/2
+} else half= nsyn/2
+outmat = data.frame(cbind(ckdSyns[1:half], ckdSyns[(half+1):(2*half)]))
+colnames(outmat) = NULL
+#ckdSyns
+kable_styling(kbl(outmat, caption = "Synonyms for EFO:0003086"), bootstrap_options = "striped", full_width = FALSE)
+```
+
+```{r getstudyAcc, echo=FALSE}
+ckdMatches = getMatchedTraits("EFO:0003086")
+#length(ckdMatches[[1]])
+ckdStudies = gwc_df[gwc_df$MAPPED_TRAIT_CURIE=="EFO:0003086",]
+#ckdStudies$STUDY.ACCESSION
+
+```
 For clarity, there is one document for each EFO term. The term itself we call the *object*,
 that is augmented by a set of zero or more *synonyms* provided by EFO and then additionally
 augmented by a set of zero or more *matches* which are GWAS study traits.  Below
-we examine one node, EFO:0003086, which is labeled as chronic kidney disease.
+we examine one node, EFO:0003086, which is labeled as *chronic kidney disease*. 
+There were `r length(length(ckdMatches[[1]]))` GWAS catalog studies that were mapped **directly** to this EFO term.
 
-```{r exampleEFO}
-##these functions return named lists, one element for each provided EFO term
-ckdSyns = getSynonyms("EFO:0003086")
-ckdSyns
-ckdMatches = getMatchedTraits("EFO:0003086")
-length(ckdMatches[[1]])
-ckdStudies = gwc_df[gwc_df$MAPPED_TRAIT_CURIE=="EFO:0003086",]
-ckdStudies$STUDY.ACCESSION
-
-```
 
 At this point all we have done is asked which EFO terms match our
 search. And by match our search we mean that one or more of the elements
@@ -423,14 +437,16 @@ ackd = EFOdescendants("EFO:0003086")
 
 There are only `r length(ackd)` EFO terms that are more specific than the term *kidney disease* and the total number of GWAS studies that mapped directly to EFO:0003086 or were inherited we only get `r efo_df["EFO:0003086","Direct"] + efo_df["EFO:0003086","Inherited"]` GWAS studies.  This suggests that there are a very large number of studies where the GWAS trait contains the phrase *chronic kidney disease* that were not mapped to any EFO kidney disease. 
 
-FIXME: here trying to figure out what is going on..
-```{r msmt, echo=TRUE}
+
+```{r msmt, echo=FALSE}
 msmtdesc = EFOdescendants("EFO:0001444")
 dtandmsmt = intersect(msmtdesc, row.names(hitsasDT))
 length(dtandmsmt)
 
 ```
-We next try to understand what is happening.  Recall that we constructed our documents by combining the name of the EFO trait (Object), the EFO synonyms (Synonyms) and all GWAS traits that were directly mapped to that EFO trait (Matches) into one *document*.  We can query the corpus to determine which of these three parts any match was made to.
+A little more exploring suggests that many of the terms are actually mapped to the descendants of the *measurement*, EFO:0001444, node. Specifically we find that there are `r length(dtandmsmt)` EFO terms that were identified by our search which align to measurements, a number far larger than those that align to disease.  Which makes searching for terms related to any specific disease somewhat more challenging, as the organizational principles for this part of the EFO are not suitable for finding related diseases and it appears the analyst is left with string matching as the only viable option.
+
+We constructed our documents by combining the name of the EFO trait (Object), the EFO synonyms (Synonyms) and all GWAS traits that were directly mapped to that EFO trait (Matches) into one *document*.  We can query the corpus to determine which of these three parts any match was made to.
 the matches to *chronic kidney disease* are occurring. For example, for `r hitsasDT$EFO[1]`
 the string *chronic kidney disease* was matched only to other GWAS
 catalog traits (since only matches were found).
@@ -440,13 +456,14 @@ knitr::kable(table(hitsasDT$field))
 ```
 
 This means that the bulk of the EFO terms are showing up due to finding
-the text string in the name of some other GWAS catalog trait and for some reason
-that trait was not mapped to kidney disease. We next query the GWAS catalog traits.
+the text string in the name of some other GWAS catalog trait and 
+that trait was not mapped to any EFO label related to kidney disease. 
+
+
+We next query the GWAS catalog traits.
 The dataframe `gwc_df` contains the names of all traits in the `DISEASE.TRAIT` column.
 
-FIXME- the matches are largely in the measurement area - see above
-
-```{r gwcmetadtable}
+```{r gwcmetadtable, echo=FALSE}
 
 gg = grep("chronic kidney disease", gwc_df$DISEASE.TRAIT, ignore.case=T)
 
@@ -454,19 +471,19 @@ gg = grep("chronic kidney disease", gwc_df$DISEASE.TRAIT, ignore.case=T)
 gl= grepl("chronic kidney disease", gwc_df$DISEASE.TRAIT, ignore.case=T)
 gwsub= gwc_df[gl,]
 r1 = grep("measurement",gwsub$MAPPED_TRAIT,  ignore.case = TRUE)
-length(r1)
+#length(r1)
 
 ##gwc_df[gg[1:10], "DISEASE.TRAIT"]
 ckdPMIDs = GWCATID2PMID(unique(gwc_df$STUDY.ACCESSION[gg]))
 pmtab = sort(table(ckdPMIDs), dec=TRUE)
-pmtab[1:10]
+#pmtab[1:10]
 ```
 
 And now we see that there are in fact `r length(unique(gwc_df[gg, "STUDY.ACCESSION"]))` terms that have been labeled this way. Further, if we look at the PUBMEDIDs associated
 with these traits we see that there are `r sum(pmtab>1000)` papers that
 report more than 1000 traits. Given the PubMed IDs it is easy to find
 the papers. The paper associated with PMID 35870639 which reports more than 
-6,700 studies is titled: Identification of 969 protein quantitative trait loci in an African American population with kidney disease attributed to hypertension @@surapaneniIdentification969Protein2022.
+6,700 studies is titled: Identification of 969 protein quantitative trait loci in an African American population with kidney disease attributed to hypertension @surapaneniIdentification969Protein2022.
 
 
 We end this example by creating a Manhattan plot based on the studies that contain the string *chronic kidney disease*.
