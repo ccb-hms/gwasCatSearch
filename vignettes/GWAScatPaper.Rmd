@@ -154,24 +154,24 @@ studies that the EBI has annotated with that same term.
 
 ## A search corpus based on GWAS Traits.
 
-A dataframe, `gwc_df` containing all GWAS studies is provided with the `gwasCatSearch` package.
-For each study (e.g. GCST006286), we report STUDY.ACCESSION, DISEASE.TRAIT, MAPPED_TRAIT,       MAPPED_TRAIT_URI, and MAPPED_TRAIT_CURIE. We note that for some studies there are multiple
-rows, each one representing a unique direct mapping of that DISEASE.TRAIT to a unique EFO term.
+A dataframe, `gwc_df`, containing all GWAS studies is provided with the `gwasCatSearch` package.
+For each study (e.g. GCST90083943), we report STUDY.ACCESSION: a unique GWAS Catalog identifier; DISEASE.TRAIT: the name the original researchers gave to the trait: MAPPED_TRAIT: which is the trait that the GWAS Catalog mapped to; MAPPED_TRAIT_URI: the URI for the mapped trait; and MAPPED_TRAIT_CURIE: the CURIE for the mapped trait. We note that for some studies there are multiple
+rows, each one representing the mapping of DISEASE.TRAIT to unique EFO terms.
 
-```{r GWCexp1}
-gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST006286"),]
+```{r GWCexp1, echo=FALSE}
+knitr::kable(t(gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST90083943"),]), align='lc', caption="Study GCST90083943", col.names="") |> kable_styling()
+
 ```
 
 
-In this case we created documents by assembling the GWAS trait (DISEASE.TRAIT), the EFO mapped trait (Triat) and all EFO provided synonyms (Synonyms). Using this dataframe we construct a searchable corpus using the internal function `.makeGWCcorpus`.  The corpus can then find matches based on either of these three potentially different text descriptions of each of the GWAS traits.
-We note that in this case the ontology is only being used to provide a trait and its synonyms, the relationships in the ontology are not used.
+To create this searchable corpus we made documents, one for each GWAS study, by assembling the GWAS trait (DISEASE.TRAIT), the EFO mapped trait (Trait) and all EFO provided synonyms (Synonyms). In this case the ontology is being used to provide a standardized trait name and its synonyms. The relationships within the ontology are not used. The corpus can be searched and studies that match the search term retrieved. As shown in Table XX it is also possible to identify which of the three parts of the *document* described above have matches.
 
-```{r GWCexp2}
+```{r GWCexp2, echo=FALSE}
 ##find all the studies that map to leukemia
 htl = search_features(gwc_tc, query="leuk*")
 htlf = addField2Hits(htl, gwc_tc)
 tt = table(htlf$hits$field)
-tt
+knitr::kable(tt, caption="Which part of the GWAS *document* matched the search term leuk*", col.names = c("Term", "Count"))  |> kable_styling()
 ```
 
 There were `r length(unique(htlf$hits$doc_id))` unique documents that
