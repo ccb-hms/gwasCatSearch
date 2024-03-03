@@ -188,34 +188,37 @@ studies associated with *infectious disease*.  One reason for this choice is tha
 
 ### Strategy One: Use the EFO
 
-Here describe how to use these tools start with a general type of disease, say infectious
-disease, and then try to find all GWAS studies that report on that class of 
-diseases. So, first we find the node/term in the EFO ontology that
-corresponds to infectious disease. All infectious diseases should be
-annotated in the EFO as descendants of that EFO term.
 
-```{r tryChildren}
+```{r tryChildren, echo=FALSE}
 #first find the EFO term for infectious diseases
 gg = grep("^infectious disease$", efo_df$Object, ignore.case=TRUE )
-efo_df[gg,]
+##efo_df[gg,]
 
 ##now look at all the more specific terms
 z2 = EFOdescendants("EFO:0005741")
-length(z2)
+##length(z2)
 
 efo_id = efo_df[z2,]
 ##d
 ## how many studies map directly to one of these terms
-table(efo_id$Direct)
+knitr::kable(t(table(efo_id$Direct)), caption="Summary of number of studies mapping to descendants") |> kable_styling()
 ## one has 249 - and it is COVID, which makes some sense
-efo_id[which.max(efo_id$Direct),]
+# efo_id[which.max(efo_id$Direct),]
 
 ##drop those with 0 mapping to them
 efo_ids = efo_id[efo_id$Direct>0,]
 
+##below shows how to find the GWAS studies that map
 dirMap = resources_annotated_with_term(efo_ids$Subject, include_subclasses=FALSE)
-dim(dirMap)
+#dim(dirMap)
 ```
+
+Here we describe how to use these tools start with a general type of disease, say infectious
+disease, and then try to find all GWAS studies that report on that class of 
+diseases. First we find the node/term in the EFO ontology that
+corresponds to infectious disease. That turns out to be EFO:0005741. All infectious diseases should be
+annotated in the EFO as descendants of that EFO term. You can use the `EFOdescendants` function to find all the descendants (there are `r length(z2)`). And from the EFO dataframe we can find
+that `r efo_df[gg,"Direct"]` were directly mapped to EFO:0005741 while `r efo_df[gg,"Inherited"]` where inherited from terms that were descendants of EFO:0005741. The term with over 200 studes is `r efo_id[which.max(efo_id$Direct),"Object"]`
 
  FIXME: need some way to look at the text descriptions and see if they are sensible
  
@@ -509,6 +512,46 @@ a *measurement* (EFO:0001444) node, with about 8,700 terms nested under it. Thes
 *susceptibility to infectious disease measurement* (EFO:0008422) and
 *infectious disease biomarker* (EFO:0006843) which may also be relevant.
 
+
+ Messing around with some NLP stuff - not sure I can see how to use it though
+ need some way of mapping to a disease dictionary....
+ 
+```{r spacyr }
+##this is our dictionary - 
+InfDisease = scan("InfDisease.txt", what="", sep="\n")
+z2 = EFOdescendants("EFO:0005741")
+InfDfromEFO = efo_df[z2,"Object"]
+library("spacyr")
+spacy_initialize()
+
+nn = paste0("d", 1:length(InfDisease))
+names(InfDisease) = nn
+
+nn = paste0("e", 1:length(InfDfromEFO))
+names(InfDfromEFO) = nn
+combdata = c(InfDfromEFO, InfDisease)
+
+
+parsedtxt <- spacy_parse(combdata)
+
+s1 = grepl("e", parsedtxt$doc_id)
+
+sub1 = parsedtxt[s1, ]
+sub2 = parsedtxt[!s1,]
+
+nn = paste0("d", 1:length(InfDfromEFO))
+names(InfDfromEFO) = nn
+ptxtEFO = spacy_parse(InfDfromEFO)
+
+vv = tolower(ptxtEFO$lemma)
+v1 = tolower(parsedtxt$lemma)
+
+d1 = setdiff(vv, v1)
+
+
+
+
+```
 ## Citations
 
 
