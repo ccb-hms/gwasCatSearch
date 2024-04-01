@@ -193,14 +193,17 @@ There were `r length(ckdMatches[[1]])` GWAS catalog studies that were mapped **d
 
 ## A search corpus based on GWAS Traits.
 
-A dataframe, `gwc_df`, containing all GWAS studies is provided with the `gwasCatSearch` package.
-For each study (e.g. GCST90083943), we report STUDY.ACCESSION: a unique GWAS Catalog identifier; DISEASE.TRAIT: the name the original researchers gave to the trait: MAPPED_TRAIT: which is the trait that the GWAS Catalog mapped to; MAPPED_TRAIT_URI: the URI for the mapped trait; and MAPPED_TRAIT_CURIE: the CURIE for the mapped trait. We note that for some studies there are multiple
-rows, each one representing the mapping of DISEASE.TRAIT to unique EFO terms. In Table \@ref(tab:GWCexp1) we show the metadata associated with the study GCST90083943.
-
 ```{r GWCexp1, echo=FALSE}
-knitr::kable(t(gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST90083943"),]), align='lc', caption="Study GCST90083943", col.names="") |> kable_styling()
+GWCexp1 = gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST90083943"),]
+EFO1 = GWCexp1$MAPPED_TRAIT_CURIE
+EFO1Syns = getSynonyms(EFO1)
+GWCexp1$EFOSynonyms = paste(unlist(EFO1Syns), collapse="; ")
+knitr::kable(t(GWCexp1), align='lc', caption="Study GCST90083943", col.names="") |> kable_styling()
 
 ```
+
+To create this corpus, which we will call the GWASC corpus, we create on document per study.
+For each study (e.g. GCST90083943), we use the name the original researchers gave to the trait, the EFO trait that the GWAS Catalog mapped that study to and the synonyms provided for that EFO trait. In this case each document is a GWAS catalog entry. In Table \@ref(tab:GWCexp1) we show the metadata associated with the study GCST90083943 as well as the synonyms for `r EFO1`.
 
 To create this searchable corpus we made documents, one for each GWAS study, by assembling the GWAS trait (DISEASE.TRAIT), the EFO mapped trait (Trait) and all EFO provided synonyms (Synonyms). In this case the ontology is being used to provide a standardized trait name and its synonyms. The relationships within the ontology are not used. The corpus can be searched and studies that match the search term retrieved. 
 
@@ -263,8 +266,8 @@ that `r efo_df[gg,"Direct"]` were directly mapped to EFO:0005741 while `r efo_df
  
 ### Strategy Two: Search based on the GWAS catalog corpus
 
-For this search we start fairly broadly and search the `gwc_tc` for the term *infectious*. 
-Recall that this will search the text descriptions of the GWAS trait as well as the trait and synonyms that correspond to the EFO term(s) this study was directly mapped to.
+For this search we start fairly broadly and search the GWAS catalog for the term *infectious*. One could also search for specific diseases or other terms and then merge the results.
+This search uses the GWAS  the text descriptions of the GWAS trait as well as the trait and synonyms that correspond to the EFO term(s) this study was directly mapped to.
 
 ```{r IDgwctc}
 qID = "infectious"
