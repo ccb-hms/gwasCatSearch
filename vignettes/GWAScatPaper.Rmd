@@ -3,7 +3,8 @@ title: "Ontology and Corpus Aided Searching of Complex Data Resources"
 author: "RoGe, VC, RaGo"
 date: "2023-06-23"
 output: 
-  html_document:
+  bookdown::html_document2: 
+    number_sections: false
 vignette: >
   %\VignetteIndexEntry{Ontology and Corpus Aided Searching of Complex Data Resources}
   %\VignetteEngine{knitr::rmarkdown}
@@ -90,6 +91,30 @@ any system that process disease, medical or epidemiological data.  There are man
 Given the structure of the ontology we can introduce the concept of an *inherited* mapping. A mapping at a node E is inherited if it was a direct mapping to some descendant of E.  Basically this is
 providing a way to find, and hence examine, the EFO terms that map to more specific versions of an EFO term.  So, while we might want to know the GWAS catalog traits that map to cancer, we may also want to find the traits that map to more specific types of cancer.  This concept allows us to do that in a rigorous way.
 
+```{r ontoHelperFuns, echo=FALSE}
+
+##a leaf is a node that has no children
+##the root is a node that has no parents
+
+isLeaf = function(x) {
+  descend = EFOdescendants(x)
+  sp = split(descend, names(descend))
+  ans = sapply(sp, function(x) length(x) < 2)
+  ans
+}
+
+t1 = isLeaf(c('MONDO:0019640','EFO:0004194'))
+
+z2 = EFOdescendants("EFO:0005741")
+z3 = EFOancestors("EFO:0005741")
+
+isRoot = function(x) {
+  parents=EFOancestors(x)
+  sp = split(parents, names(parents))
+  ans = sapply( sp, function(x) length(x) < 2)
+  ans
+}
+```
 ### Some important characteristics of the GWAS Catalog
 
 Here we explore some of the characteristics of the Catalog in order to facilitate some of the discussion in the remainder of the paper.
@@ -104,7 +129,7 @@ names(ptab)[10] = "10+"
 kable_styling(kbl(t(ptab), caption="Number of EFO Studies by EFO terms per Study"), bootstrap_options = "striped", full_width = FALSE)
 ```
 
-There are `r length(unique(gwc_df$STUDY.ACCESSION))` studies reported.  Each study can be mapped to one or more EFO terms. We counted the number of EFO terms each study was mapped to and report those in Table xx. The counts range from 1 to `r max(ptab)` with the study `r names(pp)[which.max(pp)]` having the most, `r ptab[which.max(pp)]`.
+There are `r length(unique(gwc_df$STUDY.ACCESSION))` studies reported.  Each study can be mapped to one or more EFO terms. We counted the number of EFO terms each study was mapped to and report those in Table \@ref(tab:cmpTableofMappingCounts). The counts range from 1 to `r max(ptab)` with the study `r names(pp)[which.max(pp)]` having the most, `r pp[which.max(pp)]`.
 
 
 ### A search corpus based on EFO
@@ -133,24 +158,24 @@ kable_styling(kbl(outmat, caption = "Synonyms for EFO:0003086"), bootstrap_optio
 ```
 
 ```{r getstudyAcc, echo=FALSE}
+##this code chunk needs to be synchronized with the one below
 ckdMatches = getMatchedTraits("EFO:0003086")
 #length(ckdMatches[[1]])
 ckdStudies = gwc_df[gwc_df$MAPPED_TRAIT_CURIE=="EFO:0003086",]
 #ckdStudies$STUDY.ACCESSION
 
 ```
-For clarity, there is one document for each EFO term. The term itself we call the *object*,
-that is augmented by a set of zero or more *synonyms* provided by EFO and then additionally
-augmented by a set of zero or more *matches* which are GWAS study traits.  Below
-we examine one node, EFO:0003086, which is labeled as *chronic kidney disease*. 
-There were `r length(length(ckdMatches[[1]]))` GWAS catalog studies that were mapped **directly** to this EFO term.
 
+For clarity, there is one *document* associated with each EFO term. The term itself we call the *object*, which is augmented by a set of zero or more *synonyms* provided by EFO and then additionally
+augmented by a set of zero or more *matches* which are GWAS study traits that have been mapped directly to the EFO term.
 
-At this point all we have done is asked which EFO terms match our
-search. And by match our search we mean that one or more of the elements
-of the text search is found in either the name of the EFO term, the EFO
-provided synonyms for that term, or the names of the set of GWAS catalog
-studies that the EBI has annotated with that same term.
+Searching for relevant GWAS studies using this corpus one first obtains all EFO terms where the tokenized search string matches at least one of the *object*, *synonyms* or *matches* for that term.  The desired GWAS studies are those that have either matched directly to that EFO term, or are inherited by that term. 
+
+Suppose our search string had been *chronic kidney disease*, then we would have found 
+the term EFO:0003086, which has as its text description *chronic kidney disease*. 
+There were `r length(ckdMatches[[1]])` GWAS catalog studies that were mapped **directly** to this EFO term and `r efo_df["EFO:0003086", "Inherited"]` terms that were inherited, i.e. mapped to more specific EFO terms than EFO:0003086, which could be subtypes.
+
+##FIXME: Vince here is a place where a picture of the EFO graph could be useful
 
 ## A search corpus based on GWAS Traits.
 
@@ -186,7 +211,7 @@ In this section we describe three different approaches that can be taken to
 find GWAS studies that are associated with a particular term.  We will look for GWAS
 studies associated with *infectious disease*.  One reason for this choice is that it is quite a challenging problem if one attempts it without using an ontology.  The main reason for that is that there are many infectious diseases and most of them do not have either *infectious* or *disease* in their name.  So without an ontology to guide us, we would need to have some dictionary of infectious diseases to start with. [FIXME: should we try to find one?]
 
-### Strategy One: Use the EFO
+### Strategy One: Use the EFO corpus
 
 
 ```{r tryChildren, echo=FALSE}
@@ -255,7 +280,7 @@ DT::datatable(hitsIDasDT[match(vv, hitsIDasDT$Study),])
 
 So there are `r length(vv)` studies that were found by the second method, that were not found by the first.  And `r length(v2)` studies found by the first, but not the second.  Which is probably what we hoped for. Many infectious diseases do not have the the words *infectious disease* as part of their name.
 
-### Strategy three: A text search on the EFO ontology
+### Strategy three: Use the EFO ontology structure
 
 Above we first started with the *infectious disease* in the EFO ontology and then found
 all GWAS studies that mapped directly to either that node, or one of its descendants. We contrasted that with the strategy of searching the corpus based on the GWAS catalog studies for the terms infectious and disease.  A third approach is to search the EFO corpus for *infectious disease*
@@ -511,16 +536,18 @@ While much of the EFO of interest is organized around *diseases* (EFO:0000408) t
 a *measurement* (EFO:0001444) node, with about 8,700 terms nested under it. These tend to be measurements of some of the very same diseases that are arranged under the *disease*  node. Unfortunately, there is no easy way to go between the two. They are not related in the EFO hierarchy and we have been unable to find an organizing principle.  Users likely will want to search under both of these high level nodes for matches to any disease, gene or phenotype of interest.   For example, in our infectious disease example we see that there are nodes 
 *susceptibility to infectious disease measurement* (EFO:0008422) and
 *infectious disease biomarker* (EFO:0006843) which may also be relevant.
+FIXME: report the number of studies that. align under the measurement node
 
 
  Messing around with some NLP stuff - not sure I can see how to use it though
  need some way of mapping to a disease dictionary....
  
-```{r spacyr }
+```{r spacyr, eval=FALSE }
 ##this is our dictionary - 
 InfDisease = scan("InfDisease.txt", what="", sep="\n")
 z2 = EFOdescendants("EFO:0005741")
 InfDfromEFO = efo_df[z2,"Object"]
+names(InfDfromEFO) = z2
 library("spacyr")
 spacy_initialize()
 
@@ -552,6 +579,153 @@ d1 = setdiff(vv, v1)
 
 
 ```
+
+Next we have tried using the scispacy tools.
+Rafael provided these files:
+The resulting table for each file is structured as follows:
+- ID: an autogenerated UUID is attached to each input line in the given file
+- InputText: the input line of text from the file
+- Entity: the Entity that spacy identified in the InputText
+- CUI: the UMLS unique concept identifier mapped to the Entity
+- Label: the UMLS (preferred) label for the concept
+- Definition: the definition for the concept in UMLS
+- Synonyms: the synonyms of the concept in UMLS
+- Score: the score/confidence of the mapping between entity <-> UMLS concept
+
+There are sometimes multiple output lines for each input. That means that scispacy identified
+a set of concepts in the input.  Some are probably of the form (from the repeated entities)
+infectious disease; human; primary; commensal; infection; opportunistic; bacterial; disease;
+fungal; iatrogenic; bacterimia,
+which are somewhat generic
+
+A second kind of duplication is where the same entity appears multiple times. The most common
+one is infectious disease.
+
+
+
+Things that did not map from EFO to UMLS - some fixes suggested below
+setdiff output...for now:
+> setdiff(efoIp, efoInfDss$InputText)
+ [1] "typhus"                          "bacteriemia"                    
+ [3] "kuru"                            "dysentery"                      
+ [5] "scrapie"                         "perichondritis of auricle"      
+ [7] "Kluver-Bucy syndrome"            "chickenpox"                     
+ [9] "Chikungunya encephalitis"        "spotted fever"                  
+[11] "influenza"                       "BK-virus nephropathy"           
+[13] "molluscum contagiosum"           "common wart"                    
+[15] "whooping cough"                  "onchocerciasis"                 
+[17] "Acanthamoeba infectious disease" "rhinosporidiosis"               
+[19] "screw worm infectious disease"   "Klebsiella infectious disease"  
+[21] "primary systemic mycosis"        "Rhabditida infectious disease"  
+
+Fixups:  typhus is a synonym for Typhoid fever (in the UMLS mapping - so perhaps we
+should use those), then kuru is missed but Kuru is found (so capitalization issues)
+Chikungunya is there, but not encephalitis, which is just a modifier,
+chickenpox - Chickenpox
+Acanthamoeba Infection is there - that seems like a horrible miss
+Acanthamoeba keratitis...mostly Acanthamoeba seems like the thing to match on...
+then 
+EFO:  digestive system infectious disorder which is MONDO:0043424 - and seems important
+in the EFO world as an organizer, but probably not something to match on.
+
+"Klebsiella infectious disease" in the other list is: Klebsiella Infection. So something that
+the NER stuff should have handled, I would have thought
+
+molluscum contagiosum - is common more than 200K cases per year, so it should be there somewhere
+
+
+Do we have a leaves function - maybe we want to try and map the leaves (and worry less about
+non-leaves)
+
+We have CUI labels for lots of the EFO terms, but these same labels are not found in the other list - that might not be a bad thing.
+
+
+```{r scispacyoutput, eval=FALSE}
+
+
+efoInfDss = read.delim("data/InfDfromEFO_scispacy_entities.tsv", sep="\t", head=T)
+IDss = read.delim("data/InfDisease_scispacy_entities.tsv", sep="\t", head=T)
+un1 = unique(efoInfDss$CUI)
+
+mm2 = match(efoInfDss2$CUI, IDss$CUI)
+sum(is.na(mm2))
+
+
+##look at matching between our two lists - which did not seem to work that well,
+##but we did match to the CUIs for almost all of the elements
+
+tsub = efoInfDss2[!is.na(efoInfDss2$EFOID),]
+mmx = match(tsub$CUI, IDss$CUI)
+matchedEFO = ifelse(is.na(mmx), FALSE, TRUE)
+IDleafs = isLeaf(tsub$EFOID)
+table(matchedEFO, IDleafs)
+chisq.test(matchedEFO, IDleafs)
+
+efoInfDss$Entity[duplicated(efoInfDss$Entity)]
+
+## look at some terms that map to CUIs but are not found in the InfDss list
+
+length(mm2)
+ts2 = efoInfDss2[is.na(mm2),]
+## if we look at the duplicated terms
+sort(table(efoInfDss$Entity[duplicated(efoInfDss$Entity)]), dec=TRUE)[1:20]
+
+dupID = efoInfDss$ID[duplicated(efoInfDss$ID)]
+efoInfDss[efoInfDss$ID %in% dupID[1], 1:4]
+efoInfDss[efoInfDss$ID %in% dupID[2], 1:4]
+efoInfDss[efoInfDss$ID %in% dupID[2], 1:5]
+
+##put in the EFO terms
+mmEFO = match(InfDfromEFO, efoInfDss$InputText)
+efoInfDss2 = efoInfDss
+Ind2 = InfDfromEFO[!is.na(mmEFO)]
+mmEFO = mmEFO[!is.na(mmEFO)]
+efoInfDss2[mmEFO, "EFOID"] = names(Ind2)
+
+##now we can try to figure out if the Leafs match more often than non-leaf nodes
+
+##now ask how many of the UMLS terms attached to EFO are attached to the ID list
+
+efoU = unique(efoInfDss$CUI)
+idU = unique(IDss$CUI)
+
+ss = setdiff(efoU, idU)
+ss2 = setdiff(idU, efoU)
+length(ss)
+
+length(ss2)
+
+
+##check to see what is different in the EFO labels I sent vs got back
+efoIp = scan("../InfDfromEFO.txt", what="", sep="\n")
+##see what is in the EFO that didn't map
+##scrapie is non-human
+setdiff(efoIp, efoInfDss$InputText)
+grep("Typh", IDss$InputText, ignore.case=T)
+IDss[741,1:6]
+names(IDss)
+IDss[741,7:8]
+
+##the mapping scores seem very high - so they can be used
+hist(efoInfDss$Score)
+hist(IDss$Score)
+grep("uru", IDss$InputText, ignore.case=T)
+IDss[89,1:5]
+IDss[416,1:5]
+grep("riemia", IDss$InputText, ignore.case=T)
+grep("crapie", IDss$InputText, ignore.case=T)
+grep("crapie", IDss$Synonyms, ignore.case=T)
+grep("Jakob", IDss$InputText, ignore.case=T)
+IDss[762, 7:8]
+IDss[762, 1:5]
+IDss[763, 1:5]
+IDss[763, 7:8]
+grep("gunya", IDss$InputText, ignore.case=T)
+IDss[144,1:6]
+
+
+```
+
 ## Citations
 
 
