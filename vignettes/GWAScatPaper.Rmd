@@ -120,7 +120,7 @@ isRoot = function(x) {
 Here we explore some of the characteristics of the Catalog in order to facilitate some of the discussion in the remainder of the paper.
 
 
-```{r cmpTableofMappingCounts, echo=FALSE, }
+```{r cmpTableofMappingCounts, echo=FALSE }
 pp = table(gwc_df$STUDY.ACCESSION)
 pps = sort(pp,dec=T)[1:10]
 ptab = table(pp)
@@ -129,8 +129,23 @@ names(ptab)[10] = "10+"
 kable_styling(kbl(t(ptab), caption="Number of EFO Studies by EFO terms per Study"), bootstrap_options = "striped", full_width = FALSE)
 ```
 
-There are `r length(unique(gwc_df$STUDY.ACCESSION))` studies reported.  Each study can be mapped to one or more EFO terms. We counted the number of EFO terms each study was mapped to and report those in Table \@ref(tab:cmpTableofMappingCounts). The counts range from 1 to `r max(ptab)` with the study `r names(pp)[which.max(pp)]` having the most, `r pp[which.max(pp)]`.
 
+There are `r length(unique(gwc_df$STUDY.ACCESSION))` studies reported.  Each study can be mapped to one or more EFO terms. We counted the number of EFO terms each study was mapped to and report those in Table \@ref(tab:cmpTableofMappingCounts). The counts range from 1 to `r max(ptab)` with the study `r names(pp)[which.max(pp)]` having the most.
+
+```{r studiesperPMID, echo=FALSE}
+xx = DBI::dbGetQuery(gwasCatSearch_dbconn(), "SELECT PUBMEDID, \"STUDY.ACCESSION\" FROM gwascatalog_metadata")
+tt = sort(table(xx$PUBMEDID),dec=T)
+```
+
+The GWAS catalog also provides a table with one entry per STUDY.ACCESSION number and other variables such as the PUBMEDID for the associated publication. We next examine how many GWAS Catalog studies are associated with different papers. We find that the paper associated with PMID `r names(tt)[1]` has `r tt[1]` studies associated with it.  And there are in fact `r sum(tt > 100)` publications which have more than 100 GWAS studies associated with them.  This seems hard to understand and any analysis that includes these studies will require the authors to dig quite deeply into the methods used by the GWAS Catalog.
+
+```{r grepCKD, echo=FALSE}
+xx = DBI::dbGetQuery(gwasCatSearch_dbconn(), "SELECT PUBMEDID, \"DISEASE.TRAIT\" FROM gwascatalog_metadata")
+gg = grepl("chronic kidney disease", xx$DISEASE.TRAIT, ignore.case = T)
+PMs = xx$PUBMEDID[gg]
+```
+
+We last point out that assigned disease traits, the DISEASE.TRAIT column, in the GWAS Catalog metadata may also cause some challenges.  When we searched all disease trait strings for any occurance of the string *chronic kidney disease*, ignoring capitalization, and found `r sum(gg)` matches.  These correspond to `r length(unique(PMs))` PUBMEDIDs.  
 
 ### A search corpus based on EFO
 
@@ -187,7 +202,6 @@ rows, each one representing the mapping of DISEASE.TRAIT to unique EFO terms.
 knitr::kable(t(gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST90083943"),]), align='lc', caption="Study GCST90083943", col.names="") |> kable_styling()
 
 ```
-
 
 To create this searchable corpus we made documents, one for each GWAS study, by assembling the GWAS trait (DISEASE.TRAIT), the EFO mapped trait (Trait) and all EFO provided synonyms (Synonyms). In this case the ontology is being used to provide a standardized trait name and its synonyms. The relationships within the ontology are not used. The corpus can be searched and studies that match the search term retrieved. As shown in Table XX it is also possible to identify which of the three parts of the *document* described above have matches.
 
