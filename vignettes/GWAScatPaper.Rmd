@@ -151,7 +151,7 @@ We last point out that assigned disease traits, the DISEASE.TRAIT column, in the
 
 To create a searchable EFO-based corpus we think of
 each EFO term as a *document*. The EFO provides a text description of
-the term as well as a set of known synonyms. We expand that by including the GWAS trait 
+the term as well as a set of known synonyms. We show the EFO provided synonyms for EFO:0003086 in Table \@ref(tab:exampleEFO). We expand the document by including the GWAS trait label
 for any GWAS study that has been mapped **directly** to that EFO term.  Our rationale
 is that the curators assigned that trait description to the specific EFO term, so it 
 is essentially, in their eyes, a synonym.
@@ -173,7 +173,6 @@ kable_styling(kbl(outmat, caption = "Synonyms for EFO:0003086"), bootstrap_optio
 ```
 
 ```{r getstudyAcc, echo=FALSE}
-##this code chunk needs to be synchronized with the one below
 ckdMatches = getMatchedTraits("EFO:0003086")
 #length(ckdMatches[[1]])
 ckdStudies = gwc_df[gwc_df$MAPPED_TRAIT_CURIE=="EFO:0003086",]
@@ -196,14 +195,14 @@ There were `r length(ckdMatches[[1]])` GWAS catalog studies that were mapped **d
 
 A dataframe, `gwc_df`, containing all GWAS studies is provided with the `gwasCatSearch` package.
 For each study (e.g. GCST90083943), we report STUDY.ACCESSION: a unique GWAS Catalog identifier; DISEASE.TRAIT: the name the original researchers gave to the trait: MAPPED_TRAIT: which is the trait that the GWAS Catalog mapped to; MAPPED_TRAIT_URI: the URI for the mapped trait; and MAPPED_TRAIT_CURIE: the CURIE for the mapped trait. We note that for some studies there are multiple
-rows, each one representing the mapping of DISEASE.TRAIT to unique EFO terms.
+rows, each one representing the mapping of DISEASE.TRAIT to unique EFO terms. In Table \@ref(tab:GWCexp1) we show the metadata associated with the study GCST90083943.
 
 ```{r GWCexp1, echo=FALSE}
 knitr::kable(t(gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST90083943"),]), align='lc', caption="Study GCST90083943", col.names="") |> kable_styling()
 
 ```
 
-To create this searchable corpus we made documents, one for each GWAS study, by assembling the GWAS trait (DISEASE.TRAIT), the EFO mapped trait (Trait) and all EFO provided synonyms (Synonyms). In this case the ontology is being used to provide a standardized trait name and its synonyms. The relationships within the ontology are not used. The corpus can be searched and studies that match the search term retrieved. As shown in Table XX it is also possible to identify which of the three parts of the *document* described above have matches.
+To create this searchable corpus we made documents, one for each GWAS study, by assembling the GWAS trait (DISEASE.TRAIT), the EFO mapped trait (Trait) and all EFO provided synonyms (Synonyms). In this case the ontology is being used to provide a standardized trait name and its synonyms. The relationships within the ontology are not used. The corpus can be searched and studies that match the search term retrieved. 
 
 ```{r GWCexp2, echo=FALSE}
 ##find all the studies that map to leukemia
@@ -213,11 +212,12 @@ tt = table(htlf$hits$field)
 knitr::kable(tt, caption="Which part of the GWAS *document* matched the search term leuk*", col.names = c("Term", "Count"))  |> kable_styling()
 ```
 
+As shown in Table \@ref(tab:GWCexp2) it is also possible to identify which of the three parts of the *document* described above have matches.
 There were `r length(unique(htlf$hits$doc_id))` unique documents that
 were identified. We can see that there were `r tt["DISEASE.TRAIT"]`
 cases where a match was to the DISEASE.TRAIT, `r tt["Synonyms"]` matches
 to synonyms provided by the ontologies, and `r tt["Trait"]` matches to
-the text description used by the ontology for the trait.
+the text description used by the ontology for the trait. 
 
 ## Searching For Diseases
 
@@ -240,7 +240,7 @@ z2 = EFOdescendants("EFO:0005741")
 efo_id = efo_df[z2,]
 ##d
 ## how many studies map directly to one of these terms
-knitr::kable(t(table(efo_id$Direct)), caption="Summary of number of studies mapping to descendants") |> kable_styling()
+knitr::kable(t(table(efo_id$Direct)), caption="Number of studies mapping to descendants of EFO:0005741") |> kable_styling()
 ## one has 249 - and it is COVID, which makes some sense
 # efo_id[which.max(efo_id$Direct),]
 
@@ -256,8 +256,8 @@ Here we describe how to use these tools start with a general type of disease, sa
 disease, and then try to find all GWAS studies that report on that class of 
 diseases. First we find the node/term in the EFO ontology that
 corresponds to infectious disease. That turns out to be EFO:0005741. All infectious diseases should be
-annotated in the EFO as descendants of that EFO term. You can use the `EFOdescendants` function to find all the descendants (there are `r length(z2)`). And from the EFO dataframe we can find
-that `r efo_df[gg,"Direct"]` were directly mapped to EFO:0005741 while `r efo_df[gg,"Inherited"]` where inherited from terms that were descendants of EFO:0005741. The term with over 200 studes is `r efo_id[which.max(efo_id$Direct),"Object"]`
+annotated in the EFO as descendants of that EFO term. You can use the `EFOdescendants` function to find all the descendants (there are `r length(z2)`). There were a total of `r efo_df[gg, "Direct"] + efo_df[gg, "Inherited"]` GWAS studies annotated at EFO:0005741 or one of its descendants. We find
+that `r efo_df[gg,"Direct"]` were directly mapped to EFO:0005741 while `r efo_df[gg,"Inherited"]` where inherited. The term in Table \@ref(tab:tryChildren) with over 200 studies is `r efo_id[which.max(efo_id$Direct),"Object"]`
 
  FIXME: need some way to look at the text descriptions and see if they are sensible
  
