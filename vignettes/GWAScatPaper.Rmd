@@ -147,31 +147,28 @@ PMs = xx$PUBMEDID[gg]
 
 We last point out that assigned disease traits, the DISEASE.TRAIT column, in the GWAS Catalog metadata may also cause some challenges.  When we searched all disease trait strings for any occurance of the string *chronic kidney disease*, ignoring capitalization, and found `r sum(gg)` matches.  These correspond to `r length(unique(PMs))` PUBMEDIDs.
 
-### Vague Study Definitions
-
 Sometimes the EFO terms used are very generic and hence don't provide much resolution of phenotypes.
 By that we mean that they have too many studies that map to them and hence are unlikely to be informative about the sort of specific questions we might want to address. These are
-relatively easy to find. Using a cutoff of 500 GWAS studies we obtain the set of EFO terms that have more than 500 GWAS studies that have been directly mapped to them. 
+relatively easy to find. In Table \@ref(tab:studies2EFO) we report the set of EFO terms that have more than 500 GWAS studies mapped directly to them. 
 
 
 ```{r studies2EFO, echo=FALSE}
 
 manystudies = efo_df[efo_df$Direct>500,]
-knitr::kable(manystudies[,c(1,2,5,6)], row.names=FALSE, caption="List of EFO terms with more than 500 Studies", label="tab:xx", full_width=FALSE)
+
+kable_styling(kbl(manystudies[,c(1,2,5,6)], row.names=FALSE, caption="List of EFO terms with more than 500 Studies"), bootstrap_options = "striped", full_width = FALSE)
 
 ```
 
-One can then get a sense of the actual traits that were mapped to these by using one querying the GWAS catalog dataframe. We will look at EFO:0004725, which is *metabolite measurement*. We identify
-all GWAS studies that were directly mapped to EFO:0004725 and then examine the GWAS trait strings.
-In are we see that this EFO term is really a catch-all for a wide variety of chemical measurements and hence unlikely to be helpful providing insight into the commonality of terms that were mapped directly to it. 
-
-##FIXME: Ask Rafael about other ideas here - maybe there is some sort of diversity index that could be computed per EFO term that says something about how related the terms mapped there are
 
 ```{r vagueTraits, echo=FALSE}
 metabTraits = gwc_df[gwc_df$MAPPED_TRAIT_CURIE=="EFO:0004725", "DISEASE.TRAIT"]
-zz = table(metabTraits)
-knitr::kable(sort(zz,dec=T)[1:10], row.names=FALSE, caption="GWAS disease traits mapping to EFO:0004725")
+zz = table(metabTraits, dnn = "Metabolic Trait")
+szz = sort(zz,dec=T)[1:10]
+kable_styling(kbl(szz, row.names=FALSE, caption="10 most frequent GWAS disease traits mapping to EFO:0004725"), bootstrap_options = "striped", full_width = FALSE)
 ```
+
+One can then examine the actual traits that were mapped to each of these by querying the GWAS catalog. In Table \@ref(tab:vagueTraits) we report the 10 most frequent GWAS traits that mapped to EFO:0004725, which is *metabolite measurement*. There were `r length(metabTraits)` GWAS stuides that map to EFO:0004725 and `r length(unique(metabTraits))` unique traits.
 
 ## Building search corpora 
 
