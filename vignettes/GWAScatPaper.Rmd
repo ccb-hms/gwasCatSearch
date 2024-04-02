@@ -228,7 +228,7 @@ In this section we describe three different approaches that can be taken to
 find GWAS studies that are associated with a particular term.  We will look for GWAS
 studies associated with *infectious disease*.  One reason for this choice is that it is quite a challenging problem if one attempts it without using an ontology.  The main reason for that is that there are many infectious diseases and most of them do not have either *infectious* or *disease* in their name.  So without an ontology to guide us, we would need to have some dictionary of infectious diseases to start with. [FIXME: should we try to find one?]
 
-### Strategy One: Use the EFO corpus
+### Strategy One: Use the EFO ontology structure
 
 
 ```{r tryChildren, echo=FALSE}
@@ -257,7 +257,7 @@ dirMap = resources_annotated_with_term(efo_ids$Subject, include_subclasses=FALSE
 
 Here we describe how to use these tools start with a general type of disease, say infectious
 disease, and then try to find all GWAS studies that report on that class of 
-diseases. First we find the node/term in the EFO ontology that
+diseases. First we identify the node in the EFO ontology that
 corresponds to infectious disease. That turns out to be EFO:0005741. All infectious diseases should be
 annotated in the EFO as descendants of that EFO term. You can use the `EFOdescendants` function to find all the descendants (there are `r length(z2)`). There were a total of `r efo_df[gg, "Direct"] + efo_df[gg, "Inherited"]` GWAS studies annotated at EFO:0005741 or one of its descendants. We find
 that `r efo_df[gg,"Direct"]` were directly mapped to EFO:0005741 while `r efo_df[gg,"Inherited"]` where inherited. The term in Table \@ref(tab:tryChildren) with over 200 studies is `r efo_id[which.max(efo_id$Direct),"Object"]`
@@ -270,7 +270,7 @@ For this search we start fairly broadly and search the GWAS catalog for the term
 This search uses the GWAS  the text descriptions of the GWAS trait as well as the trait and synonyms that correspond to the EFO term(s) this study was directly mapped to.
 
 ```{r IDgwctc}
-qID = "infectious"
+qID = "infect*"
 htsID = search_features(gwc_tc, query = qID)
 htsID = addField2Hits(htsID, gwc_tc )
 hitsIDasDT = hits2DTGWC(htsID, gwc_df, gwc_tc)
@@ -284,22 +284,35 @@ idTT
 ```
 
 
-Now we can ask if this second approach found any GWAS studies that the first one did not.
-And further look at those, to see if any are likely to be about infectious diseases. We
-will also check to see if the first method found studies that the second approach did not.
 
-```{r compID}
+```{r compID, echo=FALSE}
 vv = setdiff(hitsIDasDT$Study, dirMap$STUDY.ACCESSION )
 v2 = setdiff(dirMap$STUDY.ACCESSION, hitsIDasDT$Study)
 
-DT::datatable(hitsIDasDT[match(vv, hitsIDasDT$Study),])
+#DT::datatable(hitsIDasDT[match(vv, hitsIDasDT$Study),])
+
+vvGWC = gwc_df[match(vv, gwc_df$STUDY.ACCESSION),]
+v2GWC = gwc_df[match(v2, gwc_df$STUDY.ACCESSION),]
+
+##see if the ancestor of the first term is under infectious disease - and it is not
+check1 = EFOancestors(vvGWC[1, "MAPPED_TRAIT_CURIE"])
+match("EFO:0005741", check1)
+
+##look at the other list - and we see that these are infectious diseases
 ```
 
-So there are `r length(vv)` studies that were found by the second method, that were not found by the first.  And `r length(v2)` studies found by the first, but not the second.  Which is probably what we hoped for. Many infectious diseases do not have the the words *infectious disease* as part of their name.
+We can ask if this second approach found any GWAS studies that the first one did not.
+And further look at those, to see if any are likely to be about infectious diseases. We
+will also check to see if the first method found studies that the second approach did not.
+In this case this second approach found `r length(vv)` studies that were not found by our first approach, while the first approach found `r length(v2)` studies that were not found by the second.
 
-### Strategy three: Use the EFO ontology structure
+One of the studies found by this method that were not found using the EFO structure was `r vv[1]` which has the disease trait `r vvGWC[1, "DISEASE.TRAIT"]`. And the associated EFO term is `r vvGWC[1, "MAPPED_TRAIT_CURIE"]` and while it is not an infectious disease one of its synonyms is pseudomonas aeruginosa, susceptibility to chronic infection by, in cystic fibrosis", which explains why it was found using our second method.  Unfortunately many of the synonyms reported in EFO are not actually synonyms and this will cause matches where there should not be any.
 
-Above we first started with the *infectious disease* in the EFO ontology and then found
+Examining the other list, those found by our first method, but not by our second we see that these are mainly infectious diseases where the word infect is not included in the name of the disease or any of its synonyms.
+
+### Strategy three: Use the EFO corpus directly
+
+Above we first started by searching for *infectious disease* in the EFO ontology and then found
 all GWAS studies that mapped directly to either that node, or one of its descendants. We contrasted that with the strategy of searching the corpus based on the GWAS catalog studies for the terms infectious and disease.  A third approach is to search the EFO corpus for *infectious disease*
 which we do in the code below
 
