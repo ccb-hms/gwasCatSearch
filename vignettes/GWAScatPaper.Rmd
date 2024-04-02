@@ -145,9 +145,36 @@ gg = grepl("chronic kidney disease", xx$DISEASE.TRAIT, ignore.case = T)
 PMs = xx$PUBMEDID[gg]
 ```
 
-We last point out that assigned disease traits, the DISEASE.TRAIT column, in the GWAS Catalog metadata may also cause some challenges.  When we searched all disease trait strings for any occurance of the string *chronic kidney disease*, ignoring capitalization, and found `r sum(gg)` matches.  These correspond to `r length(unique(PMs))` PUBMEDIDs.  
+We last point out that assigned disease traits, the DISEASE.TRAIT column, in the GWAS Catalog metadata may also cause some challenges.  When we searched all disease trait strings for any occurance of the string *chronic kidney disease*, ignoring capitalization, and found `r sum(gg)` matches.  These correspond to `r length(unique(PMs))` PUBMEDIDs.
 
-### A search corpus based on EFO
+### Vague Study Definitions
+
+Sometimes the EFO terms used are very generic and hence don't provide much resolution of phenotypes.
+By that we mean that they have too many studies that map to them and hence are unlikely to be informative about the sort of specific questions we might want to address. These are
+relatively easy to find. Using a cutoff of 500 GWAS studies we obtain the set of EFO terms that have more than 500 GWAS studies that have been directly mapped to them. 
+
+
+```{r studies2EFO, echo=FALSE}
+
+manystudies = efo_df[efo_df$Direct>500,]
+knitr::kable(manystudies[,c(1,2,5,6)], row.names=FALSE, caption="List of EFO terms with more than 500 Studies", label="tab:xx", full_width=FALSE)
+
+```
+
+One can then get a sense of the actual traits that were mapped to these by using one querying the GWAS catalog dataframe. We will look at EFO:0004725, which is *metabolite measurement*. We identify
+all GWAS studies that were directly mapped to EFO:0004725 and then examine the GWAS trait strings.
+In are we see that this EFO term is really a catch-all for a wide variety of chemical measurements and hence unlikely to be helpful providing insight into the commonality of terms that were mapped directly to it. 
+
+##FIXME: Ask Rafael about other ideas here - maybe there is some sort of diversity index that could be computed per EFO term that says something about how related the terms mapped there are
+
+```{r vagueTraits, echo=FALSE}
+metabTraits = gwc_df[gwc_df$MAPPED_TRAIT_CURIE=="EFO:0004725", "DISEASE.TRAIT"]
+zz = table(metabTraits)
+knitr::kable(sort(zz,dec=T)[1:10], row.names=FALSE, caption="GWAS disease traits mapping to EFO:0004725")
+```
+
+## Building search corpora 
+
 
 To create a searchable EFO-based corpus we think of
 each EFO term as a *document*. The EFO provides a text description of
@@ -191,7 +218,7 @@ There were `r length(ckdMatches[[1]])` GWAS catalog studies that were mapped **d
 
 ##FIXME: Vince here is a place where a picture of the EFO graph could be useful
 
-## A search corpus based on GWAS Traits.
+### A search corpus based on GWAS Traits.
 
 ```{r GWCexp1, echo=FALSE}
 GWCexp1 = gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST90083943"),]
@@ -202,10 +229,12 @@ knitr::kable(t(GWCexp1), align='lc', caption="Study GCST90083943", col.names="")
 
 ```
 
-To create this corpus, which we will call the GWASC corpus, we create on document per study.
+To create this corpus, which we will call the GWASC corpus, we create one document per study.
 For each study (e.g. GCST90083943), we use the name the original researchers gave to the trait, the EFO trait that the GWAS Catalog mapped that study to and the synonyms provided for that EFO trait. In this case each document is a GWAS catalog entry. In Table \@ref(tab:GWCexp1) we show the metadata associated with the study GCST90083943 as well as the synonyms for `r EFO1`.
 
 To create this searchable corpus we made documents, one for each GWAS study, by assembling the GWAS trait (DISEASE.TRAIT), the EFO mapped trait (Trait) and all EFO provided synonyms (Synonyms). In this case the ontology is being used to provide a standardized trait name and its synonyms. The relationships within the ontology are not used. The corpus can be searched and studies that match the search term retrieved. 
+
+The same set of textual descriptions are used for constructing both this corpus and the EFO corpus described above.  These are the original set of traits as defined by the authors of the studies and the traits and synonyms for all EFO terms that were mapped to.  So a search based on one of these should yield the same set of EFO terms and GWAS catalog studies. We find that it is useful to have both.
 
 ```{r GWCexp2, echo=FALSE}
 ##find all the studies that map to leukemia
@@ -224,7 +253,7 @@ the text description used by the ontology for the trait.
 
 ## Searching For Diseases
 
-In this section we describe three different approaches that can be taken to
+In this section we describe two different approaches that can be taken to
 find GWAS studies that are associated with a particular term.  We will look for GWAS
 studies associated with *infectious disease*.  One reason for this choice is that it is quite a challenging problem if one attempts it without using an ontology.  The main reason for that is that there are many infectious diseases and most of them do not have either *infectious* or *disease* in their name.  So without an ontology to guide us, we would need to have some dictionary of infectious diseases to start with. [FIXME: should we try to find one?]
 
@@ -436,31 +465,6 @@ efo_df[names(tt)[2],]
 While the GWAS catalog has provided mappings to EFO there remain some substantial challenges
 for those attempting to use it to find and organize their searches.  These include vague EFO assignments where hundreds of phenotypes have been mapped to an EFO term, papers that give rise to thousands of GWAS studies, inaccuracies and inconsistencies in the EFO, and a lack of clarity on the explicit rationale for mapping a trait to an EFO term.  We give examples of each of these.
 
-### Vague Study Definitions
-
-Sometimes the EFO terms used are very generic and hence don't provide much resolution of phenotypes.
-By that we mean that they have too many studies that map to them and hence are unlikely to be informative about the sort of specific questions we might want to address. These are
-relatively easy to find. Using a cutoff of 500 GWAS studies we obtain the set of EFO terms that have more than 500 GWAS studies that have been directly mapped to them. 
-
-
-```{r studies2EFO, echo=FALSE}
-
-manystudies = efo_df[efo_df$Direct>500,]
-knitr::kable(manystudies[,c(1,2,5,6)], row.names=FALSE, caption="List of EFO terms with more than 500 Studies", label="tab:xx", full_width=FALSE)
-
-```
-
-One can then get a sense of the actual traits that were mapped to these by using one querying the GWAS catalog dataframe. We will look at EFO:0004725, which is *metabolite measurement*. We identify
-all GWAS studies that were directly mapped to EFO:0004725 and then examine the GWAS trait strings.
-In are we see that this EFO term is really a catch-all for a wide variety of chemical measurements and hence unlikely to be helpful providing insight into the commonality of terms that were mapped directly to it. 
-
-##FIXME: Ask Rafael about other ideas here - maybe there is some sort of diversity index that could be computed per EFO term that says something about how related the terms mapped there are
-
-```{r vagueTraits, echo=FALSE}
-metabTraits = gwc_df[gwc_df$MAPPED_TRAIT_CURIE=="EFO:0004725", "DISEASE.TRAIT"]
-zz = table(metabTraits)
-knitr::kable(sort(zz,dec=T)[1:10], row.names=FALSE, caption="GWAS disease traits mapping to EFO:0004725")
-```
 
 ### Mapping not so great
 
