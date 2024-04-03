@@ -121,12 +121,14 @@ Here we explore some of the characteristics of the Catalog in order to facilitat
 
 
 ```{r cmpTableofMappingCounts, echo=FALSE }
+##we are looking at how many rows in gwc_df each Study accession number
+##has - so each of these corresponds to a unique EFO term
 pp = table(gwc_df$STUDY.ACCESSION)
 pps = sort(pp,dec=T)[1:10]
 ptab = table(pp)
 ptab = c(ptab[1:9], sum(ptab[10:length(ptab)]))
 names(ptab)[10] = "10+"
-kable_styling(kbl(t(ptab), caption="Number of EFO Studies by EFO terms per Study"), bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(t(ptab), caption="GWAS Catalog Studies by number of EFO terms per Study"), bootstrap_options = "striped", full_width = FALSE)
 ```
 
 
@@ -332,7 +334,7 @@ And further look at those, to see if any are likely to be about infectious disea
 will also check to see if the first method found studies that the second approach did not.
 In this case this second approach found `r length(vv)` studies that were not found by our first approach, while the first approach found `r length(v2)` studies that were not found by the second.
 
-One of the studies found by this method that were not found using the EFO structure was `r vv[1]` which has the disease trait `r vvGWC[1, "DISEASE.TRAIT"]`. And the associated EFO term is `r vvGWC[1, "MAPPED_TRAIT_CURIE"]` and while it is not an infectious disease one of its synonyms is pseudomonas aeruginosa, susceptibility to chronic infection by, in cystic fibrosis", which explains why it was found using our second method.  Unfortunately many of the synonyms reported in EFO are not actually synonyms and this will cause matches where there should not be any.
+One of the studies found by this method that were not found using the EFO structure was `r vv[1]` which has the disease trait `r vvGWC[1, "DISEASE.TRAIT"]`. And the associated EFO term is `r vvGWC[1, "MAPPED_TRAIT_CURIE"]` and while it is not an infectious disease one of its synonyms is "pseudomonas aeruginosa, susceptibility to chronic infection by, in cystic fibrosis", which explains why it was found using our second method.  Unfortunately many of the synonyms reported in EFO are not actually synonyms and this will cause matches where there should not be any.
 
 Examining the other list, those found by our first method, but not by our second we see that these are mainly infectious diseases where the word infect is not included in the name of the disease or any of its synonyms.
 
@@ -389,15 +391,23 @@ simple_ggmanh(pp, y.label="-log10 p",
 ## Search for GWAS studies by Disease Location
 
 In recent versions of the EFO the curators have begun to include disease location information.
-This information is encoded using the UBERON ontology. To use this functionality you would first identify the UBERON CURIE that represents the location of interest.  In the code below we look for diseases associated with the lung.  FIXME: Vince - any sort of EFO graph that we could use to represent the disease categories associated with lung?
+This information is encoded using the UBERON ontology. To use this functionality you would first identify the UBERON CURIE that represents the location of interest.  In the code below we look for diseases associated with the lung.  
 
-In the code below we identify the appropriate CURIE and then find all EFO terms that have been annotated with that term. FIXME - can there be sub-terms? and do we need some tools to roll up?
-We next add a column to the metadata for the `efo_tc` corpus. This then allows us to subset the corpus and then we can carry out analyses based on the subset. Details on these capabilities are given in the @atteveldtCorpustoolsManagingQuerying2023 package vignette.
+FIXME: Vince - any sort of EFO graph that we could use to represent the disease categories associated with lung?
 
-```{r uberon, warning=FALSE}
+The CURIE for lung in the UBERON ontology is UBERON:0002048.  We identify
+all EFO terms that refer to this CURIE as their disease location. And then use corpusTools to create a document term matrix (DTM) to represent the frequency of different words in the subcorpus based only on terms associated with UBERON:0002048.  We can then visualize this in Figure \@ref(fig:subsetLung).
+
+RAFAELFIXME - can there be sub-terms? and do we need some tools to roll up?
+
+```{r uberon, warning=FALSE, echo=FALSE}
 lungU = "UBERON:0002048"
 lungEFO = grepl(lungU, efo_df$DiseaseLocation)
 
+##get the actual EFOs -
+EFOsforLung = efo_df[lungEFO, "Subject"]
+##now get the set of GWAS study IDs - this is DF/subset of gwc_df
+GWLungstudies = resources_annotated_with_term(EFOsforLung)
 
 efo_tc$meta$Lung = lungEFO
 
@@ -406,55 +416,50 @@ efo_lung = efo_df[lungEFO,]
 
 ```
 
-In the code below we subset first to the set of terms that have an association with the lung and then to the set of tokens that have more than 5 occurrances. And finally we create a word cloud based on the frequency of the tokens that remain.  These are based on occurance in the EFO corpus.
+In the code below we subset first to the set of terms that have an association with the lung and then to the set of tokens that have more than 5 occurrences. And finally we create a word cloud based on the frequency of the tokens that remain.  These are based on occurance in the EFO corpus.
 
-```{r subsetLung, warning=FALSE}
+```{r subsetLung, fig.cap="Word Cloud based word frequency in the EFO labels of those EFO terms that have disease location  UBERON:0002048. The data were subset to only include tokens that have at least 5 occurrences.", warning=FALSE, echo=FALSE}
+
 efo_tcLung = subset(efo_tc, subset_meta = Lung == TRUE)
 efo_tcLung2 = subset(efo_tcLung, subset=freq_filter(token, min=5))
 dtmLung = get_dtm(efo_tcLung, "feature")
 csums = apply(dtmLung, 2, sum, na.rm=T)
-sort(csums/sum(csums),dec=T)[1:10]
+#sort(csums/sum(csums),dec=T)[1:10]
 dtm_wordcloud(dtmLung)
 ```
 
 
 
-## Exploring the GWAS metadata
+### Exploring the GWAS metadata
 
-Once we have a set of GWAS studies that we are interested in we can access the metadata
-about which variants are implicated, where they are in the genome, the p-value and effect size to name a few.  This data is quite large and we use a SQLite database as the main tool for storing and accessing the data. The data are accessed via either `granges_from_study` if you want a `granges` object that can be integrated with a variety of Bioconductor @ tools for analyzing and plotting genomic data, or `variants_from_study` which returns a dataframe with 21 columns providing a set of metadata.
+Once we have a set of GWAS studies that we are interested in we can access the metadata about which variants are implicated, where they are in the genome, the p-value and effect size to name a few of the attributes that are provided.  These data are large and we use a  database as the main tool for storing and accessing the data. It is straightforward to read the data store them in standard Bioconductor objects and then employ the extensive array of tools for analyzing and plotting the data.
 
-```{r from_studyfuncs}
 
-tab = granges_from_study(acc="GCST007087")
-tab3 = variants_from_study(acc="GCST007087")
-names(tab3)
-##do we care that these two are not the same dimenions?  
 
-```
+```{r from_studyfuncs, echo=FALSE}
+##there should only be one mapped trait curie - not sure what
+##happens here with the studies that have multiple EFO terms
+tab = granges_from_study(acc=GWLungstudies[,"STUDY.ACCESSION"])
 
-Then one can also look at whether the same genes are implicated across
-studies. Note that there are #r NROW(assoc3)# associations that are
-plotted. The interested reaader can explore a number of different
-aspects of these mappings.
-
-```{r lookatHits, eval=FALSE}
-sort(table(assoc3$MAPPED_GENE),dec=TRUE)[1:10]
-tt = sort(table(assoc3$MAPPED_TRAIT_CURIE), dec=TRUE)
-tt[1:10]
-```
-
-Then look at some of the traits that show up often. The top two hits are
-for lymphocyte counts. Out of the top 10, only one seems to actually be
-an infectious disease. The others are autoimmune, COPD, and measurements
-of lymphocytes.
-
-```{r maptotraits, eval=FALSE}
-efo_df[names(tt)[1],]
-efo_df[names(tt)[2],]
 
 ```
 
+
+```{r lookatHits, eval=TRUE, echo=FALSE}
+sort(table(tab$MAPPED_GENE),dec=TRUE)[1:10]
+
+```
+
+We can then create a Manhattan plot of the variants associated with the selected studies.  There are many different ways in which one can explore these data. The metadata is quite extensive and one might also want to subset, or color variants by disease type.
+
+```{r lungmanh, plot=TRUE, echo=FALSE, fig.align='center', fig.width=7, fig.cap="Manhattan Plot for Disease Location Lung", warning=FALSE, fig.height=5, fig.path="figure/"}
+vars = variants_from_study(GWLungstudies$STUDY.ACCESSION)
+##drop those with a p-value > 1e-8,
+vars = vars[vars$`P-VALUE` < 1e-8, ]
+simple_ggmanh(vars, y.label="-log10 p", plot.title = "Diseases of the Lung",
+       label.colname = "MAPPED_TRAIT", pval.colname="P-VALUE")
+
+```
 
 
 ## Challenges
@@ -463,7 +468,23 @@ While the GWAS catalog has provided mappings to EFO there remain some substantia
 for those attempting to use it to find and organize their searches.  These include vague EFO assignments where hundreds of phenotypes have been mapped to an EFO term, papers that give rise to thousands of GWAS studies, inaccuracies and inconsistencies in the EFO, and a lack of clarity on the explicit rationale for mapping a trait to an EFO term.  We give examples of each of these.
 
 
-### Mapping not so great
+### Mapping and Interpreting
+
+```{r efoCKD, echo=FALSE}
+q1 = "chronic AND kidney AND disease"
+hts = search_features(efo_tc, query = q1)
+hts = addField2Hits(hts, efo_tc )
+hitsasDT = hits2DT(hts, efo_df, efo_tc)
+```
+
+```{r gwcCKD, echo=FALSE}
+htsgwc = search_features(gwc_tc, query=q1)
+htsgwc = addField2Hits(htsgwc, gwc_tc )
+hitsgwcasDT = hits2DTGWC(htsgwc, gwc_df, gwc_tc)
+```
+
+We noted above that the term EFO:0003086 has text description of "chronic kidney diseases".
+When we 
 
 In this example we are examine kidney function traits, and in particular we
 will search for *chronic AND kidney AND disease* in the EFO-based corpus. This string should find EFO terms that have matchs to all three words that are close to each other.
@@ -494,7 +515,7 @@ efo_df[kdEFO,]
 ackd = EFOdescendants("EFO:0003086")
 ```
 
-There are only `r length(ackd)` EFO terms that are more specific than the term *kidney disease* and the total number of GWAS studies that mapped directly to EFO:0003086 or were inherited we only get `r efo_df["EFO:0003086","Direct"] + efo_df["EFO:0003086","Inherited"]` GWAS studies.  This suggests that there are a very large number of studies where the GWAS trait contains the phrase *chronic kidney disease* that were not mapped to any EFO kidney disease. 
+There are only `r length(ackd)` EFO terms that are more specific than the term *kidney disease* and the total number of GWAS studies that mapped directly to EFO:0003086 or were inherited we only get `r efo_df["EFO:0003086","Direct"] + efo_df["EFO:0003086","Inherited"]` GWAS studies.  This suggests that there are a very large number of studies where the GWAS trait contains the phrase *chronic kidney disease* that were not mapped to any EFO term directly related to kidney disease. And unfortunately that suggests that to find those GWAS catalog studies we will need to rely on string matching which is not the best approach.
 
 
 ```{r msmt, echo=FALSE}
@@ -503,16 +524,8 @@ dtandmsmt = intersect(msmtdesc, row.names(hitsasDT))
 length(dtandmsmt)
 
 ```
+
 A little more exploring suggests that many of the terms are actually mapped to the descendants of the *measurement*, EFO:0001444, node. Specifically we find that there are `r length(dtandmsmt)` EFO terms that were identified by our search which align to measurements, a number far larger than those that align to disease.  Which makes searching for terms related to any specific disease somewhat more challenging, as the organizational principles for this part of the EFO are not suitable for finding related diseases and it appears the analyst is left with string matching as the only viable option.
-
-We constructed our documents by combining the name of the EFO trait (Object), the EFO synonyms (Synonyms) and all GWAS traits that were directly mapped to that EFO trait (Matches) into one *document*.  We can query the corpus to determine which of these three parts any match was made to.
-the matches to *chronic kidney disease* are occurring. For example, for `r hitsasDT$EFO[1]`
-the string *chronic kidney disease* was matched only to other GWAS
-catalog traits (since only matches were found).
-
-```{r why7K, echo=FALSE}
-knitr::kable(table(hitsasDT$field))
-```
 
 This means that the bulk of the EFO terms are showing up due to finding
 the text string in the name of some other GWAS catalog trait and 
@@ -538,7 +551,7 @@ pmtab = sort(table(ckdPMIDs), dec=TRUE)
 #pmtab[1:10]
 ```
 
-And now we see that there are in fact `r length(unique(gwc_df[gg, "STUDY.ACCESSION"]))` terms that have been labeled this way. Further, if we look at the PUBMEDIDs associated
+And now we see that there are in fact `r length(unique(gwc_df[gg, "STUDY.ACCESSION"]))` terms that have been labeled this way. Further, if we look at the PUBMED IDs associated
 with these traits we see that there are `r sum(pmtab>1000)` papers that
 report more than 1000 traits. Given the PubMed IDs it is easy to find
 the papers. The paper associated with PMID 35870639 which reports more than 
@@ -560,6 +573,19 @@ simple_ggmanh(vars, y.label="-log10 p", plot.title = "Chronic Kidney Disease",
 
 Another potential issue is that the EFO provided synonyms might be inaccurate. Further investigation of those issues is also recommended. FIXME: maybe Rafael has some ideas.
 
+
+```{r semnet, echo=FALSE}
+gwc_tc$preprocess(min_docfreq = 50, remove_stopwords = T, remove_numbers = T)
+
+g = semnet_window(gwc_tc, 'feature')
+gb = backbone_filter(g, alpha = 0.001, max_vertices = 100)
+plot_semnet(gb)
+
+fa = feature_associations(gwc_tc, 'feature', query = 'chron*')
+fa = feature_associations(gwc_tc, 'feature', query = 'chronic AND kidney')
+
+fa = feature_associations(gwc_tc, 'feature', query = "leuk*")
+```
 
 #### Other Hierarchies
 
