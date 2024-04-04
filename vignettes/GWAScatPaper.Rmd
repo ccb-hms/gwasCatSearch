@@ -224,7 +224,8 @@ GWCexp1 = gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST90083943"),]
 EFO1 = GWCexp1$MAPPED_TRAIT_CURIE
 EFO1Syns = getSynonyms(EFO1)
 GWCexp1$EFOSynonyms = paste(unlist(EFO1Syns), collapse="; ")
-knitr::kable(t(GWCexp1), align='lc', caption="Study GCST90083943", col.names="") |> kable_styling()
+
+kable_styling(kbl(t(GWCexp1), align='lc', caption="Study GCST90083943", col.names=""), bootstrap_options = "striped", full_width = FALSE)
 
 ```
 
@@ -240,7 +241,8 @@ The same set of textual descriptions are used for constructing both this corpus 
 htl = search_features(gwc_tc, query="leuk*")
 htlf = addField2Hits(htl, gwc_tc)
 tt = table(htlf$hits$field)
-knitr::kable(tt, caption="Which part of the GWAS *document* matched the search term leuk*", col.names = c("Term", "Count"))  |> kable_styling()
+
+kable_styling(kbl(tt, caption="Which part of the GWAS *document* matched the search term leuk*", col.names = c("Term", "Count")) , bootstrap_options = "striped", full_width = FALSE)
 ```
 
 As shown in Table \@ref(tab:GWCexp2) it is also possible to identify which of the three parts of the *document* described above have matches.
@@ -294,21 +296,20 @@ that `r efo_df[gg,"Direct"]` were directly mapped to EFO:0005741 while `r efo_df
  
 ### Strategy Two: Search based on the GWAS catalog corpus
 
-For this search we start fairly broadly and search the GWAS catalog for the term *infectious*. One could also search for specific diseases or other terms and then merge the results.
-This search uses the GWAS  the text descriptions of the GWAS trait as well as the trait and synonyms that correspond to the EFO term(s) this study was directly mapped to.
+In this case we will search the corpus based on the GWAS catalog. One might want to experiment with different queries to try to obtain a good trade off between sensitivity and specificity.  We found that using *infectious diease* as our query missed a number of GWAS studies that had *infection* in them and opted for the term *infect\**. If a list of all infectious diseases was available a different strategy would be to search for each disease in that list and then merge the results.   Recall that when we constructed the GWAS catalog corpus we used the text descriptions of the GWAS trait as well as the trait name and the synonyms that correspond to the EFO term(s) this study was directly mapped to.
 
-```{r IDgwctc}
+```{r IDgwctc, echo=FALSE}
 qID = "infect*"
 htsID = search_features(gwc_tc, query = qID)
 htsID = addField2Hits(htsID, gwc_tc )
 hitsIDasDT = hits2DTGWC(htsID, gwc_df, gwc_tc)
 ```
 
-We can see where the matches occur. And see that the bulk have come from the EFO synonyms.
+We found `r{NROW(hitsIDasDT` and in Table \@ref(tab:checkIDmatches) we report where in the *document* matches have occurred and see that the majority are in synonyms.
 
-```{r checkIDmatches}
+```{r checkIDmatches, echo=FALSE}
 idTT = table(hitsIDasDT$field)
-idTT
+kable_styling(kbl(idTT, caption="Which part of the text matched our search term.", col.names = c("Term", "Count")) , bootstrap_options = "striped", full_width = FALSE)
 ```
 
 
@@ -324,7 +325,7 @@ v2GWC = gwc_df[match(v2, gwc_df$STUDY.ACCESSION),]
 
 ##see if the ancestor of the first term is under infectious disease - and it is not
 check1 = EFOancestors(vvGWC[1, "MAPPED_TRAIT_CURIE"])
-match("EFO:0005741", check1)
+#match("EFO:0005741", check1)
 
 ##look at the other list - and we see that these are infectious diseases
 ```
@@ -344,7 +345,7 @@ Above we first started by searching for *infectious disease* in the EFO ontology
 all GWAS studies that mapped directly to either that node, or one of its descendants. We contrasted that with the strategy of searching the corpus based on the GWAS catalog studies for the terms infectious and disease.  A third approach is to search the EFO corpus for *infectious disease*
 which we do in the code below
 
-```{r otherterms}
+```{r otherterms, echo=FALSE}
 
 qIDefo = "Infectious AND disease"
 htsID2 = search_features(efo_tc, query = qIDefo)
@@ -357,7 +358,7 @@ Now we can compare the EFO categories and see if we found anything new and also 
 the GWAS studies. A quick visual inspection of the EFO categories found by this method
 and not the first, suggests that the first approach did seem to get everything useful.
 
-```{r method3comp}
+```{r method3comp, echo=FALSE}
 efoIDS3 = row.names(hitsID2asDT2)
 setd3 = setdiff(efoIDS3, row.names(efo_id))
 efo_df[setd3,"Object"]
@@ -366,7 +367,7 @@ efo_df[setd3,"Object"]
 
 We end this section by creating a Manhattan plot based on the studies that were identified using the first strategy. 
 
-```{r getresources}
+```{r getresources, echo=FALSE}
 
 IDassoc <- granges_from_study(dirMap$STUDY.ACCESSION)
 IDassoc2 = IDassoc[IDassoc$P.VALUE<1e-8,]
@@ -377,7 +378,7 @@ sum(duplicated(IDassoc2$SNP_ID_CURRENT))
 ##and produce a plot
 ```
 
-```{r IDmanh, plot=TRUE, fig.align='center', fig.width=7, fig.cap="Manhattan Plot for Infectious Disease", warning=FALSE, fig.height=5, fig.path="figure/"}
+```{r IDmanh, echo=FALSE, plot=TRUE, fig.align='center', fig.width=7, fig.cap="Manhattan Plot for Infectious Disease", warning=FALSE, fig.height=5, fig.path="figure/"}
 pp = variants_from_study(dirMap$STUDY.ACCESSION)
 pp = pp[IDassoc$P.VALUE<1e-8,]
 
@@ -432,7 +433,7 @@ dtm_wordcloud(dtmLung)
 
 ### Exploring the GWAS metadata
 
-Once we have a set of GWAS studies that we are interested in we can access the metadata about which variants are implicated, where they are in the genome, the p-value and effect size to name a few of the attributes that are provided.  These data are large and we use a  database as the main tool for storing and accessing the data. It is straightforward to read the data store them in standard Bioconductor objects and then employ the extensive array of tools for analyzing and plotting the data.
+Once we have a set of GWAS studies that we are interested in we can access the metadata for the implicated variants such as likely gene, the genome coordinates, the p-value and effect size to name a few of the attributes that are provided.  These data are large and we use a  database as the main tool for storing and accessing the data. The data can be read into standard Bioconductor objects, such as those for storing and manipulating genetic coordinates and users can easily produce Manhattan plots, or identfy genes that are implicated.  In Table  \@ref(tab:lookatHits) we report the ten most frequent mapped genes for the lung studies.
 
 
 
@@ -446,7 +447,7 @@ tab = granges_from_study(acc=GWLungstudies[,"STUDY.ACCESSION"])
 
 
 ```{r lookatHits, eval=TRUE, echo=FALSE}
-sort(table(tab$MAPPED_GENE),dec=TRUE)[1:10]
+kable_styling(kbl(t(sort(table(tab$MAPPED_GENE),dec=TRUE)[1:10]), caption="Most frequent mapped genes in GWAS lung studies." ), bootstrap_options = "striped", full_width = FALSE)
 
 ```
 
@@ -525,7 +526,7 @@ length(dtandmsmt)
 
 ```
 
-A little more exploring suggests that many of the terms are actually mapped to the descendants of the *measurement*, EFO:0001444, node. Specifically we find that there are `r length(dtandmsmt)` EFO terms that were identified by our search which align to measurements, a number far larger than those that align to disease.  Which makes searching for terms related to any specific disease somewhat more challenging, as the organizational principles for this part of the EFO are not suitable for finding related diseases and it appears the analyst is left with string matching as the only viable option.
+A little more exploring suggests that many of the terms are actually mapped to the descendants of the *measurement*, EFO:0001444, node. Specifically we find that there are `r length(dtandmsmt)` EFO terms that were identified by our search which are annotated as measurements, a number far larger than those that align to disease.  Which makes searching for terms related to any specific disease somewhat more challenging, as the organizational principles for this part of the EFO are not suitable for finding related diseases and it appears the analyst is left with string matching as the only viable option.
 
 This means that the bulk of the EFO terms are showing up due to finding
 the text string in the name of some other GWAS catalog trait and 
