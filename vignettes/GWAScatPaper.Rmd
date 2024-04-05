@@ -67,7 +67,7 @@ a number of tables that can be accessed via a SQL database; we use SQLite (@sqli
 An ontology is a set of concepts and categories that describe a subject area or domain of knowledge that expresses their properties and the relations between them. Ontologies form one of the bases for knowledge engineering and representation and are important in understanding and referencing biomedical entities. One of the challenges that needs to be addressed is the fact that the same concept might usefully appear in different ontologies and users will need tools to help identify similar concepts. A second challenge is that to be useful the ontologies must be accessible and typically that means using the web or a database implementation. There are two useful constructs that help with this, the compact uniform resource identifiers (CURIEs), and the internationalized resource identifiers (IRIs)  which in ontology space are used as *names* terms in the ontology. A CURIE has three parts: a prefix; a delimiter; and a unique local (to the ontology described by the prefix) identifier from the given nomenclature. The CURIE EFO:0005305 which represents the concept *atrioventricular node disease* has a prefix of EFO, a delimiter of a colon (:) and a unique local identifier of 0005305.  The corresponding IRI for that term is http://www.ebi.ac.uk/efo/EFO_0005305, which gives a web location that can be examined by a user.
 
 The disease location information was extracted directly from EFO statements of the form:  X has_disease_location Y, where Y is typically an UBERON term representing an anatomical location. If a term does not have an explicitly stated location relationship, we determine if it has an inferred location. This is done by recursively checking if a parent in the ontology hierarchy has a location. The first location found is used, and if none is found then it is marked as missing. 
-For example, *bronchitis*  (EFO:0009661) does not have an explicitly stated location in EFO, but it inherits one from its immediate parent (*bronchial disease*), which has location *bronchus*, (UBERON:0002185).
+For example, *bronchitis*  (EFO:0009661) does not have an explicitly stated location in EFO, but it inherits one from its immediate parent (*bronchial disease*), which has location *bronchus*, (UBERON:0002185).  Of the `r NROW(efo_df)` EFO terms `r sum(!is.na(efo_df$DiseaseLocation))` terms have a disease location.
 
 As part of the processing we construct two dataframes, one based on the EFO terms `efo_df` and the other based on the GWAS catalog studies `gwc_df`. These are described in Table 1. We create two different corpora for searching. One based on the EFO and
 the relationships inherent in it, `efo_tc`, and the second based on the GWAS
@@ -83,7 +83,10 @@ Each GWAS study has a specific trait that was studied and that is
 reported as a text string. That trait is mapped to a specific term in
 the EFO ontology, and we refer to those as **direct** mappings. The terms in the EFO ontology
 are related to each other via a directed acyclic graph. By construction there is a single root node. More specific terms, such as the relationship between cancer and pancreatic cancer are encoded with pancreatic cancer being the **child** of cancer,
-while cancer is the **parent** of pancreatic cancer.  The descriptions can become more refined, and we define the **descendents** of a node to be the set of child nodes, where one recurses down to the point where a node has no children.  Such a node is referred to as a *leaf*.  Similarly **ancesters** are the parents, again applied recursively to the root node of the ontology.  Our software contains tools to obtain the children, descendents, parents, and ancestors as well as to perform other operations on the ontology. 
+while cancer is the **parent** of pancreatic cancer.  The descriptions can become more refined, and we define the **descendents** of a node to be the set of child nodes, where one recurses down to the point where a node has no children.  Such a node is referred to as a *leaf*.  Similarly **ancesters** are the parents, again applied recursively to the root node of the ontology.  Our software contains tools to obtain the children, descendents, parents, and ancestors as well as to perform other operations on the ontology.
+
+In some sense studies that map to leaf nodes in the ontology are describing quite specific concepts, while studies that map to non-leaf nodes are likely to be concepts that are more general.
+FIXME: we need an image of some part of the ontology to try to make this clear to the reader
 
 Tools for representing and organizing biomedical entities and concepts are key components of
 any system that process disease, medical or epidemiological data.  There are many challenges among them is the need to have some way to have two different systems align on some concepts. On the seminatic web Uniform Resource Identifiers (URIs) are used to reference named entities. So URI basically give a web address where more details on the concept can be found.
@@ -150,7 +153,7 @@ PMs = xx$PUBMEDID[gg]
 We last point out that assigned disease traits, the DISEASE.TRAIT column, in the GWAS Catalog metadata may also cause some challenges.  When we searched all disease trait strings for any occurance of the string *chronic kidney disease*, ignoring capitalization, and found `r sum(gg)` matches.  These correspond to `r length(unique(PMs))` PUBMEDIDs.
 
 Sometimes the EFO terms used are very generic and hence don't provide much resolution of phenotypes.
-By that we mean that they have too many studies that map to them and hence are unlikely to be informative about the sort of specific questions we might want to address. These are
+By that we mean that they have many studies that map to them and hence are unlikely to be informative about the sort of specific questions we might want to address. These are
 relatively easy to find. In Table \@ref(tab:studies2EFO) we report the set of EFO terms that have more than 500 GWAS studies mapped directly to them. 
 
 
@@ -176,10 +179,7 @@ One can then examine the actual traits that were mapped to each of these by quer
 
 To create a searchable EFO-based corpus we think of
 each EFO term as a *document*. The EFO provides a text description of
-the term as well as a set of known synonyms. We show the EFO provided synonyms for EFO:0003086 in Table \@ref(tab:exampleEFO). We expand the document by including the GWAS trait label
-for any GWAS study that has been mapped **directly** to that EFO term.  Our rationale
-is that the curators assigned that trait description to the specific EFO term, so it 
-is essentially, in their eyes, a synonym.
+the term as well as a set of known synonyms. We show the EFO provided synonyms for `r efo_df["EFO:0003086", "Object"]`, EFO:0003086 in Table \@ref(tab:exampleEFO). 
 
 
 ```{r exampleEFO, echo=FALSE}
@@ -194,8 +194,12 @@ if( nsyn %% 2 ) {
 outmat = data.frame(cbind(ckdSyns[1:half], ckdSyns[(half+1):(2*half)]))
 colnames(outmat) = NULL
 #ckdSyns
-kable_styling(kbl(outmat, caption = "Synonyms for EFO:0003086"), bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(outmat, caption = paste0("Synonyms for EFO:0003086, ", efo_df["EFO:0003086","Object"])), bootstrap_options = "striped", full_width = FALSE)
 ```
+We expand the document by including the GWAS trait label
+for any GWAS study that has been mapped **directly** to that EFO term.  Our rationale
+is that the curators assigned that trait description to the specific EFO term, so it 
+is essentially, in their eyes, a synonym.
 
 ```{r getstudyAcc, echo=FALSE}
 ckdMatches = getMatchedTraits("EFO:0003086")
@@ -205,8 +209,7 @@ ckdStudies = gwc_df[gwc_df$MAPPED_TRAIT_CURIE=="EFO:0003086",]
 
 ```
 
-For clarity, there is one *document* associated with each EFO term. The term itself we call the *object*, which is augmented by a set of zero or more *synonyms* provided by EFO and then additionally
-augmented by a set of zero or more *matches* which are GWAS study traits that have been mapped directly to the EFO term.
+For clarity, we create one *document* for each EFO term. The document has three components, the term itself we call the *object*, second a set of zero or more *synonyms* provided by EFO and third a set of zero or more *matches* which are GWAS study traits that have been mapped directly to the EFO term.
 
 Searching for relevant GWAS studies using this corpus one first obtains all EFO terms where the tokenized search string matches at least one of the *object*, *synonyms* or *matches* for that term.  The desired GWAS studies are those that have either matched directly to that EFO term, or are inherited by that term. 
 
@@ -570,6 +573,10 @@ simple_ggmanh(vars, y.label="-log10 p", plot.title = "Chronic Kidney Disease",
 ### Bad synonyms
 
 Another potential issue is that the EFO provided synonyms might be inaccurate. Further investigation of those issues is also recommended. FIXME: maybe Rafael has some ideas.
+
+For `r efo_df["EFO:0000685", "Object"]` the reported synonyms include *proliferative arthritis* and
+*Rheumatic gout*. However, proliferative arthritis refers to a condition characterized by the excessive growth of synovial tissue in the joints, leading to inflammation and joint damage. Rheumatoid arthritis, on the other hand, is an autoimmune disease where the immune system mistakenly attacks the joints, causing inflammation, pain, and joint damage. And *Rheumatic gout* is a somewhat archaic term for gout. Including these as synonyms will result in linking traits that should not be linked.
+
 
 
 ```{r semnet, warning=FALSE, message=FALSE, echo=FALSE}
