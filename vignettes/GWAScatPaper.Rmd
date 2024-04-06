@@ -29,21 +29,18 @@ library("DT")
 
 Larger and more complex biomedical data sets are becoming increasingly
 available and they provide substantial opportunities for discovery.
-Realizing the potential for discovery is challenged by the complexity of
-the data, the inherent relationships between phenotypes and the need for
-data analysts to be able to navigate some of the complexities of both
-biological and medical terminologies. In this paper we explore using
-corpus search tools (as exemplified in the `corpustools` package
+Realizing the potential for discovery is hampered by many challenges including the complexity of
+the data and the inherent challenge of phenotypes and experimental factors
+being described primarily in natural language. We explore the challenges and opportunites that arise from mapping textual descriptions of traits and experimental conditions to ontologies. In particular we examine the use of corpus search tools (as exemplified in the `corpustools` package
 @atteveldtCorpustoolsManagingQuerying2023) to help search through the set of traits that are
-reported by the GWAS catalog. These traits have been hand curated by the
+reported by the GWAS catalog. Since these investigator defined traits have been hand curated by the
 EBI and mapped to terms in the Experimental Factor Ontology (EFO,
-@maloneModelingSampleVariables2010). However, the tools available for searching these data are
-mainly variants of regular expression matching, which as very limited
-expressivity for the complex nature of medical and biological terms.
+@maloneModelingSampleVariables2010) we can also examine how the structure that mapping provides can be used to aid the analysis and interpretation of the data.
 
-The GWAS Catalog (@sollisNHGRIEBIGWASCatalog2023) reports on a set of curated GWAS
+The GWAS Catalog (@sollisNHGRIEBIGWASCatalog2023) reports on a set of published curated GWAS
 association studies. Since 2010, delivery and development of the Catalog
-has been a collaborative project between the EMBL-EBI and NHGRI. As of
+has been a collaborative project between the EMBL-EBI and NHGRI. Full details of
+the data and the date it was obtained are given in an appendix. As of
 2024-01-30, the GWAS Catalog contains 6715 publications, 571148 top
 associations and 67322 full summary statistics. GWAS Catalog data is
 currently mapped to Genome Assembly GRCh38.p14 and dbSNP Build 156.
@@ -59,7 +56,7 @@ anomalies in both the EFO and the GWAS catalog that make it essential that
 we have effective tools for cross-referencing searches. Our software is contained in the `gwasCatSearch` package (@gentlemanGwasCatSearchPackageSupport2024a) 
 which is open source and freely available.
 
-## Methods
+## Materials and Methods
 
 ### Data
 We obtain data from the GWAS Catalog and transform it into a set of tables using tools in the GWASCatalogSearchDB (https://github.com/ccb-hms/GWASCatalogSearchDB). This processing produces
@@ -255,6 +252,7 @@ to synonyms provided by the ontologies, and `r tt["Trait"]` matches to
 the text description used by the ontology for the trait. 
 
 ## Searching For Diseases
+The journal Genetics allows for statisical analysis or GWAS/TWAS etc analysis...
 
 In this section we describe two different approaches that can be taken to
 find GWAS studies that are associated with a particular term.  We will look for GWAS
@@ -600,7 +598,23 @@ a *measurement* (EFO:0001444) node, with about 8,700 terms nested under it. Thes
 *infectious disease biomarker* (EFO:0006843) which may also be relevant.
 FIXME: report the number of studies that. align under the measurement node
 
+##Results and Discussion
+
+The results of our exploration are encouraging but also exhibit the challenges that remain. The mapping of phenotypes to an ontology is extremely helpful in providing a more specific vocabulary that can be used to harmonize across studies.  The terms or nodes in the ontology provide a means of associating synonyms and they can then easily be incorporated into searches.  Ontologies provide some means of versioning and hence of updating and improving the ontology.  And as we have noted that additional information, such as disease location, can also be documented and then subsequently used in any analyses.
+
+While ontologies provide mechanisms for describing complex relationships their practical application to support specific scientific investigations remains challenging.  There are no clear mechanisms to describe the processes used.  For example we have shown that in many cases the curators chose to map phenotypes to entries in the *measurement* portion of the EFO ontology, which may be appropriate for many situations, but as our focus is in identifying diseases this decision appears to leave us relying on syntax and string matching.
+  The ontologies are incomplete, which is to be anticipated, but that incompleteness leads to compromises in the labeling of phenotypes for which there are no standards for describing.
+  We anticipate that further refinements such as making use of other natural language processing tools such as name-entity-recognition (NER) may be useful in further identifying phenotypes that reference specific diseases, genes, drugs.
+  Our ability to integrate and synthesize data across studies remains hampered by other issues as well.  In most situations we would like to be able to address whether or not studies were based on reasonably similar cohorts of individuals, and in some cases whether or not the inclusion and exclusion criteria were similar.  This of course remains a challenge across much of medical and epidemiological data reporting.
+  
+  
 ## Citations
 
 
 
+### Appendix
+
+The GWAS catalog data are obtained from xhttps://www.ebi.ac.uk/gwas/
+and transformed according to the descriptions in https://github.com/ccb-hms/GWASCatalogSearchDB,
+which gives explicit details on which files were obtained, and the dates on which they
+were obtained.
