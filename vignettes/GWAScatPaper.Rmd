@@ -67,9 +67,23 @@ An ontology is a set of concepts and categories that describe a subject area or 
 The disease location information was extracted directly from EFO statements of the form:  X has_disease_location Y, where Y is typically an UBERON term representing an anatomical location. If a term does not have an explicitly stated location relationship, we determine if it has an inferred location. This is done by recursively checking if a parent in the ontology hierarchy has a location. The first location found is used, and if none is found then it is marked as missing. 
 For example, *bronchitis*  (EFO:0009661) does not have an explicitly stated location in EFO, but it inherits one from its immediate parent (*bronchial disease*), which has location *bronchus*, (UBERON:0002185).  Of the `r NROW(efo_df)` EFO terms `r sum(!is.na(efo_df$DiseaseLocation))` terms have a disease location.
 
-As part of the processing we construct two dataframes, one based on the EFO terms `efo_df` and the other based on the GWAS catalog studies `gwc_df`. These are described in Table 1. We create two different corpora for searching. One based on the EFO and
-the relationships inherent in it, `efo_tc`, and the second based on the GWAS
-catalog studies, `gwc_tc`.
+As part of the processing we construct two dataframes, one based on the EFO terms `efo_df` and the other based on the GWAS catalog studies `gwc_df`. These are described in Tables 1 and 2. 
+
+
+```{r tab1a, echo=FALSE}
+ttz = data.frame(t(t(sapply(gwc_df,function(x)length(unique(x))))))
+ttz = cbind(rownames(ttz), ttz)
+rownames(ttz) = NULL
+names(ttz) = c("Field", "Unique values")
+kable_styling(kbl(ttz, caption="Overview of gwc_df"), bootstrap_options = "striped", full_width = FALSE)
+```
+
+```{r tab1b,echo=FALSE}
+ee = head(efo_df[,-c(3,4)][rev(order(efo_df[,"Direct"])),],8)
+rownames(ee) = NULL
+kable_styling(kbl(ee, caption="The top 8 records in efo_df, ordered by frequency of direct annotation to GWAS."), bootstrap_options = "striped", full_width = FALSE)
+```
+
 
 The EFO dataframe has one row for each term in the EFO ontology and columns labeled `Subject`: the corresponding EFO CURIE; `Object`: the textual description of the trait; `IRI`: the IRI for that term; `DiseaseLocation`: the UBERON CURIE for the location of the `trait` if there is one; `Direct`: the number of GWAS catalog studies that were mapped directly to that trait; `Inherited`: the number of traits that were mapped to terms that are more specific (according to the ontology) than the `Object`.
 
@@ -85,6 +99,16 @@ while cancer is the **parent** of pancreatic cancer.  The descriptions can becom
 
 In some sense studies that map to leaf nodes in the ontology are describing quite specific concepts, while studies that map to non-leaf nodes are likely to be concepts that are more general.
 FIXME: we need an image of some part of the ontology to try to make this clear to the reader
+
+```{r tryfig, echo=FALSE, message=FALSE, fig.cap="Terms and relations in EFO"}
+if (!requireNamespace("ontoProc")) stop("install ontoProc with BiocManager to run this chunk")
+mytags = c("EFO:0004747", "EFO:0004346", "EFO:0004529", "EFO:0006801", 
+"MONDO:0004975", "HP:0003124", "EFO:0005210", "EFO:0007849")
+suppressMessages({ef = ontoProc::getOnto("efoOnto")})
+onto_plot2(ef, mytags)
+```
+
+
 
 Tools for representing and organizing biomedical entities and concepts are key components of
 any system that process disease, medical or epidemiological data.  There are many challenges among them is the need to have some way to have two different systems align on some concepts. On the seminatic web Uniform Resource Identifiers (URIs) are used to reference named entities. So URI basically give a web address where more details on the concept can be found.
@@ -173,6 +197,10 @@ kable_styling(kbl(szz, row.names=FALSE, caption="10 most frequent GWAS disease t
 One can then examine the actual traits that were mapped to each of these by querying the GWAS catalog. In Table \@ref(tab:vagueTraits) we report the 10 most frequent GWAS traits that mapped to EFO:0004725, which is *metabolite measurement*. There were `r length(metabTraits)` GWAS stuides that map to EFO:0004725 and `r length(unique(metabTraits))` unique traits.
 
 ## Building search corpora 
+
+We create two different corpora for searching. One based on the EFO and
+the relationships inherent in it, `efo_tc`, and the second based on the GWAS
+catalog studies, `gwc_tc`.
 
 To create a searchable EFO-based corpus we think of
 each EFO term as a *document*. The EFO provides a text description of
