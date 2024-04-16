@@ -37,9 +37,34 @@ While helpful, we then have the challenge of how to help a researcher find an EF
 
 ### How the corpus is created
 
-Each EFO term, and more generally, any term from an ontology is turned into a *document* by appending the text description (label) for that term, any synonyms for that term that are provided by the ontology and also the text description of any phenotype that has been directly mapped to that EFO term. The rationale for the last part is that text descriptions that have been mapped to a specific EFO term are in essence also synonyms for that term.
+Each EFO term, and more generally, any term from an ontology is turned into a *document* by appending the text description (label) for that term, any synonyms for that term that are provided by the ontology and also the text description of any phenotype that has been directly mapped to that EFO term. The rationale for the last part is that text descriptions that have been mapped to a specific EFO term are in essence also synonyms for that term. In the chunk below we show the code that will generate one EFO-based document, it has three components, Object, Synonyms and Matches.
+
+```{r efotcex, message=FALSE, warning=FALSE}
+##build up one document example, for EFO:0003086
+efoidx=grep("EFO:0003086", efo_df$Subject)
+ans = list(Object = efo_df$Object[efoidx], Synonyms=getSynonyms("EFO:0003086"), 
+           Matches =getMatchedTraits("EFO:0003086"))
+```
 
 When searching the corpus for a match to input text string, all three of these sources are examined, the *object* which is the text label for the EFO term, the *synonyms* which are those provided by the ontology, and *matches* which are the phenotype labels for traits that have been mapped directly to that ontology term. When searching we provide information on which of these three different sources had a match. In many cases a match will be found for more than one source.
+
+```{r GWCexp1, echo=FALSE}
+GWCexp1 = gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST90083943"),]
+EFO1 = GWCexp1$MAPPED_TRAIT_CURIE
+EFO1Syns = getSynonyms(EFO1)
+GWCexp1$EFOSynonyms = paste(unlist(EFO1Syns), collapse="; ")
+
+datatable(t(GWCexp1))
+
+```
+
+To create this searchable corpus we made documents, one for each GWAS study, by assembling the GWAS trait (DISEASE.TRAIT), the EFO mapped trait (Trait) and all EFO provided synonyms (Synonyms). In this case the ontology is being used to provide a standardized trait name and its synonyms. The relationships within the ontology are not used. The corpus can be searched and studies that match the search term retrieved. In Table \@ref(tab:GWCexp1) we show the metadata associated with the study GCST90083943 as well as the synonyms for `r EFO1`.
+
+```{r exgwctc, warning=FALSE, message=FALSE}
+idsx1 = grep("GCST90083943", gwc_df$STUDY.ACCESSION)
+ans = list(DISEASE.TRAIT = gwc_df$DISEASE.TRAIT[idsx1], Trait=gwc_df$MAPPED_TRAIT[idsx1], Synonyms=getSynonyms(gwc_df$MAPPED_TRAIT_CURIE[idsx1]))
+
+```
 
 ## Understanding the corpus
 

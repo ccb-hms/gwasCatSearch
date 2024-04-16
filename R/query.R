@@ -148,9 +148,9 @@ getSynonyms = function(Ontonames) {
 getMatchedTraits = function(Ontonames) {
   if( !is.character(Ontonames) || (length(Ontonames)<1) )
     stop("incorrect input")
-  query = dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from gwascatalog_mappings")
-  sp1 = split(query$DISEASE.TRAIT , query$MAPPED_TRAIT_CURIE)
-  ans = sp1[Ontonames]
+  query = paste0("SELECT * from gwascatalog_mappings WHERE MAPPED_TRAIT_CURIE IN ('", paste(Ontonames, collapse="','"), "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), query)
+  ans = split(ans$DISEASE.TRAIT , ans$MAPPED_TRAIT_CURIE)
   return(ans) 
 }
 
