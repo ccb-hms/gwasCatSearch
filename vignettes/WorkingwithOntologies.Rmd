@@ -17,11 +17,11 @@ library(gwasCatSearch)
 ```
 
 ## Using the ontologies
-We have functions that allow
-exploration of the EFO ontology along the lines of the ontologyIndex package from CRAN. In the code below we start with an ontology term print its name and then find the parents and children of that term.
 
-The ontology index contains information about children, parents and ancestors for different terms in an ontology. By default the tool uses *is-a* relationships to define these terms.
-The ontology_index object is just a list of ‘vectors and lists’ of term properties, indexed by the IDs of the terms:
+We have functions that allow exploration of the EFO ontology along the lines of the ontologyIndex package from CRAN. In the code below we start with an ontology term print its name and then find the parents and children of that term.
+
+The ontology index contains information about children, parents and ancestors for different terms in an ontology. By default the tool uses *is-a* relationships to define these terms. The ontology_index object is just a list of 'vectors and lists' of term properties, indexed by the IDs of the terms:
+
 ```{r holder, echo=FALSE}
 ##    property     class
 ## 1        id character
@@ -37,27 +37,31 @@ EFOlabels("EFO:0000095")
 EFOchildren("EFO:0000095")
 EFOparents("EFO:0000095")
 ```
-We'll produce a "little" ontology_index instance for
-illustration.
+
+We'll produce a "little" ontology_index instance for illustration.
+
 ```{r dolit}
 litoi = make_oi("EFO:0000095") 
 litoi
 ```
-One of the parents of `EFO:0000095` is `EFO:0000220` and we can see how many children it has
-by using the `children` table in the ontology index.
+
+One of the parents of `EFO:0000095` is `EFO:0000220` and we can see how many children it has by using the `children` table in the ontology index.
+
 ```{r chk}
 litoi$children["EFO:0000095"]
 ```
+
 If we use the `[[` accessor then we just get the vector of children. If instead we use the `[` accessor then we would get a list that is named by the input vector of terms where each element is the vector of children for the corresponding EFO term.
+
 ```{r}
 x1 = litoi$children[["EFO:0000220"]]
 
 x1
 ```
+
 We see that "EFO:0000095" is one of the children of "EFO:0000220", as we expect given the fact that "EFO:0000220" is a parent of "EFO:0000095"
 
-Now we will interact with the DB to get at the mappings to different terms.
-In the code below we can find which of the children of "EFO:0000220" have studies that are directly mapped to them or that have inherited a mapping from. one of its children.
+Now we will interact with the DB to get at the mappings to different terms. In the code below we can find which of the children of "EFO:0000220" have studies that are directly mapped to them or that have inherited a mapping from. one of its children.
 
 ```{r dbmappings}
 
@@ -70,13 +74,9 @@ In the code below we can find which of the children of "EFO:0000220" have studie
 
 ```
 
-In the code chunk below we get the counts for the parents of "EFO:0000095".
-Suppose we are interested in this phenotype and interpreting the GWAS hits.
-One approach we could take to interpreting any GWAS hits for this phenotype is to download GWAS summary statistics for this phenotype (if it was computed) from the UKBB.
-We could then do either a Manhattan plot of those summary statistics in a local neighborhood, or we could do a compressed view that covered all chromosomes.
+In the code chunk below we get the counts for the parents of "EFO:0000095". Suppose we are interested in this phenotype and interpreting the GWAS hits. One approach we could take to interpreting any GWAS hits for this phenotype is to download GWAS summary statistics for this phenotype (if it was computed) from the UKBB. We could then do either a Manhattan plot of those summary statistics in a local neighborhood, or we could do a compressed view that covered all chromosomes.
 
-We might also wonder if there are GWAS hits for related phenotypes that are in similar locations in the genome.  For example, since this phenotype is "chronic lymphocytic leukemia" we might ask if we look at all the hits mapped to the leukemia node in our ontology would they show any shared location.
-
+We might also wonder if there are GWAS hits for related phenotypes that are in similar locations in the genome. For example, since this phenotype is "chronic lymphocytic leukemia" we might ask if we look at all the hits mapped to the leukemia node in our ontology would they show any shared location.
 
 Our goal is to find a set of GWAS phenotypes that
 
@@ -104,4 +104,19 @@ v1 = strsplit(nn, "\n")
 nodeEFO = sapply(v1, function(x) x[length(x)])
 subs=efo_df[nodeEFO,c("Direct","Inherited")]
 subs
+```
+
+Some semantic network code
+
+```{r semnet, warning=FALSE, message=FALSE, echo=FALSE}
+gwc_tc\$preprocess(min_docfreq = 50, remove_stopwords = T, remove_numbers = T)
+
+g = semnet_window(gwc_tc, 'feature')
+gb = backbone_filter(g, alpha = 0.001, max_vertices = 100)
+plot_semnet(gb)
+
+fa = feature_associations(gwc_tc, 'feature', query = 'chron\*')
+fa = feature_associations(gwc_tc, 'feature', query = 'chronic AND kidney')
+
+fa = feature_associations(gwc_tc, 'feature', query = "leuk\*")
 ```

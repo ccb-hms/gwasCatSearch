@@ -15,6 +15,7 @@ editor: visual
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 library("gwasCatSearch")
 library(DT)
+library("kableExtra")
 ```
 
 The gwasCatSearch package provides functionality to search for different phenotypes within the GWAS catalog (<https://www.ebi.ac.uk/gwas/>) database. We used the mappings provided by the GWAS catalog for phenotypes to the EFO ontology (<https://www.ebi.ac.uk/efo/>). We then created a SQLite database that contains (among other things) a table that has the linearized form of the ontology. Annotations can be mapped directly to a term, or they can be inferred from any child term. Then given any EFO ontology label users can query the database to determine which, if any, GWAS catalog phenotypes have been mapped to that EFO term.
@@ -306,4 +307,142 @@ am = resources_annotated_with_term("EFO:0000401", include_subclasses = FALSE)
 dim(am)
 table(am$PUBMEDID)
 am2 = resources_annotated_with_term("EFO:0000401", include_subclasses = TRUE)
+```
+
+
+## Searching for types of Diseases
+
+We now describe some strategies for searching for classes or types of diseases. Suppose that you want to find all the GWAS catalog studies that relate to infectious disease.
+
+### Strategy One: Use the EFO ontology structure
+
+
+```{r tryChildren}
+#first find the EFO term for infectious diseases
+gg = grep("^infectious disease$", efo_df$Object, ignore.case=TRUE )
+##efo_df[gg,]
+
+##now look at all the more specific terms
+z2 = EFOdescendants("EFO:0005741")
+##length(z2)
+
+efo_id = efo_df[z2,]
+##d
+## how many studies map directly to one of these terms
+knitr::kable(t(table(efo_id$Direct)), caption="Number of studies mapping to descendants of EFO:0005741") |> kable_styling()
+## one has 249 - and it is COVID, which makes some sense
+# efo_id[which.max(efo_id$Direct),]
+
+##drop those with 0 mapping to them
+efo_ids = efo_id[efo_id$Direct>0,]
+
+##below shows how to find the GWAS studies that map
+dirMap = resources_annotated_with_term(efo_ids$Subject, include_subclasses=FALSE)
+#dim(dirMap)
+```
+
+Here we describe how to use these tools start with a general type of disease, say infectious
+disease, and then try to find all GWAS studies that report on that class of 
+diseases. First we identify the node in the EFO ontology that
+corresponds to *infectious disease*, which has CURIE EFO:0005741. All infectious diseases should be
+annotated in the EFO as descendants of that EFO term. Currently there are `r length(z2)` descendants and a total of `r efo_df[gg, "Direct"] + efo_df[gg, "Inherited"]` GWAS studies annotated at EFO:0005741 or one of its descendants. We find
+that `r efo_df[gg,"Direct"]` were directly mapped to EFO:0005741 while `r efo_df[gg,"Inherited"]` where inherited. The term in Table \@ref(tab:tryChildren) with over 200 studies is `r efo_id[which.max(efo_id$Direct),"Object"]`,
+
+### Strategy Two: Search based on the GWAS catalog corpus
+
+In this case we will search the corpus based on the GWAS catalog. One might want to experiment with different queries to try to obtain a good trade off between sensitivity and specificity.  We found that using *infectious diease* as our query missed a number of GWAS studies that had *infection* in them and opted to use only the term *infect\**. If a list of all infectious diseases was available a different strategy would be to search for each disease in that list and then merge the results.   Recall that when we constructed the GWAS catalog corpus we used the text descriptions of the GWAS trait as well as the trait name and the synonyms that correspond to the EFO term(s) this study was directly mapped to.
+
+```{r IDgwctc}
+qID = "infect*"
+htsID = search_features(gwc_tc, query = qID)
+htsID = addField2Hits(htsID, gwc_tc )
+hitsIDasDT = hits2DTGWC(htsID, gwc_df, gwc_tc)
+DT::datatable(hitsIDasDT)
+```
+
+We found `r NROW(hitsIDasDT)` GWAS catalog studies and in Table \@ref(tab:checkIDmatches) we report where in the *document* matches have occurred, if a match was in more than one part of the *document* then both are reported,  we see that the majority of matches are to synonyms.
+
+```{r checkIDmatches}
+idTT = table(hitsIDasDT$field)
+kable_styling(kbl(idTT, caption="Which part of the text matched our search term.", col.names = c("Term", "Count")) , bootstrap_options = "striped", full_width = FALSE)
+```
+
+
+
+```{r compID}
+vv = setdiff(hitsIDasDT$Study, dirMap$STUDY.ACCESSION )
+v2 = setdiff(dirMap$STUDY.ACCESSION, hitsIDasDT$Study)
+
+#DT::datatable(hitsIDasDT[match(vv, hitsIDasDT$Study),])
+
+vvGWC = gwc_df[match(vv, gwc_df$STUDY.ACCESSION),]
+v2GWC = gwc_df[match(v2, gwc_df$STUDY.ACCESSION),]
+
+##see if the ancestor of the first term is under infectious disease - and it is not
+check1 = EFOancestors(vvGWC[1, "MAPPED_TRAIT_CURIE"])
+#match("EFO:0005741", check1)
+
+##look at the other list - and we see that these are infectious diseases
+```
+
+We can ask if this second approach found any GWAS studies that the first one did not.
+And further look at those, to see if any are likely to be about infectious diseases. We
+will also check to see if the first method found studies that the second approach did not.
+In this case this second approach found `r length(vv)` studies that were not found by our first approach, while the first approach found `r length(v2)` studies that were not found by the second.
+
+One of the studies found by this method that was not found using the EFO structure was `r vv[1]` which has the disease trait `r vvGWC[1, "DISEASE.TRAIT"]`. And the associated EFO term is `r vvGWC[1, "MAPPED_TRAIT_CURIE"]` and while it is not an infectious disease one of its synonyms is "pseudomonas aeruginosa, susceptibility to chronic infection by, in cystic fibrosis", which explains why it was found using our second method.  Examining the list of those found by our first method but not by our second we see that these are mainly infectious diseases where the token *infect* is not found in the name of the disease or any of its synonyms.
+
+### Strategy three: Use the EFO corpus directly
+
+Above we first started by searching for *infectious disease* in the EFO ontology and then found
+all GWAS studies that mapped directly to either that node, or one of its descendants. We contrasted that with the strategy of searching the corpus based on the GWAS catalog studies for the token *infect*.  A third approach is to take all the EFO labels for nodes under EFO:0005741, and search the GWAS corpus for them.  One could extend this to include all synonyms for those nodes, but in the code below we simply search the terms themselves.  We use the method of enclosing the term in <> to ensure an exact match is being looked for.
+
+```{r otherterms}
+##here we do the infectious disease search
+z2 = EFOdescendants("EFO:0005741")
+##length(z2)
+
+efoIDs = efo_df[z2,"Object"]
+htsID2 = search_features(gwc_tc, query = paste0("<",efoIDs,">"), code=paste0("ID", 1:length(efoIDs)))
+hixx = hits2DTGWC(htsID2, gwc_df, gwc_tc)
+DT::datatable(hixx, escape=FALSE, rownames=FALSE)
+
+##Not sure we need to, or want to evaluate this any more
+#qIDefo = "Infectious AND disease"
+#htsID2 = search_features(efo_tc, query = qIDefo)
+#hitsID2asDT2 = hits2DT(htsID2, efo_df, efo_tc)
+#DT::datatable(hitsID2asDT2[1:100,], escape=FALSE, rownames=FALSE)
+
+```
+
+A different extension would be to query engineer each of the actual disease names.
+If we consider 10 EFO term labels, for infectious diseases, as seen in the code chunk below, then it is obvious that there is a lot of room for query engineering. But that seems to be very labor intensive and error prone, and we probably would want to resort to a different NLP approach.
+
+```{r queryEngineer}
+efoIDs[1:10]
+```
+We see that there are lots of ways in which we could try alternative queries. Splitting longer names, doing some by hand stemming etc can all be used, depending on just how much effort you want to put in. 
+
+We end by creating a Manhattan plot based on the studies that were identified using the first strategy. 
+
+```{r getresources}
+
+IDassoc <- granges_from_study(dirMap$STUDY.ACCESSION)
+IDassoc2 = IDassoc[IDassoc$P.VALUE<1e-8,]
+
+#NROW(IDassoc2)
+##how many are reported more than once...
+#sum(duplicated(IDassoc2$SNP_ID_CURRENT))
+##and produce a plot
+```
+
+```{r IDmanh, plot=TRUE, fig.align='center', fig.width=7, fig.cap="Manhattan Plot for Infectious Disease", warning=FALSE, fig.height=5, fig.path="figure/"}
+pp = variants_from_study(dirMap$STUDY.ACCESSION)
+pp = pp[IDassoc$P.VALUE<1e-8,]
+
+#pp = ggmanh::manhattan_data_preprocess(IDassoc2, pval.colname="P.VALUE")
+simple_ggmanh(pp, y.label="-log10 p",
+       label.colname = "MAPPED_TRAIT", pval.colname="P-VALUE")
+
+##ggmanh::manhattan_plot(pp, plot.title="Infectious Diseases", y.label="-log10 p")
 ```
