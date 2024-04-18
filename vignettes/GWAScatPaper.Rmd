@@ -164,8 +164,7 @@ dupT = sum(duplicated(gwcB$DISEASE.TRAIT))
 dupC = sum(duplicated(gwcB$MAPPED_TRAIT_CURIE))
 ```
 
-The GWAS catalog also provides metadata in the form of a table with one entry per STUDY.ACCESSION number and other variables such as the PUBMEDID for the associated publication, more complete information on these tables is in the Appendix. A single paper can give rise to more than one GWAS catalog study. We find that there are `r sum(tt > 100)` publications which have more than 100 GWAS studies associated with them and the paper associated with PMID `r names(tt)[1]` @Backman2021 has `r tt[1]` studies associated with it.  In the Backman *et al* paper the authors report ``We identified 12 million coding variants, including around 1 million loss-of-function and around 1.8 million deleterious missense variants. When these were tested for association with 3,994 health-related traits, we found 564 genes with trait associations at P ≤ 2.18 × 10-11.''.
-So it does seem likely that these represent distinct traits. We found a small number of traits that were reported more than once. But in mapping these traits to EFO terms there was a substantial amount of coarsening, where for example around 550 terms were all mapped to EFO:0007010, *drug use measurement*. 
+The GWAS catalog also provides metadata in the form of a table with one entry per STUDY.ACCESSION number and other variables such as the PUBMEDID for the associated publication, more complete information on these tables is in the Appendix. We now examine the relationship between published papers and the GWAS catalog studies. A single paper can give rise to more than one GWAS catalog study. We find that there are `r sum(tt==1)` papers for which a single GWAS catalog study is identified. On the other end, we find that there are `r sum(tt > 100)` publications which have more than 100 GWAS studies associated with them. We examined the paper associated with PMID `r names(tt)[1]` @Backman2021 which has `r tt[1]` GWAS catalog studies associated with it.  In the Backman *et al* paper the authors report ``We identified 12 million coding variants, including around 1 million loss-of-function and around 1.8 million deleterious missense variants. When these were tested for association with 3,994 health-related traits, we found 564 genes with trait associations at P ≤ 2.18 × 10-11.''. So it does seem likely that these `r tt[1]` studies do represent distinct traits.
 
 ```{r grepCKD, echo=FALSE}
 xx = DBI::dbGetQuery(gwasCatSearch_dbconn(), "SELECT PUBMEDID, \"DISEASE.TRAIT\" FROM gwascatalog_metadata")
@@ -182,15 +181,6 @@ gdtsub = gwc_df[g1,]
 ##should check that ss[1] is EFO:0004725
 ```
 
-
-
-```{r studies2EFO, eval=FALSE, echo=FALSE}
-
-manystudies = efo_df[efo_df$Direct>500,]
-
-kable_styling(kbl(manystudies[,c(1,2,5,6)], row.names=FALSE, caption="List of EFO terms with more than 500 Studies directly mapped to them"), bootstrap_options = "striped", full_width = FALSE)
-
-```
 
 ### Building search corpora 
 
@@ -390,12 +380,10 @@ In this case this second approach found `r length(vv)` studies that were not fou
 
 One of the studies found by this method that was not found using the EFO structure was `r vv[1]` which has the disease trait `r vvGWC[1, "DISEASE.TRAIT"]`. And the associated EFO term is `r vvGWC[1, "MAPPED_TRAIT_CURIE"]` and while it is not an infectious disease one of its synonyms is "pseudomonas aeruginosa, susceptibility to chronic infection by, in cystic fibrosis", which explains why it was found using our second method.  Examining the list of those found by our first method but not by our second we see that these are mainly infectious diseases where the token *infect* is not found in the name of the disease or any of its synonyms.
 
-### Strategy three: Use the EFO corpus directly
+### Strategy three: Use the EFO corpus to get specific disease names
 
-Above we first started by searching for *infectious disease* in the EFO ontology and then found
-all GWAS studies that mapped directly to either that node, or one of its descendants. We contrasted that with the strategy of searching the corpus based on the GWAS catalog studies for the terms infectious and disease.  A third approach is to search the EFO corpus for *infectious disease*.  However, this approach will simply search the same text strings, although arranged differently. 
 
-```{r otherterms, echo=FALSE, eval=FALSE}
+```{r otherterms, echo=FALSE, eval=TRUE}
 ##here we do the infectious disease search
 z2 = EFOdescendants("EFO:0005741")
 ##length(z2)
@@ -403,18 +391,10 @@ z2 = EFOdescendants("EFO:0005741")
 efoIDs = efo_df[z2,"Object"]
 htsID2 = search_features(gwc_tc, query = paste0("<",efoIDs,">"), code=paste0("ID", 1:length(efoIDs)))
 hixx = hits2DTGWC(htsID2, gwc_df, gwc_tc)
-
-##Not sure we need to, or want to evaluate this any more
-qIDefo = "Infectious AND disease"
-htsID2 = search_features(efo_tc, query = qIDefo)
-hitsID2asDT2 = hits2DT(htsID2, efo_df, efo_tc)
-##DT::datatable(hitsasDT2[1:100,], escape=FALSE, rownames=FALSE)
+##FIXME - should output number and perhaps some specific names
 
 ```
 
-Now we can compare the EFO categories and see if we found anything new and also examine
-the GWAS studies. A quick visual inspection of the EFO categories found by this method
-and not the first, suggests that the first approach did seem to get everything useful.
 
 ```{r method3comp, echo=FALSE, eval=FALSE}
 efoIDS3 = row.names(hitsID2asDT2)
@@ -423,9 +403,13 @@ setd3 = setdiff(efoIDS3, row.names(efo_id))
 
 ```
 
-We end this section by creating a Manhattan plot based on the studies that were identified using the first strategy. 
+Above we first started by searching for *infectious disease* in the EFO ontology and then found
+all GWAS studies that mapped directly to either that node, or one of its descendants. We contrasted that with the strategy of searching the corpus based on the GWAS catalog studies for the terms infectious and disease.  A third approach is to use the EFO corpus to provide specific disease names, from the term labels for those EFO terms listed under the infectious disease node, EFO:0005741. If we simply extract all the EFO term labels for the descendants of EFO:0005741 and search the corpus with those we find `r nrow(hixx)` studies, which is an increase over using the direct and inherited studes at EFO:0005741. We could enhance that search further in a number of ways such as using all synonyms, or breaking down terms into words.  However that process becomes somewhat bespoke and unwieldy. 
 
-```{r getresources, echo=FALSE}
+
+
+
+```{r getresources, eval=FALSE, echo=FALSE}
 
 IDassoc <- granges_from_study(dirMap$STUDY.ACCESSION)
 IDassoc2 = IDassoc[IDassoc$P.VALUE<1e-8,]
@@ -436,7 +420,7 @@ IDassoc2 = IDassoc[IDassoc$P.VALUE<1e-8,]
 ##and produce a plot
 ```
 
-```{r IDmanh, echo=FALSE, plot=TRUE, fig.align='center', fig.width=7, fig.cap="Manhattan Plot for Infectious Disease", warning=FALSE, fig.height=5, fig.path="figure/"}
+```{r IDmanh, eval=FALSE, echo=FALSE, plot=TRUE, fig.align='center', fig.width=7, fig.cap="Manhattan Plot for Infectious Disease", warning=FALSE, fig.height=5, fig.path="figure/"}
 pp = variants_from_study(dirMap$STUDY.ACCESSION)
 pp = pp[IDassoc$P.VALUE<1e-8,]
 
@@ -509,9 +493,9 @@ simple_ggmanh(vars, y.label="-log10 p", plot.title = "Diseases of the Lung",
 ## Challenges
 
 While the GWAS catalog has provided mappings to EFO there remain some substantial challenges
-for those attempting to use it to find and organize their searches.  These include vague EFO assignments where hundreds of phenotypes have been mapped to an EFO term, papers that give rise to thousands of GWAS studies, inaccuracies and inconsistencies in the EFO, and a lack of clarity on the explicit rationale for mapping a trait to an EFO term.  We give examples of each of these.
+for those attempting to use it to find and organize their searches.  As we see in Table \@ref{tab:tab1c} a large number of GWAS studies are mapped to EFO terms where the EFO label is not particularly descriptive so that for these studies EFO labeling has contributed very little. Now, for those studies it is still possible that the GWAS catalog traits will contain more specific details, however, accessing that information will be reliant on tools for searching plain text. 
 
-### Mapping and Interpreting
+As we describe for the disease location data, while it is useful the predicates and search strategies that will need to be employed to access it for these sorts of analysis and complex and will likely involve a substantial amount of expertise in the specific ontologies being used, the nature of ontological reasoning and the role in which they will be used. There are few who can carry out all three of those well.
 
 ```{r efoCKD, echo=FALSE}
 q1 = "chronic AND kidney AND disease"
@@ -526,39 +510,22 @@ htsgwc = addField2Hits(htsgwc, gwc_tc )
 hitsgwcasDT = hits2DTGWC(htsgwc, gwc_df, gwc_tc)
 ```
 
-We noted above that the term EFO:0003086 has text description of "chronic kidney diseases".
-When we 
-
-In this example we are examine kidney function traits, and in particular we
-will search for *chronic AND kidney AND disease* in the EFO-based corpus. This string should find EFO terms that have matchs to all three words that are close to each other.
 
 ```{r gwasCatPubMed, echo=FALSE}
 q1 = "chronic AND kidney AND disease"
-hts = search_features(efo_tc, query = q1)
-hts = addField2Hits(hts, efo_tc )
-hitsasDT = hits2DT(hts, efo_df, efo_tc)
+hts = search_features(gwc_tc, query = q1)
+hts = addField2Hits(hts, gwc_tc )
+hitsasDT = hits2DTGWC(hts, gwc_df, gwc_tc)
 ```
 
-```{r DT, fig.cap="CKD EFO Hits", echo=FALSE}
+```{r DT, eval = FALSE, fig.cap="CKD EFO Hits", echo=FALSE}
 knitr::kable(hitsasDT[1:10,], escape=FALSE, row.names=FALSE, caption="CKD EFO Hits (first 10)")
 ##DT::datatable(hitsasDT[1:100,], escape=FALSE, rownames=FALSE, caption="CKD EFO Hits (first 100)")
 ```
 
-Surprisingly we find that there were `r nrow(hitsasDT)`
-different EFO terms that have a hit. This seems very large to
-understand what is happening we start by looking 
-code chunk we explore some of the issues. If we consider the EFO node for
-*kidney disease* we anticipate that all different forms of kidney
-disease will be descendants of that node. And we expect that all `r nrow(hitsasDT)`
-hits will map to some one of those nodes.
-
-```{r ckdEFO, echo=FALSE}
-kdEFO = grep("^kidney disease$", efo_df$Object, ignore.case = TRUE)
-#efo_df[kdEFO,]
-ackd = EFOdescendants("EFO:0003086")
-```
-
-There are only `r length(ackd)` EFO terms that are more specific than the term *kidney disease* and the total number of GWAS studies that mapped directly to EFO:0003086 or were inherited we only get `r efo_df["EFO:0003086","Direct"] + efo_df["EFO:0003086","Inherited"]` GWAS studies.  This suggests that there are a very large number of studies where the GWAS trait contains the phrase *chronic kidney disease* that were not mapped to any EFO term directly related to kidney disease. And unfortunately that suggests that to find those GWAS catalog studies we will need to rely on string matching which is not the best approach.
+Previously we discussed the term EFO:0003086 has text description of "chronic kidney diseases" and pointed out that there were `r length(ckdMatches[[1]])` GWAS catalog studies that were mapped **directly**  and `r efo_df["EFO:0003086", "Inherited"]`inherited studies.
+But these are not all the GWAS catalog studies that have the string *chronic kidney disease* in their trait description. When we search the corpus based on the GWAS catalog we find `r nrow(hitsasDT)`
+different studies that have a hit. 
 
 
 ```{r msmt, echo=FALSE}
@@ -567,80 +534,42 @@ dtandmsmt = intersect(msmtdesc, row.names(hitsasDT))
 #length(dtandmsmt)
 ```
 
-A little more exploring suggests that many of the terms are actually mapped to the descendants of the *measurement*, EFO:0001444, node. Specifically we find that there are `r length(dtandmsmt)` EFO terms that were identified by our search which are annotated as measurements, a number far larger than those that align to disease.  Which makes searching for terms related to any specific disease somewhat more challenging, as the organizational principles for this part of the EFO are not suitable for finding related diseases and it appears the analyst is left with string matching as the only viable option.
-
-This means that the bulk of the EFO terms are showing up due to finding
-the text string in the name of some other GWAS catalog trait and 
-that trait was not mapped to any EFO label related to kidney disease. 
-
-
-We next query the GWAS catalog traits.
-The dataframe `gwc_df` contains the names of all traits in the `DISEASE.TRAIT` column.
+A little more exploring suggests that many of the terms are actually mapped to the descendants of the *measurement*, EFO:0001444, node. Specifically we find that there are `r length(dtandmsmt)` EFO terms that were identified by our search which are annotated as measurements, a number far larger than those that align to disease.  
 
 ```{r gwcmetadtable, echo=FALSE}
-
-gg = grep("chronic kidney disease", gwc_df$DISEASE.TRAIT, ignore.case=T)
-
-
-gl= grepl("chronic kidney disease", gwc_df$DISEASE.TRAIT, ignore.case=T)
-gwsub= gwc_df[gl,]
-r1 = grep("measurement",gwsub$MAPPED_TRAIT,  ignore.case = TRUE)
-#length(r1)
-
 ##gwc_df[gg[1:10], "DISEASE.TRAIT"]
-ckdPMIDs = GWCATID2PMID(unique(gwc_df$STUDY.ACCESSION[gg]))
+ckdPMIDs = GWCATID2PMID(unique(hitsasDT$Study))
 pmtab = sort(table(ckdPMIDs), dec=TRUE)
 #pmtab[1:10]
 ```
 
-And now we see that there are in fact `r length(unique(gwc_df[gg, "STUDY.ACCESSION"]))` terms that have been labeled this way. Further, if we look at the PUBMED IDs associated
+If we look at the PUBMED IDs associated
 with these traits we see that there are `r sum(pmtab>1000)` papers that
 report more than 1000 traits. Given the PubMed IDs it is easy to find
 the papers. The paper associated with PMID 35870639 which reports more than 
 6,700 studies is titled: Identification of 969 protein quantitative trait loci in an African American population with kidney disease attributed to hypertension @surapaneniIdentification969Protein2022.
 
 
-We end this example by creating a Manhattan plot based on the studies that contain the string *chronic kidney disease*.
-
-```{r ckdmanh, plot=TRUE, echo=FALSE, fig.align='center', fig.width=7, fig.cap="Manhattan Plot for CKD", warning=FALSE, fig.height=5, fig.path="figure/"}
-vars = variants_from_study(gwc_df$STUDY.ACCESSION[gg])
-##drop those with a p-value > 1e-8,
-vars = vars[vars$`P-VALUE` < 1e-8, ]
-simple_ggmanh(vars, y.label="-log10 p", plot.title = "Chronic Kidney Disease",
-       label.colname = "MAPPED_TRAIT", pval.colname="P-VALUE")
-
-```
-
-### Bad synonyms
-
 Another potential issue is that the EFO provided synonyms might be inaccurate. 
 For `r efo_df["EFO:0000685", "Object"]` the reported synonyms include *proliferative arthritis* and
 *Rheumatic gout*. Proliferative arthritis refers to a condition characterized by the excessive growth of synovial tissue in the joints, leading to inflammation and joint damage while rheumatoid arthritis is an autoimmune disease where the immune system mistakenly attacks the joints, causing inflammation, pain, and joint damage. And *Rheumatic gout* is a somewhat archaic term for gout. Including these as synonyms will result in linking traits that should not be linked and be misleading.
 
-
-
-
-#### Other Hierarchies
-
-While much of the EFO of interest is organized around *diseases* (EFO:0000408) there is also
-a *measurement* (EFO:0001444) node, with about 8,700 terms nested under it. These tend to be measurements of some of the very same diseases that are arranged under the *disease*  node. Unfortunately, there is no easy way to go between the two. They are not related in the EFO hierarchy and we have been unable to find an organizing principle.  Users likely will want to search under both of these high level nodes for matches to any disease, gene or phenotype of interest.   For example, in our infectious disease example we see that there are nodes 
-*susceptibility to infectious disease measurement* (EFO:0008422) and
-*infectious disease biomarker* (EFO:0006843) which may also be relevant.
-FIXME: report the number of studies that. align under the measurement node
-
 ## Results and Discussion
 
-The results of our exploration are encouraging but also exhibit the challenges that remain. The mapping of phenotypes to an ontology is extremely helpful in providing a more specific vocabulary that can be used to harmonize across studies.  The terms or nodes in the ontology provide a means of associating synonyms and they can then easily be incorporated into searches.  Ontologies provide some means of versioning and hence of updating and improving the ontology.  And as we have noted that additional information, such as disease location, can also be documented and then subsequently used in any analyses.
+The results of our exploration are encouraging but also exhibit the challenges that remain. The mapping of phenotypes to an ontology is extremely helpful in providing a more specific vocabulary that can be used to harmonize across studies.  The terms or nodes in the ontology provide a means of identifying synonyms can then be incorporated into searches.  The ontologies themselves are often undergoing active research and development. That typically means they will be updated and in some cases there are ways for users to provide feedback about issues and to give suggestions.  As we have noted they can include additional information, such as disease location, that can be used in any analyses.
 
-While ontologies provide mechanisms for describing complex relationships their practical application to support specific scientific investigations remains challenging.  There are no clear mechanisms to describe the processes used.  For example we have shown that in many cases the curators chose to map phenotypes to entries in the *measurement* portion of the EFO ontology, which may be appropriate for many situations, but as our focus is in identifying diseases this decision appears to leave us relying on syntax and string matching.
-  The ontologies are incomplete, which is to be anticipated, but that incompleteness leads to compromises in the labeling of phenotypes for which there are no standards for describing.
-  We anticipate that further refinements such as making use of other natural language processing tools such as name-entity-recognition (NER) may be useful in further identifying phenotypes that reference specific diseases, genes, drugs.
-  Our ability to integrate and synthesize data across studies remains hampered by other issues as well.  In most situations we would like to be able to address whether or not studies were based on reasonably similar cohorts of individuals, and in some cases whether or not the inclusion and exclusion criteria were similar.  This of course remains a challenge across much of medical and epidemiological data reporting.
+Although there are certain advantages in applying ontology labels to human phenotypes, the effectiveness of correlating them directly with specific phenotypes is debatable. Challenges arise when trying to accommodate concepts like the age of initial disease diagnosis, or the quantification of a protein level shift in a disease compared to a healthy state. There is a tension between accurately depicting the entity, such as age in the first instance and protein measurement in the second, and precisely pinpointing the root disease. Perhaps an approach where the phenotypes of interest are tagged, or labled as pertaining to certain concepts, measurements or diseases would facilitate broader and more appropriate usage.
+
+There are no clear mechanisms to describe the curation processes used. And of course these may change over time, or be different for different curators adding to the complexity of relying on this strategy for aligning phenotypes with ontological representations of knowledge.  We have shown that in the case of the GWAS catalog and curation to the EFO curators chose to map phenotypes to entries in the *measurement* portion of the EFO ontology rather than the disease hierarchy. This is perfectly valid but as our use case relies on identifying diseases this decision leaves us relying on syntax and string matching.
+
+We anticipate that further refinements such as making use of other natural language processing tools such as name-entity-recognition (NER) may be useful in further identifying phenotypes that reference specific diseases, genes, drugs.
+  
+Our ability to integrate and synthesize data across studies remains hampered by other issues as well.  In most situations we would like to be able to address whether or not studies were based on reasonably similar cohorts of individuals, and in some cases whether or not the inclusion and exclusion criteria were similar.  This of course remains a challenge across much of medical and epidemiological data reporting.
   
   
 ## Citations
 
-
+<div id="refs"></div>
 
 ### Appendix
 
