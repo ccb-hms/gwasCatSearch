@@ -230,9 +230,10 @@ ans = list(Object = efo_df$Object[efoidx], Synonyms=getSynonyms("EFO:0003086"),
            Matches =getMatchedTraits("EFO:0003086"))
 ```
 
-In Figure \@ref{fig:efograph}
+In Figure \@ref(fig:efograph) we render a portion of the EFO ontology that is anchored at the node
+labeles urinary system disease, EFO:0009690, and shows all of the descendents of that term.
 
-```{r efograph, echo=FALSE, fig.cap = "Rendering of the EFO Ontology for urinary system disease and descendents.", label="EFOgraph", fig.align='center'}
+```{r efograph, echo=FALSE, fig.cap = "Rendering of the EFO Ontology for urinary system disease and descendents.", fig.align='center'}
 knitr::include_graphics("figure/demopic.png")
 ```
 
