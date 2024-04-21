@@ -565,14 +565,3 @@ We believe that it is clear that use of ontologies and similar tools for organiz
 
 <div id="refs"></div>
 
-### Appendix
-
-**URLs for Data**
-The GWAS catalog data are obtained from xhttps://www.ebi.ac.uk/gwas/
-and transformed according to the descriptions in https://github.com/ccb-hms/GWASCatalogSearchDB,
-which gives explicit details on which files were obtained, and the dates on which they
-were obtained.
-
-**Creation of the word cloud**
-We subset first to the set of EFO terms that have an association with the lung and then within that we removed tokens that have fewer than 5 occurrences. And finally we create a word cloud based on the frequency of the tokens that remain.
-
