@@ -109,14 +109,14 @@ subs
 Some semantic network code
 
 ```{r semnet, warning=FALSE, message=FALSE, echo=FALSE}
-gwc_tc\$preprocess(min_docfreq = 50, remove_stopwords = T, remove_numbers = T)
+gwc_tc$preprocess(min_docfreq = 50, remove_stopwords = T, remove_numbers = T)
 
 g = semnet_window(gwc_tc, 'feature')
 gb = backbone_filter(g, alpha = 0.001, max_vertices = 100)
 plot_semnet(gb)
 
-fa = feature_associations(gwc_tc, 'feature', query = 'chron\*')
+fa = feature_associations(gwc_tc, 'feature', query = 'chron*')
 fa = feature_associations(gwc_tc, 'feature', query = 'chronic AND kidney')
 
-fa = feature_associations(gwc_tc, 'feature', query = "leuk\*")
+fa = feature_associations(gwc_tc, 'feature', query = "leuk*")
 ```
