@@ -1,0 +1,26 @@
+---
+title: "gwasCatSupplement"
+author: "Robert Gentleman, Rafael Goncalves, Vince Carey"
+date: "`r Sys.Date()`"
+output: 
+  bookdown::html_document2: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## GWASCatalogSearchDB
+
+This repository provides a SQLite database designed to facilitate search for GWAS records in the GWAS Catalog database—the NHGRI-EBI Catalog of human genome-wide association studies. This is achieved by combining the EFO ontology mappings specified in the GWAS Catalog metadata with tabular representations of ontology relationships—extracted from a SemanticSQL database representation of EFO—such that users can search for GWAS Catalog records by leveraging the EFO class hierarchy.
+
+The data were downloaded and processed according to the description in the GWASCatalogSearchDB,
+<https://github.com/ccb-hms/GWASCatalogSearchDB>.
+
+
+```{r sqltabls, echo=FALSE, fig.cap = "Table descriptions for GWAS catalog processed data."}
+knitr::include_graphics("figure/GWASCat.png")
+```
+
+A schema of the resulting tables is given in Figure \@ref{fig:sqltabs}.
+
