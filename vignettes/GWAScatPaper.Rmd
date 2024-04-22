@@ -3,8 +3,9 @@ title: "Ontology and Corpus Aided Searching of Complex Data Resources"
 author: "RoGe, VC, RaGo"
 date: "2023-06-23"
 output: 
-  bookdown::html_document2: 
-    number_sections: false
+  bookdown::pdf_document2:
+    toc: false
+
 vignette: >
   %\VignetteIndexEntry{Ontology and Corpus Aided Searching of Complex Data Resources}
   %\VignetteEngine{knitr::rmarkdown}
@@ -29,7 +30,7 @@ library("DT")
 
 Larger and more complex biomedical data sets are becoming increasingly available and they provide substantial opportunities for integration across disparate data source to enable the discovery of medically relevant relationships. Tools for representing and organizing biomedical entities and concepts are key components of any system that processes disease, medical or epidemiological data. Realizing the potential for discovery is hampered by the complexity of the data and the inherent challenge of working with phenotypes and experimental factors described primarily in natural language. To work with these textual descriptions there are a plethora of ontologies and vocabularies that are in use such as Unified Medical Language System (UMLS), @UMLS2004 , Medical Subject Headings (MeSH), Human Phenotype Ontology (HPO), @HPO2024, and the Experimental Factor Ontology (EFO), @maloneModelingSampleVariables2010. Finding and grouping or
 comparing phenotypes of
-research interest in large data resources such as NHANES @cdc2024 or biobanks, such as the UKBB FIXME-cite can be aided by effective use of
+research interest in large data resources such as NHANES @cdc2024 or biobanks, such as the UKBB @UKBB, can be aided by effective use of
 ontologies and tools for natural language processing.
 
 We explore some of these challenges in the context of the GWAS catalog, @sollisNHGRIEBIGWASCatalog2023, which reports on a set of published curated GWAS association studies where the phenotypic traits reported in published articles are mapped to terms in the EFO. A GWAS reports on assocations between single nucleotide polymorphisms (SNPs), which are variants in the human genome, and specific traits or phenotypes.  The GWAS catalog provides an integrated database of a large set of published GWAS studies curated from the scientific literature and collated, together with a large amount of metadata. Users can freely download and search the data for different purposes. While the data are freely available, access to them through easy to use interfaces designed for non-experts appears to be mainly through search facilities on the GWAS catalog website. Our interest is in integrating this resouce with search facilities in the R programming language in order to provide programmatic access to the data and to enable the sorts of complex searches that would be of interest in epidemiological and other fields.
@@ -167,7 +168,7 @@ dupT = sum(duplicated(gwcB$DISEASE.TRAIT))
 dupC = sum(duplicated(gwcB$MAPPED_TRAIT_CURIE))
 ```
 
-The GWAS catalog also provides metadata in the form of a table with one entry per STUDY.ACCESSION number and other variables such as the PUBMEDID for the associated publication, more complete information on these tables is in the Appendix. We now examine the relationship between published papers and the GWAS catalog studies. A single paper can give rise to more than one GWAS catalog study. We find that there are `r sum(tt==1)` papers for which a single GWAS catalog study is identified. On the other end, we find that there are `r sum(tt > 100)` publications which have more than 100 GWAS studies associated with them. We examined the paper associated with PMID `r names(tt)[1]` @Backman2021 which has `r tt[1]` GWAS catalog studies associated with it.  In the Backman *et al* paper the authors report ``We identified 12 million coding variants, including around 1 million loss-of-function and around 1.8 million deleterious missense variants. When these were tested for association with 3,994 health-related traits, we found 564 genes with trait associations at P ≤ 2.18 × 10-11.''. So it does seem likely that these `r tt[1]` studies do represent distinct traits.
+The GWAS catalog also provides metadata in the form of a table with one entry per STUDY.ACCESSION number and other variables such as the PUBMEDID for the associated publication, more complete information on these tables is in the Appendix. We now examine the relationship between published papers and the GWAS catalog studies. A single paper can give rise to more than one GWAS catalog study. We find that there are `r sum(tt==1)` papers for which a single GWAS catalog study is identified. On the other end, we find that there are `r sum(tt > 100)` publications which have more than 100 GWAS studies associated with them. We examined the paper associated with PMID `r names(tt)[1]` @Backman2021 which has `r tt[1]` GWAS catalog studies associated with it.  In the Backman *et al* paper the authors report ``We identified 12 million coding variants, including around 1 million loss-of-function and around 1.8 million deleterious missense variants. When these were tested for association with 3,994 health-related traits, we found 564 genes with trait associations at $p \leq 2.18 \times 10-11$. So it does seem likely that these `r tt[1]` studies do represent distinct traits.
 
 ```{r grepCKD, echo=FALSE}
 xx = DBI::dbGetQuery(gwasCatSearch_dbconn(), "SELECT PUBMEDID, \"DISEASE.TRAIT\" FROM gwascatalog_metadata")
@@ -233,7 +234,7 @@ ans = list(Object = efo_df$Object[efoidx], Synonyms=getSynonyms("EFO:0003086"),
 In Figure \@ref(fig:efograph) we render a portion of the EFO ontology that is anchored at the node
 labeles urinary system disease, EFO:0009690, and shows all of the descendents of that term.
 
-```{r efograph, echo=FALSE, fig.cap = "Rendering of the EFO Ontology for urinary system disease and descendents.", fig.align='center'}
+```{r efograph, echo=FALSE, fig.cap = "Rendering of the EFO Ontology for urinary system disease and descendents.", fig.align='center', out.width="75%"}
 knitr::include_graphics("figure/demopic.png")
 ```
 
