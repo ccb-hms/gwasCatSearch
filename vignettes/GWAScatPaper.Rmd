@@ -6,6 +6,7 @@ output:
   bookdown::pdf_document2:
     toc: false
     number_sections: false
+    extra_dependencies: ["longtable", "float"]
 
 vignette: >
   %\VignetteIndexEntry{Ontology and Corpus Aided Searching of Complex Data Resources}
@@ -235,7 +236,7 @@ ans = list(Object = efo_df$Object[efoidx], Synonyms=getSynonyms("EFO:0003086"),
 In Figure \@ref(fig:efograph) we render a portion of the EFO ontology that is anchored at the node
 labeled urinary system disease, EFO:0009690, and shows all of the descendents of that term.
 
-```{r efograph, echo=FALSE, fig.cap = "Rendering of the EFO Ontology for urinary system disease and descendents.", fig.align='center', out.width="75%"}
+```{r efograph, echo=FALSE, fig.cap = "Rendering of the EFO Ontology for urinary system disease and descendents.", fig.align='center', out.width="75%",latex_options = c("scale_down")}
 knitr::include_graphics("figure/demopic.png")
 ```
 
@@ -244,10 +245,18 @@ knitr::include_graphics("figure/demopic.png")
 ```{r GWCexp1, echo=FALSE}
 GWCexp1 = gwc_df[which(gwc_df$STUDY.ACCESSION=="GCST90083943"),]
 EFO1 = GWCexp1$MAPPED_TRAIT_CURIE
-EFO1Syns = getSynonyms(EFO1)
-GWCexp1$EFOSynonyms = paste(unlist(EFO1Syns), collapse="; ")
+EFO1Syns = getSynonyms(EFO1)[[1]]
+nsyns=length(EFO1Syns)
+if(nsyns %% 2 == 1) {
+  EFO1Syns=c(EFO1Syns, "")
+  nsyns = nsyns+1
+}
+p1 = paste(EFO1Syns[seq(1,nsyns, by=2)], EFO1Syns[seq(2,nsyns,by=2)], collapse = "; ")
+p2 = paste0(p1, collapse = "\n ")
 
-kable_styling(kbl(t(GWCexp1), align='lc', caption="Study GCST90083943", col.names=""), bootstrap_options = "striped", full_width = FALSE)
+GWCexp1$EFOSynonyms =p2
+
+kable_styling(kbl(t(GWCexp1), align='lc', caption="Study GCST90083943", col.names=""), bootstrap_options = "striped", full_width = TRUE)
 
 ```
 
@@ -268,7 +277,7 @@ htl = search_features(gwc_tc, query="leuk*")
 htlf = addField2Hits(htl, gwc_tc)
 tt = table(htlf$hits$field)
 
-kable_styling(kbl(tt, caption="Which part of the GWAS *document* matched the search term leuk*", col.names = c("Term", "Count")) , bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(tt, caption="Which part of the GWAS \\textit{document} matched the search token leuk*", col.names = c("Term", "Count")) , bootstrap_options = "striped", full_width = FALSE)
 ```
 
 
@@ -354,7 +363,7 @@ We found `r NROW(hitsIDasDT)` GWAS catalog studies and in Table \@ref(tab:checkI
 
 ```{r checkIDmatches, echo=FALSE}
 idTT = table(hitsIDasDT$field)
-kable_styling(kbl(idTT, caption="Which part of the text matched our search term.", col.names = c("Term", "Count")) , bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(idTT, caption="Which part of the GWAS catalog document matched our search term.", col.names = c("Term", "Count")) , bootstrap_options = "striped", full_width = FALSE)
 ```
 
 
@@ -390,7 +399,6 @@ z2 = EFOdescendants("EFO:0005741")
 efoIDs = efo_df[z2,"Object"]
 htsID2 = search_features(gwc_tc, query = paste0("<",efoIDs,">"), code=paste0("ID", 1:length(efoIDs)))
 hixx = hits2DTGWC(htsID2, gwc_df, gwc_tc)
-##FIXME - should output number and perhaps some specific names
 
 ```
 
@@ -403,10 +411,7 @@ setd3 = setdiff(efoIDS3, row.names(efo_id))
 ```
 
 Above we first started by searching for *infectious disease* in the EFO ontology and then found
-all GWAS studies that mapped directly to either that node, or one of its descendants. We contrasted that with the strategy of searching the corpus based on the GWAS catalog studies for the terms infectious and disease.  A third approach is to use the EFO corpus to provide specific disease names, from the term labels for those EFO terms listed under the infectious disease node, EFO:0005741. If we simply extract all the EFO term labels for the descendants of EFO:0005741 and search the corpus with those we find `r nrow(hixx)` studies, which is an increase over using the direct and inherited studes at EFO:0005741. We could enhance that search further in a number of ways such as using all synonyms, or breaking down terms into words.  However that process becomes somewhat bespoke and unwieldy. 
-
-
-
+all GWAS studies that mapped directly to either that node, or one of its descendants. We contrasted that with the strategy of searching the corpus based on the GWAS catalog studies for the terms infectious and disease.  A third approach is to use the EFO corpus to provide specific disease names, from the term labels for those EFO terms listed under the infectious disease node, EFO:0005741. If we simply extract all the EFO term labels for the descendants of EFO:0005741 and search the corpus with those we find `r nrow(hixx)` studies, which is an increase over using the first strategy that relied on the direct and inherited studes reported for EFO:0005741. We could enhance thid search further in a number of ways such as using all synonyms, or breaking down terms into individual words and searching.  However these processes can become unwieldy. 
 
 ```{r getresources, eval=FALSE, echo=FALSE}
 
@@ -462,7 +467,7 @@ csums = apply(dtmLung, 2, sum, na.rm=T)
 dtm_wordcloud(dtmLung)
 ```
 
-Once we have a set of GWAS studies that we are interested in we can access the metadata for the implicated variants such as likely gene, the genome coordinates, the p-value and effect size to name a few of the attributes that are provided.  These data are large and we use a  database as the main tool for storing and accessing the data. The data can be read into standard Bioconductor objects, such as those for storing and manipulating genetic coordinates and users can easily produce Manhattan plots, or identify genes that are implicated in the association.  In Table  \@ref(tab:lookatHits) we report the ten most frequent mapped genes for the lung studies. Notice that these do represent genes such as
+Once we have a set of GWAS studies that we are interested in we can access the metadata for the implicated variants such as likely gene, the genome coordinates, the p-value and effect size to name a few of the attributes that are provided.  These data are large and we use a  database as the main tool for storing and accessing the data. The data can be read into standard Bioconductor objects, such as those for storing and manipulating genetic coordinates and users can easily produce Manhattan plots such as Figure \@ref(fig:lungmanh), or identify genes, where for example we report the ten most frequently reported genes for this collection of studies in Table  \@ref(tab:lookatHits) . Notice genes such as the cholinergic receptors CHRNA3 and CHRNA5 with strong associations for risk of lung cancer.
 
 ```{r from_studyfuncs, echo=FALSE}
 ##there should only be one mapped trait curie - not sure what
@@ -474,13 +479,12 @@ tab = granges_from_study(acc=GWLungstudies[,"STUDY.ACCESSION"])
 
 
 ```{r lookatHits, eval=TRUE, echo=FALSE}
-kable_styling(kbl(t(sort(table(tab$MAPPED_GENE),dec=TRUE)[1:10]), caption="Most frequent mapped genes in GWAS lung studies." ), bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(t(sort(table(tab$MAPPED_GENE),dec=TRUE)[1:10]), caption="Most frequent mapped genes in GWAS lung studies." ), bootstrap_options = "striped", full_width = TRUE)
 
 ```
 
-We can then create a Manhattan plot of the variants associated with the selected studies.  There are many different ways in which one can explore these data. The metadata is quite extensive and one might also want to subset, or color variants by disease type.
 
-```{r lungmanh, plot=TRUE, echo=FALSE, fig.align='center', fig.width=7, fig.cap="Manhattan Plot for Disease Location Lung", warning=FALSE, fig.height=5, fig.path="figure/"}
+```{r lungmanh, plot=TRUE, echo=FALSE, fig.align='center', fig.width=7, fig.cap="Manhattan Plot for GWAS variants associated with studies where we are able to identify the disease location Lung", warning=FALSE, fig.height=5, fig.path="figure/"}
 vars = variants_from_study(GWLungstudies$STUDY.ACCESSION)
 ##drop those with a p-value > 1e-8,
 vars = vars[vars$`P-VALUE` < 1e-8, ]
@@ -492,9 +496,9 @@ simple_ggmanh(vars, y.label="-log10 p", plot.title = "Diseases of the Lung",
 ## Challenges
 
 While the GWAS catalog has provided mappings to EFO there remain some substantial challenges
-for those attempting to use it to find and organize their searches.  As we see in Table \@ref{tab:tab1c} a large number of GWAS studies are mapped to EFO terms where the EFO label is not particularly descriptive so that for these studies EFO labeling has contributed very little. Now, for those studies it is still possible that the GWAS catalog traits will contain more specific details, however, accessing that information will be reliant on tools for searching plain text. 
+for those attempting to use it to find and organize their searches.  As we see in Table \@ref{tab:tab1c} a large number of GWAS studies are mapped to EFO terms where the EFO label is not particularly descriptive so that for these studies EFO labeling has contributed very little information. It is possible that the GWAS catalog traits will contain more specific details, however, accessing that information will be reliant on tools for searching plain text. 
 
-The disease location data are useful, but access is incomplete, since the predicates and search strategies that will need to be employed to access it for these sorts of analysis and complex and requires expertise in the semantics of ontological concept representation and familiarity with the specific ontologies being used. These are not usually challenging for non-experts to employ.
+The disease location data are useful, but the mapping is incomplete, since the predicates and search strategies that will need to be employed to access it for these sorts of analysis and complex and requires expertise in the semantics of ontological concept representation and familiarity with the specific ontologies being used. These are not usually challenging for non-experts to employ.
 
 ```{r efoCKD, echo=FALSE}
 q1 = "chronic AND kidney AND disease"
@@ -547,7 +551,6 @@ with these traits we see that there are `r sum(pmtab>1000)` papers that
 report more than 1000 traits. Given the PubMed IDs it is easy to find
 the papers. The paper associated with PMID 35870639 which reports more than 
 6,700 studies is titled: Identification of 969 protein quantitative trait loci in an African American population with kidney disease attributed to hypertension @surapaneniIdentification969Protein2022.
-
 
 Another potential issue that will affect the completeness and accuracy of our results is that the EFO provided synonyms might be incomplete or inaccurate. For `r efo_df["EFO:0000685", "Object"]` the reported synonyms include *proliferative arthritis* and *Rheumatic gout*. Proliferative arthritis refers to a condition characterized by the excessive growth of synovial tissue in the joints, leading to inflammation and joint damage while rheumatoid arthritis is an autoimmune disease where the immune system mistakenly attacks the joints, causing inflammation, pain, and joint damage. And *Rheumatic gout* is a somewhat archaic term for gout. Including these as synonyms will result in linking traits that should not be linked and be misleading.
 
