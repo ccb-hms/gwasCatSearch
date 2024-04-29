@@ -13,7 +13,8 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 
 bibliography: references.bib
-
+cls: oxford-university-press-scimed-author-date.csl
+  
 link-citations: true
 
 format: html
@@ -42,7 +43,7 @@ searches such as the retrieval augmented generation (RAG) approaches that are no
 
 For the experimental factor ontology (EFO) our database contains a table named `efo_labels` with details about all terms in EFO, such as their labels, identifiers, and disease locations associated with them (if available). In this table we also include the count of how many GWAS studies are directly mapped to each ontology term, and of how many studies are indirectly mapped to each term, i.e., they are mapped to a more specific term in the hierarchy. 
 
-Our database includes a tabular representation of an ontology's class hierarchy before and after reasoning, in the tables `efo_edges` and `efo_entailed_edges`, respectively. So for a particular term, we can obtain its direct, asserted parents using `efo_edges`, and we can obtain its indirect, entailed parents (i.e., ancestors) using `efo_entailed_edges`. The table `efo_synonyms` contains the potentially multiple synonyms of each EFO term. We construct our tables by extracting the minimum required details from a SemanticSQL representation of EFO.
+Our database includes a tabular representation of an ontology's class hierarchy before and after reasoning, in the tables `efo_edges` and `efo_entailed_edges`, respectively. So for a particular term, we can obtain its direct, asserted parents using `efo_edges`, and we can obtain its indirect, entailed parents (i.e., ancestors) using `efo_entailed_edges`. The table `efo_synonyms` contains the potentially multiple synonyms of each EFO term. We construct our tables by extracting the minimum required details from a SemanticSQL @INCAsemSQL representation of EFO.
 
 Our pipeline allows the inclusion of any additional user-specified ontologies. In our case, we include the Uberon ontology so that we can obtain more details about the anatomical structures associated with (EFO) diseases. The tables included in the database for such extra ontologies are the same as for the primary annotation ontology, except that the labels table does not include disease location details or mapping counts.
 
