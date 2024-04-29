@@ -49,7 +49,7 @@ EBI and mapped to terms in the EFO we also examine how that mapping can be used 
 
 ### Data
 
-Since 2010, delivery and development of the Catalog
+Since 2010, delivery and development of the GWAS catalog
 has been a collaborative project between the EMBL-EBI and NHGRI. Full details of
 the data and the date it was obtained are given in an appendix. As of
 2024-01-30, the GWAS Catalog contains 6715 publications, 571148
@@ -58,10 +58,14 @@ currently mapped to Genome Assembly GRCh38.p14 and dbSNP Build 156.
 The curation process used is described on their web page, 
 <https://www.ebi.ac.uk/gwas/docs/methods/curation>. Of particular
 interest is their comment:
-*Each study is also assigned a trait that best represents the phenotype under investigation. When multiple traits are analysed in the same study either multiple entries are created, or individual SNPs are annotated with their specific traits.*. Which indicates that in some situations individual SNPs will be annotated with a trait, while in other cases collections of SNPs will be associated with a single trait.  The latter occurs, for example, when publications report on interactions between a SNP and protein abundance.
+*Each study is also assigned a trait that best represents the phenotype under investigation. When multiple traits are analysed in the same study either multiple entries are created, or individual SNPs are annotated with their specific traits.*. This indicates that in some situations individual SNPs will be annotated with a trait, while in other cases collections of SNPs will be associated with a single trait.  The latter occurs, for example, when publications report on interactions between a SNP and protein abundance.
 
 We obtain data from the GWAS Catalog and transform it into a set of tables using tools in the GWASCatalogSearchDB (https://github.com/ccb-hms/GWASCatalogSearchDB).
 Our processing produces a number of tables that can be accessed via a SQL database; we use SQLite (@sqlite2020hipp). These tables include data from the EBI, several tables organized around the Experimental Factor Ontology (EFO) and the Uber-anatomy ontology (UBERON) @Uberon2012.
+
+% FIXME Should there be a reference to semantic sql as a
+% basis for the sqlite approach
+
 
 
 ### Ontologies
@@ -69,12 +73,18 @@ Our processing produces a number of tables that can be accessed via a SQL databa
 An ontology is a set of concepts and categories that describe a subject area or domain of knowledge that expresses their properties and the relations between them. Ontologies form one of the bases for knowledge engineering and representation and are important in understanding and referencing biomedical entities. One of the challenges that needs to be addressed is the fact that the same concept might usefully appear in different ontologies and users will need tools to help identify similar concepts across ontologies. A second challenge is that to be useful the ontologies must be accessible and typically that means using the web or a database implementation. There are two constructs that help with this, the compact uniform resource identifiers (CURIEs), and the internationalized resource identifiers (IRIs). A CURIE has three parts: a prefix; a delimiter; and a unique local (to the ontology described by the prefix) identifier from the given nomenclature. The CURIE EFO:0005305 which represents the concept *atrioventricular node disease* has a prefix of EFO, a delimiter of a colon (:) and a unique local identifier of 0005305.  The corresponding IRI for that term is http://www.ebi.ac.uk/efo/EFO_0005305, which gives a web location that can be examined by a user. Note that the delimiter in the IRI is an underscore, rather than a colon. We will use both in our discussion. The terms in the EFO ontology
 are related to each other via logical relationships,  which can be viewed as a directed acyclic graph. By construction there is a single root node. More specific terms, such as the relationship between cancer and pancreatic cancer are encoded with pancreatic cancer being the **child** of cancer, while cancer is the **parent** of pancreatic cancer.  The descriptions can become more refined, and we define the **descendants** of a node to be the set of child nodes, where one recurses down to the point where a node has no children.  Such a node is referred to as a *leaf*. In some sense studies that map to leaf nodes in the ontology are describing quite specific concepts, while studies that map to non-leaf nodes are likely to be concepts that are more general.
 
-Similarly we define **ancestors** nodes to be those obtained by recursing the parent operation applied recursively up to the root node of the ontology.  Our software contains tools to obtain the children, descendants, parents, and ancestors as well as to perform other operations using the ontology.  Given the structure of the ontology we can introduce the concept of an *inherited* mapping. A mapping at a node E is inherited if it was a direct mapping to some descendant of E.  For example the CURIE for pancreatic carcinoma is EFO:0002618, which has `r efo_df["EFO:0002618","Direct"]` direct mappings and `r efo_df["EFO:0002618", "Inherited"]` inherited mappings. The structure of the ontology provides substantial benefits with regard to the organization of phenotypes, as, for example, all diseases should be organized under the node labeled *Disease* which has CURIE EFO:0000408. Thus, by examining the direct and inherited mappings at the EFO:0000408 node we can identify all GWAS catalog traits that have been mapped to a human disease. Now, that will not be quite as useful as it seems due to issues we will explore due to the inherent complexity of phenotypes.
+Similarly we define **ancestors** nodes to be those obtained by recursing the parent operation applied recursively up to the root node of the ontology.  Our software contains tools to obtain the children, descendants, parents, and ancestors as well as to perform other operations using the ontology.  Given the structure of the ontology we can introduce the concept of an *inherited* mapping. A mapping at a node E is inherited if it was a direct mapping to some descendant of E.  For example the CURIE for pancreatic carcinoma is EFO:0002618, which has `r efo_df["EFO:0002618","Direct"]` direct mappings and `r efo_df["EFO:0002618", "Inherited"]` inherited mapping.  (The inherited mapping is for a study that
+mapped to pancreatic ductal carcinoma.)  The structure of the ontology provides substantial benefits with regard to the organization of phenotypes, as, for example, all diseases should be organized under the node labeled *Disease* which has CURIE EFO:0000408. Thus, by examining the direct and inherited mappings at the EFO:0000408 node we can identify all GWAS catalog traits that have been mapped to a human disease. Now, that will not be quite as useful as it seems due to issues we will explore due to the inherent complexity of phenotypes.
+
+% FIXME the pancreatic ductal carcinoma has PMID 34216462, should we cite?
 
 Disease location information was extracted directly from EFO statements of the form:  X has_disease_location Y, where Y is typically an UBERON term representing an anatomical location. If a term does not have an explicitly stated location relationship, we determine if it has an inferred location. This is done by recursively checking if a parent in the ontology hierarchy has a location. The first location found is used, and if none is found then it is marked as missing. 
 For example, *bronchitis*  (EFO:0009661) does not have an explicitly stated location in EFO, but it inherits one from its immediate parent (*bronchial disease*), which has location *bronchus*, (UBERON:0002185).  Of the `r NROW(efo_df)` EFO terms `r sum(!is.na(efo_df$DiseaseLocation))` terms have a disease location.
 
-In some cases, the disease location is given as a statement of the form: kidney disease has_disease_location (kidney or part_of kidney). Logically, this does not entail that kidney disease has_disease_location kidney, and so we miss the locations of diseases that are axiomatized this way in EFO.  Sometimes the ontology developers did add an extra statement that would unambiguously give us a location. For example, for bronchial disease, which is defined as a disease that has_disease_location (bronchus or part_of bronchus), there is an additional statement that bronchial disease has_disease_location bronchus. If this pattern were consistent, we could get higher coverage of locations. Another way to achieve higher coverage would be through more precise semantics—in particular, by specifying that if a disease D has_disease_location (part_of anatomical entity A), it implies D has_disease_location A, which can be achieved using the Web Ontology Language (OWL) where we could define a property chain such as: has_disease_location *o* part_of implies has_disease_location, where *o* expresses a property path and is usually read as *followed by*.
+In some cases, the disease location is given as a statement of the form: kidney disease has_disease_location (kidney or part_of kidney). Logically, this does not entail that kidney disease has_disease_location kidney, and so we miss the locations of diseases that are axiomatized this way in EFO.  Sometimes the ontology developers did add an extra statement that would unambiguously give us a location. For example, for bronchial disease, which is defined as a disease that has_disease_location (bronchus or part_of bronchus), there is an additional statement that bronchial disease has_disease_location bronchus. If this pattern were consistent, we could get more comprehensive coverage of locations. Another way to achieve greater coverage would be through more precise semantics—in particular, by specifying that if a disease D has_disease_location (part_of anatomical entity A), it implies D has_disease_location A, which can be achieved using the Web Ontology Language (OWL) where we could define a property chain such as: has_disease_location *o* part_of implies has_disease_location, where *o* expresses a property path and is usually read as *followed by*.
+
+% FIXME?  This semantic/ontology material is technical and some
+% additional definitions may be needed
 
 ### Aligning EFO and the GWAS Catalog
 
@@ -195,6 +205,8 @@ To create a searchable EFO-based corpus we create synthetic documents that consi
 components: first the EFO term's text description; second the EFO provided synonyms; and third the set of GWAS catalog study names, for any study that was directly mapped to that EFO term. Our rationale
 for the third component is that the EBI curators assigned that trait description to the specific EFO term, so it is in their opinion a synonym. We show the EFO provided synonyms for `r efo_df["EFO:0003086", "Object"]`, EFO:0003086 in Table \@ref(tab:exampleEFO). 
 
+
+% FIXME?  Need tolower on the terms, or get one with capital Kidney Disorder
 
 ```{r exampleEFO, echo=FALSE}
 ##these functions return named lists, one element for each provided EFO term
@@ -331,7 +343,7 @@ efo_id = efo_df[z2,]
 ##
 directEFO = t(table(efo_id$Direct))
 ## how many studies map directly to one of these terms
-knitr::kable(directEFO, caption="Number of studies mapping to descendants of EFO:0005741") |> kable_styling()
+knitr::kable(directEFO, caption="Number of studies mapping to descendants of EFO:0005741 (infectious disease)") |> kable_styling()
 ## one has 249 - and it is COVID, which makes some sense
 # efo_id[which.max(efo_id$Direct),]
 
