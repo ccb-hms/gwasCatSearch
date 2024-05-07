@@ -280,7 +280,7 @@ In Figure \@ref(fig:efograph) we render a portion of the EFO ontology that is an
 labeled urinary system disease, EFO:0009690, and shows all of the descendants of that term.
 
 ```{r efograph, echo=FALSE, fig.cap = "Rendering of the EFO Ontology for urinary system disease and descendants.", fig.align='center', out.width="75%",latex_options = c("scale_down")}
-knitr::include_graphics("figure/demopic.png")
+knitr::include_graphics("figures/demopic.png")
 ```
 
 #### A search corpus based on GWAS Traits.

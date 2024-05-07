@@ -52,7 +52,7 @@ Finally we include a table in our database (version_info) specifying the version
 A schema of the resulting tables is given in Figure \@ref(fig:sqltabs).
 
 ```{r sqltabs, echo=FALSE, fig.cap = "Table descriptions for GWAS catalog processed data.", out.width="90%"}
-knitr::include_graphics("figure/GWASCat.png")
+knitr::include_graphics("figures/GWASCat.png")
 ```
 
 ## Additional References
