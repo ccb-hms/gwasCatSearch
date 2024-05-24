@@ -1,5 +1,5 @@
 ---
-title: "gwasCat Supplement"
+title: "Supplementary Data for 'Semantic computing for human phenotypes'"
 author: "Robert Gentleman, Rafael Goncalves, Vince Carey"
 date: "`r Sys.Date()`"
 output: 
@@ -25,12 +25,12 @@ format: html
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## The paper
+## Source code for manuscript and analyses
 
-Our paper was written using bookdown @bookdown and the markup is contained in the *gwasCatSearch@ package available on GitHub, <https://github.com/ccb-hms/gwasCatSearch>. Within that repository, in the vignettes folder are all the documents needed to reproduce this paper.  All details are given explicitly in the file GWAScatPaper.Rmd and they can be modified and extended if the reader chooses to explore our analysis.
+Our paper was written using bookdown @bookdown and the markup is contained in the gwasCatSearch package available on GitHub, <https://github.com/ccb-hms/gwasCatSearch>. Within that repository, in the vignettes folder are all the documents needed to reproduce this paper.  All details are given explicitly in the file GWAScatPaper.Rmd and they can be modified and extended if the reader chooses to explore our analysis.
 
 
-## GWASCatalogSearchDB
+## Database infrastructure: GWASCatalogSearchDB
 
 This paper relies on a large amount of work to organize the GWAS catalog data resources in a manner that is suitable for the analyses we describe.  The explicit details of that effort are available from the corresponding GitHub repository, <https://github.com/ccb-hms/GWASCatalogSearchDB>.  We summarize the process here for interested readers.
 
@@ -55,6 +55,6 @@ A schema of the resulting tables is given in Figure \@ref(fig:sqltabs).
 knitr::include_graphics("figures/GWASCat.png")
 ```
 
-## Additional References
+### Additional References
 
 

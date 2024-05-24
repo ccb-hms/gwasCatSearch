@@ -1,6 +1,6 @@
 ---
 title: "Semantic computing for human phenotypes"
-author: ' Robert Gentleman^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Rafael Goncalves^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Vincent Carey^[Statistical and Data Analysis Center, Channing Laboratory, 181 Longwood Ave Boston, MA 02115, USA]'
+author: ' Robert Gentleman^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Rafael Goncalves^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Vincent Carey^[Channing Division of Network Medicine, 181 Longwood Ave Boston, MA 02115, USA]'
 date: "2024-04-29"
 output: 
   bookdown::pdf_document2:
@@ -73,18 +73,28 @@ EBI and mapped to terms in the EFO we also examine how that mapping can be used 
 
 Since 2010, delivery and development of the GWAS Catalog
 has been a collaborative project between the EMBL-EBI and NHGRI. Full details of
-the data and the date it was obtained are given in an appendix. GWAS Catalog data is
+the data and the date it was obtained are given in Supplementary Data. GWAS Catalog data is
 currently mapped to Genome Assembly GRCh38.p14 and dbSNP Build 156.
-The curation process used is described on their web page, 
+The curation process used is described at
 <https://www.ebi.ac.uk/gwas/docs/methods/curation>.
-As of 2024-01-30, the GWAS Catalog contains 6715 publications, 571148
-associations and 67322 full summary statistics.  The results reported
-in a publication can be further divided into *studies*. Each publication can report one or
-more studies. Of particular interest is their comment:
-*Each study is also assigned a trait that best represents the phenotype under investigation. When multiple traits are analysed in the same study either multiple entries are created, or individual SNPs are annotated with their specific traits.*. This indicates that in some situations individual SNPs will be annotated with a trait, while in other cases collections of SNPs will be associated with a single trait. 
+%As of 2024-01-30, the GWAS Catalog contains 6715 publications, 571148
+%associations and 67322 full summary statistics.  
+The primary information types in the catalog include publications,
+associations, and summary statistics.
+The results reported
+in a publication are further divided into *studies*
+with unique accession identifiers. 
+Each publication can report one or
+more studies.  The online text on the
+curation process includes the remark:
+*Each study is also assigned a trait that best represents the phenotype under investigation. When multiple traits are analysed in the same study either multiple entries are created, or individual SNPs are annotated with their specific traits.*. This indicates that in some situations individual SNPs will be annotated with a trait and
+unique study accession number, 
+while in other cases collections of SNPs will be associated with a single trait and accession number.
 
 We obtain data from the GWAS Catalog and transform it into a set of tables using tools in the GWASCatalogSearchDB (https://github.com/ccb-hms/GWASCatalogSearchDB).
-Our processing produces a number of tables that can be accessed via a SQL database; we use SQLite [@sqlite2020hipp]. These tables include data from the EBI, several tables organized around the Experimental Factor Ontology (EFO) and the Uber-anatomy ontology (UBERON) [@Uberon2012].
+Our processing produces a number of tables that can be accessed via a SQL database; we use SQLite [@sqlite2020hipp]
+following the example of the
+INCAtools project [@Matentzoglu2022]. These tables include data from the EBI, several tables organized around the Experimental Factor Ontology (EFO) and the Uber-anatomy ontology (UBERON) [@Uberon2012].
 
 ### Ontologies
 
@@ -238,8 +248,6 @@ components: first the EFO term's text description; second the EFO provided synon
 for the third component is that the EBI curators assigned that trait description to the specific EFO term, so it is in their opinion a synonym. We show the EFO provided synonyms for `r efo_df["EFO:0003086", "Object"]`, EFO:0003086 in Table \@ref(tab:exampleEFO). 
 
 
-% FIXME?  Need tolower on the terms, or get one with capital Kidney Disorder
-
 ```{r exampleEFO, echo=FALSE}
 ##these functions return named lists, one element for each provided EFO term
 ckdSyns = getSynonyms("EFO:0003086")[[1]]
@@ -301,7 +309,7 @@ p2 = paste0(p1, collapse = "\n ")
 
 GWCexp1$EFOSynonyms =p2
 
-kable_styling(kbl(t(GWCexp1), align='lc', caption="Study GCST90083943", col.names=""), bootstrap_options = "striped", full_width = TRUE)
+kable_styling(kbl(t(GWCexp1), align='lc', caption="Some attributes of Study GCST90083943 in the GWAS Catalog", col.names=""), bootstrap_options = "striped", full_width = TRUE)
 
 ```
 
@@ -342,10 +350,15 @@ cases where a match was to the DISEASE.TRAIT, `r tt["Synonyms"]` matches
 to synonyms provided by the ontologies, and `r tt["Trait"]` matches to
 the text description used by the ontology for the trait. 
 
-## Analysis: Searching for diseases and traits
+## Results
+
+### Facilitated search for diseases and traits
 
 There are a number analytic tasks that these GWAS Catalog-based tools can aid in.
-Finding all diseases of a specific type, say disorders of the kidney, or infectious disease and finding diseases that relate to some organ, system or part of the body.  Having traits mapped to an ontology, such as EFO, should help with these tasks.  We will examine how these tasks can be supported using the EFO ontology together with the search corpora we describe above. This process basically integrates a dictionary search with the structured information in an ontology.
+A basic example is retrieval of associations reported on
+all diseases of a fairly broad class, say disorders of the kidney, or infectious disease.
+Another example is enumerating diseases and genetic
+associations that relate to some organ, system or part of the body.  Having traits mapped to an ontology, such as EFO, should help with these tasks.  We will examine how these tasks can be supported using the EFO ontology together with the search corpora we describe above. This process basically integrates a dictionary search with the structured information in an ontology.
 
 ```{r diseaseN, echo=FALSE, message=FALSE, warning=FALSE}
 didx = grep("EFO:0000408", efo_df$Subject)
@@ -353,13 +366,19 @@ didx = grep("EFO:0000408", efo_df$Subject)
 ```
 
 We first consider the question of whether the GWAS traits are mapped to ontology terms that represent diseases.  The EFO CURIE for *Disease* is EFO:0000408 and all diseases should be children of that node.
-We find that `r efo_df$Direct[didx]` GWAS studies were mapped directly to this node while `r efo_df$Inherited[didx]` were inherited. Since there are `r length(unique(gwc_df$STUDY.ACCESSION))` different GWAS studies only a small fraction of the studies are mapped to diseases.
+We find that `r efo_df$Direct[didx]` GWAS studies were mapped directly to this node while `r efo_df$Inherited[didx]` were inherited. Since there are `r length(unique(gwc_df$STUDY.ACCESSION))` different GWAS studies, we have the surprising finding
+that less than 20 per cent of studies
+in the GWAS catalog present associations that can be mapped to human diseases.
 
-We last point out that GWAS Catalog assigned disease traits may also cause some challenges.  We searched each assigned disease trait for any occurance of the string *chronic kidney disease*, ignoring capitalization, and found `r sum(gg)` matches which correspond to `r length(unique(PMs))` different PUBMEDIDs. These studies are mapped to `r length(ss)` different EFO terms, with `r ss[1]` mapping to `r names(ss)[1]`, which is *metabolite measurement*. We will return to this specific example in our discussion. 
+The use of string matching for retrieval of genetic associations
+of potential interest can have unexpected consequences.
+We searched each assigned disease trait for any occurrence of the string *chronic kidney disease*, ignoring capitalization, and found `r sum(gg)` matches which correspond to `r length(unique(PMs))` different PUBMEDIDs. These studies are mapped to `r length(ss)` different EFO terms, with `r ss[1]` mapping to `r names(ss)[1]`, which is *metabolite measurement*. We will return to this specific example in our discussion. 
+
+### A worked example: genetic associations with "infectious disease"
 
 We will look for GWAS studies associated with *infectious disease*.  One reason for this choice is that it is quite a challenging problem if one attempts it without using an ontology.  The main reason for that is that there are many infectious diseases and most of them do not have either *infectious* or *disease* in their name.  So without an ontology to guide us, we would need to have some dictionary of infectious diseases to start with, and for that there are several candidates, but we were unable to identify a definitive authoratative source.
 
-### Strategy One: Use the EFO ontology structure
+#### Strategy One: Use the EFO ontology structure
 
 
 ```{r tryChildren, echo=FALSE}
@@ -394,7 +413,7 @@ corresponds to *infectious disease*, which has CURIE EFO:0005741. All infectious
 annotated in the EFO as descendants of that EFO term. Currently there are `r length(z2)` descendants and a total of `r efo_df[gg, "Direct"] + efo_df[gg, "Inherited"]` GWAS studies annotated at EFO:0005741 or one of its descendants. We find
 that `r efo_df[gg,"Direct"]` were directly mapped to EFO:0005741 while `r efo_df[gg,"Inherited"]` where inherited.  From Table \@ref(tab:tryChildren) we see that there were `r directEFO[1]` EFO terms that had no studies mapping to them. We note that the EFO term with over 200 studies mapped to is is `r efo_id[which.max(efo_id$Direct),"Object"]`,
 
-### Strategy Two: Search based on the GWAS Catalog corpus
+#### Strategy Two: Search based on the GWAS Catalog corpus
 
 In this case we will search the corpus based on the GWAS Catalog. One might want to experiment with different queries to try to obtain a good trade off between sensitivity and specificity.  We found that using *infectious disease* as our query missed a number of GWAS studies that had *infection* in them and opted to use only the term *infect\**. If a list of all infectious diseases was available a different strategy would be to search for each disease in that list and then merge the results.   Recall that when we constructed the GWAS Catalog corpus we used the text descriptions of the GWAS trait as well as the EFO trait name and synonyms for the EFO term(s) this study was directly mapped to.
 
@@ -434,7 +453,7 @@ The second approach found `r length(vv)` studies that were not found by our firs
 while the first approach found `r length(v2)` studies that were not found by the second.
 One of the studies found by second approach that was not found using the first was `r vv[1]` which has the disease trait `r vvGWC[1, "DISEASE.TRAIT"]`. And the associated EFO term is `r vvGWC[1, "MAPPED_TRAIT_CURIE"]` and while it is not an infectious disease one of its synonyms is "pseudomonas aeruginosa, susceptibility to chronic infection by, in cystic fibrosis", which explains why it was found using our second method.  Examining the list of those found by our first method but not by our second we see that these are mainly infectious diseases where the token *infect* is not found in the name of the disease or any of its synonyms.
 
-### Strategy three: Use the EFO corpus to get specific disease names
+#### Strategy three: Use the EFO corpus to get specific disease names
 
 
 ```{r otherterms, echo=FALSE, eval=TRUE}
@@ -481,7 +500,7 @@ simple_ggmanh(pp, y.label="-log10 p",
 ##ggmanh::manhattan_plot(pp, plot.title="Infectious Diseases", y.label="-log10 p")
 ```
 
-### Search for GWAS studies by Disease Location
+### Searching for GWAS studies by Disease Location
 
 ```{r uberon, warning=FALSE, echo=FALSE}
 lungU = "UBERON:0002048"
@@ -498,8 +517,9 @@ efo_lung = efo_df[lungEFO,]
 ##FIXME - here it would be good to get some form of graph completion of the EFO labels
 ```
 
-We now describe how one can make use of the disease location information provided by EFO. First, you must identify
-the UBERON CURIE that corresponds to your location of interest. The CURIE for lung in the UBERON ontology is UBERON:0002048 and we will use that to find EFO terms that specify UBERON:0002048 as the disease location. We identify `r nrow(efo_lung)` terms as having lung as their location. In order to provide some sense of the terms that were found we create a word cloud using functionality in the `corpusTools` package and visualize this in Figure \@ref(fig:subsetLung).
+As a final example,
+we describe how one can make use of the disease location information provided by EFO. First, we must identify
+the UBERON CURIE that corresponds to the location of interest. The CURIE for lung in the UBERON ontology is UBERON:0002048 and we will use that to find EFO terms that specify UBERON:0002048 as the disease location. We identify `r nrow(efo_lung)` terms as having lung as their location. In order to provide some sense of the terms that were found we create a word cloud using functionality in the `corpusTools` package and visualize this in Figure \@ref(fig:subsetLung).
 
 
 
@@ -539,12 +559,12 @@ simple_ggmanh(vars, y.label="-log10 p", plot.title = "Diseases of the Lung",
 
 ```
 
-## Challenges
+## Consequences of imprecise annotation of study outcomes
 
 While the GWAS Catalog has provided mappings to EFO there remain some substantial challenges
 for those attempting to use it to find and organize their searches.  As we see in Table \@ref(tab:tab1c) a large number of GWAS studies are mapped to EFO terms where the EFO label is not particularly descriptive so that for these studies EFO labeling has contributed very little information. It is possible that the GWAS Catalog traits will contain more specific details, however, accessing that information will be reliant on tools for searching plain text. 
 
-The disease location data are useful, but the mapping is incomplete, since the predicates and search strategies that will need to be employed to access it for these sorts of analysis are complex and requires expertise in the semantics of ontological concept representation and familiarity with the specific ontologies being used. These are not usually challenging for non-experts to employ.
+The disease location data are useful, but the mapping is incomplete, since the predicates and search strategies that will need to be employed to access it for these sorts of analysis are complex. Expertise in the semantics of ontological concept representation and familiarity with the specific ontologies being used will be required. These are usually challenging for investigators in disease genetics.
 
 ```{r efoCKD, echo=FALSE}
 q1 = "chronic AND kidney AND disease"
@@ -592,7 +612,7 @@ pmtab = sort(table(ckdPMIDs), dec=TRUE)
 #pmtab[1:10]
 ```
 
-If we look at the PUBMED IDs associated
+When we look at the PUBMED IDs associated
 with these traits we see that there are `r sum(pmtab>1000)` papers that
 report more than 1000 traits. Given the PubMed IDs it is easy to find
 the papers. The paper associated with PMID 35870639 which reports more than 
@@ -600,7 +620,7 @@ the papers. The paper associated with PMID 35870639 which reports more than
 
 Another potential issue that will affect the completeness and accuracy of our results is that the EFO provided synonyms might be incomplete or inaccurate. For `r efo_df["EFO:0000685", "Object"]` the reported synonyms include *proliferative arthritis* and *Rheumatic gout*. Proliferative arthritis refers to a condition characterized by the excessive growth of synovial tissue in the joints, leading to inflammation and joint damage while rheumatoid arthritis is an autoimmune disease where the immune system mistakenly attacks the joints, causing inflammation, pain, and joint damage. And *Rheumatic gout* is a somewhat archaic term for gout. Including these as synonyms will result in linking traits that should not be linked and be misleading.
 
-## Results and Discussion
+## Discussion
 
 The results of our exploration are encouraging but also exhibit the challenges that remain. The mapping of phenotypes to an ontology is extremely helpful in providing a more specific vocabulary that can be used to harmonize across studies. The terms or nodes in the ontology provide a means of identifying synonyms that can be incorporated into searches.  The ontologies themselves are often undergoing active research and development. That typically means they will be updated and in some cases there are ways for users to provide feedback about issues and to give suggestions.  As we have noted they can include additional information, such as disease location, that can be used in any analyses.
 
