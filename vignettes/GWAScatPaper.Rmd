@@ -1,7 +1,7 @@
 ---
 title: "Semantic computing for human phenotypes"
 author: ' Robert Gentleman^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Rafael Goncalves^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Vincent Carey^[Channing Division of Network Medicine, 181 Longwood Ave Boston, MA 02115, USA]'
-date: "2024-04-29"
+date: "2024-05-28"
 output: 
   bookdown::pdf_document2:
     toc: false
@@ -65,7 +65,7 @@ To facilitate searching for traits we use a search strategy that combines the us
 In particular we examine the use of corpus search tools, as exemplified in the `corpustools` package,
 [@atteveldtCorpustoolsManagingQuerying2023], to help search the set of traits that are
 reported on by the GWAS Catalog. Since these investigator defined traits have been hand curated by the
-EBI and mapped to terms in the EFO we also examine how that mapping can be used to aid the analysis and interpretation of the data. Our software is contained in the `gwasCatSearch` package, [@gentlemanGwasCatSearchPackageSupport2024a], which is open source and freely available.
+EBI and mapped to terms in the EFO we also examine how that mapping can be used to aid the analysis and interpretation of the data. Our software is contained in an R package, `gwasCatSearch` [@gentlemanGwasCatSearchPackageSupport2024a], which is open source and freely available.
 
 ## Materials and Methods
 
@@ -91,7 +91,7 @@ curation process includes the remark:
 unique study accession number, 
 while in other cases collections of SNPs will be associated with a single trait and accession number.
 
-We obtain data from the GWAS Catalog and transform it into a set of tables using tools in the GWASCatalogSearchDB (https://github.com/ccb-hms/GWASCatalogSearchDB).
+We obtain data from the GWAS Catalog and transform it into a set of tables using tools in the GWASCatalogSearchDB [@GWASCatalogSearchDB].
 Our processing produces a number of tables that can be accessed via a SQL database; we use SQLite [@sqlite2020hipp]
 following the example of the
 INCAtools project [@Matentzoglu2022]. These tables include data from the EBI, several tables organized around the Experimental Factor Ontology (EFO) and the Uber-anatomy ontology (UBERON) [@Uberon2012].
@@ -358,7 +358,7 @@ There are a number analytic tasks that these GWAS Catalog-based tools can aid in
 A basic example is retrieval of associations reported on
 all diseases of a fairly broad class, say disorders of the kidney, or infectious disease.
 Another example is enumerating diseases and genetic
-associations that relate to some organ, system or part of the body.  Having traits mapped to an ontology, such as EFO, should help with these tasks.  We will examine how these tasks can be supported using the EFO ontology together with the search corpora we describe above. This process basically integrates a dictionary search with the structured information in an ontology.
+associations that relate to some organ, system or part of the body.  Having traits mapped to an ontology, such as EFO, should help with these tasks.  We will examine how these tasks can be supported using the EFO ontology together with the search corpora we describe above. This process integrates a dictionary search with the structured information in an ontology.
 
 ```{r diseaseN, echo=FALSE, message=FALSE, warning=FALSE}
 didx = grep("EFO:0000408", efo_df$Subject)
@@ -368,7 +368,7 @@ didx = grep("EFO:0000408", efo_df$Subject)
 We first consider the question of whether the GWAS traits are mapped to ontology terms that represent diseases.  The EFO CURIE for *Disease* is EFO:0000408 and all diseases should be children of that node.
 We find that `r efo_df$Direct[didx]` GWAS studies were mapped directly to this node while `r efo_df$Inherited[didx]` were inherited. Since there are `r length(unique(gwc_df$STUDY.ACCESSION))` different GWAS studies, we have the surprising finding
 that less than 20 per cent of studies
-in the GWAS catalog present associations that can be mapped to human diseases.
+in the GWAS catalog present associations that were mapped to this part of the EFO.
 
 The use of string matching for retrieval of genetic associations
 of potential interest can have unexpected consequences.
@@ -593,7 +593,7 @@ knitr::kable(hitsasDT[1:10,], escape=FALSE, row.names=FALSE, caption="CKD EFO Hi
 ```
 
 We also found in the examples above that the study of the traits associated with a specific disease requires a fairly comprehensive search across all components of an ontology. For example,
-previously we discussed the term EFO:0003086 that has the text description: "chronic kidney diseases". We found `r length(ckdMatches[[1]])` GWAS Catalog studies that were mapped **directly**  and `r efo_df["EFO:0003086", "Inherited"]`inherited studies for that EFO term. But these are not all the GWAS Catalog studies that have the string *chronic kidney disease* in their trait description. When we search the corpus based on the GWAS Catalog we find `r nrow(hitsasDT)`
+previously we discussed the term EFO:0003086 that has the text description: "chronic kidney diseases". We found `r length(ckdMatches[[1]])` GWAS Catalog studies that were mapped **directly**  and `r efo_df["EFO:0003086", "Inherited"]` inherited studies for that EFO term. But these are not all the GWAS Catalog studies that have the string *chronic kidney disease* in their trait description. When we search the corpus based on the GWAS Catalog we find `r nrow(hitsasDT)`
 different studies that have a hit. 
 
 
@@ -615,10 +615,10 @@ pmtab = sort(table(ckdPMIDs), dec=TRUE)
 When we look at the PUBMED IDs associated
 with these traits we see that there are `r sum(pmtab>1000)` papers that
 report more than 1000 traits. Given the PubMed IDs it is easy to find
-the papers. The paper associated with PMID 35870639 which reports more than 
+the papers. The paper associated with PMID 35870639 which is associated with more than 
 6,700 studies is titled: Identification of 969 protein quantitative trait loci in an African American population with kidney disease attributed to hypertension [@surapaneniIdentification969Protein2022].
 
-Another potential issue that will affect the completeness and accuracy of our results is that the EFO provided synonyms might be incomplete or inaccurate. For `r efo_df["EFO:0000685", "Object"]` the reported synonyms include *proliferative arthritis* and *Rheumatic gout*. Proliferative arthritis refers to a condition characterized by the excessive growth of synovial tissue in the joints, leading to inflammation and joint damage while rheumatoid arthritis is an autoimmune disease where the immune system mistakenly attacks the joints, causing inflammation, pain, and joint damage. And *Rheumatic gout* is a somewhat archaic term for gout. Including these as synonyms will result in linking traits that should not be linked and be misleading.
+Another potential issue that will affect the completeness and accuracy of our results is that the EFO provided synonyms might be incomplete or inaccurate. For `r efo_df["EFO:0000685", "Object"]` the reported synonyms include *proliferative arthritis* and *Rheumatic gout*. Proliferative arthritis refers to a condition characterized by the excessive growth of synovial tissue in the joints, leading to inflammation and joint damage while rheumatoid arthritis is an autoimmune disease where the immune system mistakenly attacks the joints, causing inflammation, pain, and joint damage. And *Rheumatic gout* is a somewhat archaic term for gout. Including these as synonyms will result in linking traits that should not be linked.
 
 ## Discussion
 
