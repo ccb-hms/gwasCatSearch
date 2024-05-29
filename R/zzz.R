@@ -17,7 +17,7 @@ gwc_df <-NULL
 .onLoad <- function(libname, pkgname) {
   ## Connect to the SQLite DB
   ## shipped in package as a gzipped tarfile that will be untarred into temp dir
-  tarfile <- system.file("extdata", "gwascatalog_search.db.tar.gz", package=pkgname, lib.loc=libname)
+  tarfile <- system.file("extdata", "gwascatalog_search.db.tar.xz", package=pkgname, lib.loc=libname)
   td = tempdir()
   untd <- utils::untar(tarfile, list=FALSE, exdir=td)
   dbfile <- paste(td, "gwascatalog_search.db", sep="/")

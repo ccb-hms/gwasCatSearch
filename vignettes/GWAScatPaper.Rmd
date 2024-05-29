@@ -71,16 +71,31 @@ EBI and mapped to terms in the EFO we also examine how that mapping can be used 
 
 ### Data
 
+```{r procdate, echo=FALSE, message=FALSE}
+dstr = DBI::dbGetQuery(gwasCatSearch_dbconn(), "select Version from 'version_info' where Resource = 'Associations'")[[1]] 
+npub = DBI::dbGetQuery(gwasCatSearch_dbconn(), "select count (distinct PUBMEDID) from gwascatalog_references")[[1]]
+nass = DBI::dbGetQuery(gwasCatSearch_dbconn(), "select count(*) from gwascatalog_associations")[[1]]
+ii = lubridate::as_datetime(dstr)
+datestr = function(x) sprintf("%s %d, %d", 
+   lubridate::month(x,label=TRUE), lubridate::day(x), lubridate::year(x))
+dbdate = datestr(ii)
+```
+
+
 Since 2010, delivery and development of the GWAS Catalog
 has been a collaborative project between the EMBL-EBI and NHGRI. Full details of
 the data and the date it was obtained are given in Supplementary Data. GWAS Catalog data is
 currently mapped to Genome Assembly GRCh38.p14 and dbSNP Build 156.
 The curation process used is described at
 <https://www.ebi.ac.uk/gwas/docs/methods/curation>.
+<!--
 %As of 2024-01-30, the GWAS Catalog contains 6715 publications, 571148
 %associations and 67322 full summary statistics.  
-The primary information types in the catalog include publications,
-associations, and summary statistics.
+-->
+As of `r dbdate`, the GWAS Catalog contains `r npub` publications
+and `r nass` associations.
+<!-- The primary information types in the catalog include publications,
+associations, and summary statistics. -->
 The results reported
 in a publication are further divided into *studies*
 with unique accession identifiers. 
