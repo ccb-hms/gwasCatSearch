@@ -365,6 +365,10 @@ cases where a match was to the DISEASE.TRAIT, `r tt["Synonyms"]` matches
 to synonyms provided by the ontologies, and `r tt["Trait"]` matches to
 the text description used by the ontology for the trait. 
 
+### Data Availability
+
+All data used in this paper are publicly available, as are all softwore tools. Specific URLs and on-line resources are indicated at their point of use in the article.
+
 ## Results
 
 ### Facilitated search for diseases and traits
