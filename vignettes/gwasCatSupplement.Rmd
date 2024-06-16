@@ -1,6 +1,6 @@
 ---
 title: "Supplementary Data for 'Semantic computing for human phenotypes'"
-author: "Robert Gentleman, Rafael Goncalves, Vince Carey"
+author: ' Robert Gentleman^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Rafael Goncalves^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Vincent Carey^[Channing Division of Network Medicine, 181 Longwood Ave Boston, MA 02115, USA]'
 date: "`r Sys.Date()`"
 output: 
   bookdown::pdf_document2: 
@@ -27,16 +27,16 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Source code for manuscript and analyses
 
-Our paper was written using bookdown @bookdown and the markup is contained in the gwasCatSearch package available on GitHub, <https://github.com/ccb-hms/gwasCatSearch>. Within that repository, in the vignettes folder are all the documents needed to reproduce this paper.  All details are given explicitly in the file GWAScatPaper.Rmd and they can be modified and extended if the reader chooses to explore our analysis.
+Our paper was written using bookdown @bookdown and the markup is contained in the gwasCatSearch package available on GitHub, <https://github.com/ccb-hms/gwasCatSearch>. Within that repository, in the vignettes folder are all the documents needed to reproduce this paper.  All details for the paper are given explicitly in the file `GWAScatPaper.Rmd` and in `gwasCatSupplement.Rmd` for the supplement. They can be modified and extended by any interested reader.
 
 
 ## Database infrastructure: GWASCatalogSearchDB
 
-This paper relies on a large amount of work to organize the GWAS catalog data resources in a manner that is suitable for the analyses we describe.  The explicit details of that effort are available from the corresponding GitHub repository, <https://github.com/ccb-hms/GWASCatalogSearchDB>.  We summarize the process here for interested readers.
+This paper relies on a large amount of work to organize the GWAS catalog data resources in a manner that is suitable for the analyses we describe.  The explicit details of that effort are available from the corresponding GitHub repository, <https://github.com/ccb-hms/GWASCatalogSearchDB>.  We summarize the process here.
 
 We programmatically obtained two tables from GWAS Catalog's Downloads webpage <https://www.ebi.ac.uk/gwas/docs/file-downloads>: 'All studies v1.0.2' and 'All associations v1.0.2', and store them without modification as tables `gwascatalog_metadata` and `gwascatalog_associations`, respectively. The first table contains details about GWAS studies registered in the GWAS Catalog, while the second contains details about the SNP-trait associations extracted from those studies. 
 
-In the `gwascatalog_metadata` table, there are sometimes multiple ontology mappings for a single study, which are represented as a comma-separated list of CURIEs in each study's row. This representation makes search over such values challenging. So, we extract all ontology mappings and create another table, `gwascatalog_mappings`, where each ontology mapping is represented in its own row. The rationale behind this new table is that it can be extended to include additional mappings from different sources which allows users to select their preferred mapping source(s) to use for search.
+In the `gwascatalog_metadata` table, there are sometimes multiple ontology mappings for a single study, which are represented as a comma-separated list of CURIEs in each study's row. This representation makes search over such values challenging. So, we extract all ontology mappings and create another table, `gwascatalog_mappings`, where each ontology mapping is represented in its own row. The rationale behind creating this new table is that it can be extended to include additional mappings from different sources which allows users to select their preferred mapping source(s) to use for search.
 
 From the `gwascatalog_metadata` we extract the PubMed ID associated with each study, and we use the `metapub` (https://pypi.org/project/metapub) Python package to extract publication details such as titles, abstracts, and journal names, which we then store in the table `gwascatalog_references`. These data could easily be embedded into a vector database that could then facilitate use in large language model (LLM)
 searches such as the retrieval augmented generation (RAG) approaches that are now becoming commonplace.
@@ -47,7 +47,7 @@ Our database includes a tabular representation of an ontology's class hierarchy 
 
 Our pipeline allows the inclusion of any additional user-specified ontologies. In our case, we include the Uberon ontology so that we can obtain more details about the anatomical structures associated with (EFO) diseases. The tables included in the database for such extra ontologies are the same as for the primary annotation ontology, except that the labels table does not include disease location details or mapping counts.
 
-Finally we include a table in our database (version_info) specifying the versions of the ontologies used in the pipeline, and the dates and times when the metadata tables were downloaded from the GWAS Catalog. 
+Finally we include a table in our database (`version_info`) specifying the versions of the ontologies used in the pipeline, and the dates and times when the metadata tables were downloaded from the GWAS Catalog. 
 
 A schema of the resulting tables is given in Figure \@ref(fig:sqltabs).
 
