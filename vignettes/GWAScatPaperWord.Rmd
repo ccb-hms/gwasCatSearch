@@ -2,11 +2,10 @@
 title: "Semantic computing for human phenotypes"
 author: ' Robert Gentleman^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Rafael Goncalves^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Vincent Carey^[Channing Division of Network Medicine, 181 Longwood Ave Boston, MA 02115, USA]'
 date: "2024-05-28"
-output: 
-  bookdown::pdf_document2:
-    toc: false
+output:
+    bookdown::word_document2: default
     number_sections: false
-    extra_dependencies: ["longtable", "float"]
+    toc: false
 
 vignette: >
   %\VignetteIndexEntry{Semantic computing for human phenotypes}
@@ -153,7 +152,7 @@ ptab2 = c(ptab[1:9], sum(ptab[10:length(ptab)]))
 names(ptab2)[10] = "10+"
 pm = t(ptab2)
 rownames(pm) = "# of studies"
-kable_styling(kbl(pm, caption="GWAS Catalog Studies by number of EFO terms per Study"), bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(pm, caption="GWAS Catalog Studies by number of EFO terms per Study"), bootstrap_options = "striped", full_width = FALSE) |> save_kable(file="figures/CompTableMappingCounts.png")
 ```
 
 To facilitate searching we create a dataframe based on the GWAS Catalog studies in which there is one row for each unique combination of GWAS Catalog study ID and EFO term. This GWAS Catalog dataframe has columns labeled `STUDY.ACCESSION`: the GWAS Catalog study identifier; `DISEASE.TRAIT`: the GWAS Catalog text description of the trait; `MAPPED_TRAIT`: the textual description of the trait from EFO that this study was *directly* mapped to; `MAPPED_TRAIT_URI`: the URI for the mapped trait; `MAPPED_TRAIT_CURIE`: the CURIE for the mapped trait.
@@ -170,7 +169,10 @@ ttz = data.frame(t(t(sapply(gwc_df,function(x)length(unique(x))))))
 ttz = cbind(rownames(ttz), ttz)
 rownames(ttz) = NULL
 names(ttz) = c("Field", "Unique values")
-kable_styling(kbl(ttz, caption="Overview of GWAS Catalog Data"), bootstrap_options = "striped", full_width = FALSE)
+
+library("magick")
+kable_styling(kbl(ttz, caption="Overview of GWAS Catalog Data"), bootstrap_options = "striped", full_width = FALSE) |> save_kable(file="figures/tab1a.png")
+
 ```
 
 
@@ -180,13 +182,13 @@ rn = c("Subject: EFO CURIE", "Object: Trait Name", "IRI: IRI", "DiseaseLocation:
 ttz = cbind(rn, ttz)
 rownames(ttz) = NULL
 colnames(ttz) = c("Field", "Unique values")
-kable_styling(kbl(ttz, caption="Overview of EFO Data"), bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(ttz, caption="Overview of EFO Data"), bootstrap_options = "striped", full_width = FALSE) |> save_kable(file="figures/tab1b.png")
 ```
 
 ```{r tab1c,echo=FALSE}
 ee = head(efo_df[,-c(3,4)][rev(order(efo_df[,"Direct"])),],8)
 rownames(ee) = NULL
-kable_styling(kbl(ee, caption="The top 8 records in EFO based dataframe, ordered by frequency of direct annotation to GWAS."), bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(ee, caption="The top 8 records in EFO based dataframe, ordered by frequency of direct annotation to GWAS."), bootstrap_options = "striped", full_width = FALSE) |> save_kable(file="figures/tab1c.png")
 ```
 
 In Table \@ref(tab:tab1c) we list the EFO terms that have the highest frequency of GWAS studies mapped to them. And considering the results in Table \@ref(tab:tab1c) in combination with those reported in Table \@ref(tab:tab1a) we can infer that for many of the GWAS Catalog studies there is relatively little information contained in the EFO mappings as the EFO terms listed in Table \@ref(tab:tab1c) are quite generic.
@@ -275,7 +277,7 @@ if( nsyn %% 2 ) {
 outmat = data.frame(cbind(ckdSyns[1:half], ckdSyns[(half+1):(2*half)]))
 colnames(outmat) = NULL
 #ckdSyns
-kable_styling(kbl(outmat, caption = paste0("Synonyms for EFO:0003086, ", efo_df["EFO:0003086","Object"])), bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(outmat, caption = paste0("Synonyms for EFO:0003086, ", efo_df["EFO:0003086","Object"])), bootstrap_options = "striped", full_width = FALSE) |> save_kable(file="figures/tabSynonyms.png")
 ```
 
 
@@ -324,7 +326,7 @@ p2 = paste0(p1, collapse = "\n ")
 
 GWCexp1$EFOSynonyms =p2
 
-kable_styling(kbl(t(GWCexp1), align='lc', caption="Some attributes of Study GCST90083943 in the GWAS Catalog", col.names=""), bootstrap_options = "striped", full_width = TRUE)
+kable_styling(kbl(t(GWCexp1), align='lc', caption="Some attributes of Study GCST90083943 in the GWAS Catalog", col.names=""), bootstrap_options = "striped", full_width = TRUE) |> save_kable(file="figures/GCST90083943.png")
 
 ```
 
@@ -345,7 +347,7 @@ htl = search_features(gwc_tc, query="leuk*")
 htlf = addField2Hits(htl, gwc_tc)
 tt = table(htlf$hits$field)
 
-kable_styling(kbl(tt, caption="Which part of the GWAS \\textit{document} matched the search token leuk*", col.names = c("Term", "Count")) , bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(tt, caption="Which part of the GWAS \\textit{document} matched the search token leuk*", col.names = c("Term", "Count")) , bootstrap_options = "striped", full_width = FALSE) |> save_kable(file="figures/GWCmatch.png")
 ```
 
 
@@ -413,7 +415,7 @@ efo_id = efo_df[z2,]
 ##
 directEFO = t(table(efo_id$Direct))
 ## how many studies map directly to one of these terms
-knitr::kable(directEFO, caption="Number of studies mapping to descendants of EFO:0005741 (infectious disease)") |> kable_styling()
+knitr::kable(directEFO, caption="Number of studies mapping to descendants of EFO:0005741 (infectious disease)") |> kable_styling() |> save_kable(file="figures/EFO0005741.png")
 ## one has 249 - and it is COVID, which makes some sense
 # efo_id[which.max(efo_id$Direct),]
 
@@ -447,7 +449,7 @@ We found `r NROW(hitsIDasDT)` GWAS Catalog studies and in Table \@ref(tab:checkI
 
 ```{r checkIDmatches, echo=FALSE}
 idTT = table(hitsIDasDT$field)
-kable_styling(kbl(idTT, caption="Which part of the GWAS Catalog document matched our search term.", col.names = c("Term", "Count")) , bootstrap_options = "striped", full_width = FALSE)
+kable_styling(kbl(idTT, caption="Which part of the GWAS Catalog document matched our search term.", col.names = c("Term", "Count")) , bootstrap_options = "striped", full_width = FALSE) |> save_kable(file="figures/checkIDmatches.png")
 ```
 
 
@@ -564,7 +566,7 @@ tab = granges_from_study(acc=GWLungstudies[,"STUDY.ACCESSION"])
 
 
 ```{r lookatHits, eval=TRUE, echo=FALSE}
-kable_styling(kbl(t(sort(table(tab$MAPPED_GENE),dec=TRUE)[1:10]), caption="Most frequent mapped genes in GWAS lung studies." ), bootstrap_options = "striped", full_width = TRUE)
+kable_styling(kbl(t(sort(table(tab$MAPPED_GENE),dec=TRUE)[1:10]), caption="Most frequent mapped genes in GWAS lung studies." ), bootstrap_options = "striped", full_width = TRUE) |> save_kable(file="figures/ExamineHits.png")
 
 ```
 
@@ -607,7 +609,7 @@ hitsasDT = hits2DTGWC(hts, gwc_df, gwc_tc)
 ```
 
 ```{r DT, eval = FALSE, fig.cap="CKD EFO Hits", echo=FALSE}
-knitr::kable(hitsasDT[1:10,], escape=FALSE, row.names=FALSE, caption="CKD EFO Hits (first 10)")
+knitr::kable(hitsasDT[1:10,], escape=FALSE, row.names=FALSE, caption="CKD EFO Hits (first 10)") |> save_kable(file="figures/DT.png")
 ##DT::datatable(hitsasDT[1:100,], escape=FALSE, rownames=FALSE, caption="CKD EFO Hits (first 100)")
 ```
 
