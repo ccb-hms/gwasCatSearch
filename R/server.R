@@ -83,8 +83,16 @@ server <- function(input, output, session) {
   })
   output$resources <- DT::renderDataTable({
     last <- process_annotated()
-    DT::datatable(last, escape = FALSE)
-  })
+    DT::datatable(last, escape = FALSE,
+      extensions = c('Select', 'Buttons'), options = list(
+    select = list(style = 'os', items = 'row'),
+    dom = 'Blfrtip',
+    rowId = 0,
+    buttons = c('selectAll', 'selectNone', 'selectRows')
+   ),
+   selection = 'none'
+   )
+  }, server=FALSE)
   output$ontoviz <- renderPlot({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
     validate(need(!is.null(input$gbuttons), "Waiting for gbutton UI"))
